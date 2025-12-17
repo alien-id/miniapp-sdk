@@ -4,7 +4,7 @@
   "workspaces": {
     "": {},
     "packages/bridge": {
-      "name": "@alien-id/bridge",
+      "name": "@alm/bridge",
       "devDependencies": {
         "@types/bun": "latest",
       },
@@ -12,8 +12,8 @@
         "typescript": "^5",
       },
     },
-    "packages/event-types": {
-      "name": "@alien-id/event-types",
+    "packages/protocol": {
+      "name": "@alm/protocol",
       "devDependencies": {
         "@types/bun": "latest",
       },
@@ -23,9 +23,9 @@
     },
   },
   "packages": {
-    "@alien-id/bridge": ["@alien-id/bridge@workspace:packages/bridge"],
+    "@alm/bridge": ["@alm/bridge@workspace:packages/bridge"],
 
-    "@alien-id/event-types": ["@alien-id/event-types@workspace:packages/event-types"],
+    "@alm/protocol": ["@alm/protocol@workspace:packages/protocol"],
 
     "@types/bun": ["@types/bun@1.3.4", "", { "dependencies": { "bun-types": "1.3.4" } }, "sha512-EEPTKXHP+zKGPkhRLv+HI0UEX8/o+65hqARxLy8Ov5rIxMBPNTjeZww00CIihrIQGEQBYg+0roO5qOnS/7boGA=="],
 
