@@ -1,5 +1,5 @@
 {
-  "name": "@alm/protocol",
+  "name": "@alm/contract",
   "module": "index.ts",
   "type": "module",
   "private": true,

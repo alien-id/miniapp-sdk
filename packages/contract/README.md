@@ -1,10 +1,10 @@
-# @alm/protocol
+# @alm/contract
 
-This package defines the communication protocol used by the bridge to enable seamless interaction between the miniapp and the native app. Think of it as the shared language that both sides speak to understand each other.
+This package defines the communication schema used by the bridge to enable seamless interaction between the miniapp and the native app. Think of it as the shared language that both sides speak to understand each other.
 
 ## Types of Communication
 
-The protocol organizes communication into two main types:
+The contract organizes communication into two main types:
 
 - **Methods**: Requests sent from the miniapp to the native app (with responses)
 - **Events**: Notifications sent from the native app to the miniapp (one-way)
