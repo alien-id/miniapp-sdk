@@ -1,4 +1,4 @@
-import type { MethodName, MethodPayload } from '@alm/contract';
+import type { MethodName, MethodPayloads } from '@alm/contract';
 import type { MethodRequest, MethodResponse } from '../messages';
 
 /**
@@ -6,13 +6,11 @@ import type { MethodRequest, MethodResponse } from '../messages';
  */
 export function buildMethodRequest<T extends MethodName>(
   name: T,
-  payload: MethodPayload<T>,
-  reqId: string,
+  payload: MethodPayloads[T],
 ): MethodRequest<T> {
   return {
     type: 'method',
     name,
-    req_id: reqId,
     payload,
   };
 }
@@ -29,8 +27,7 @@ export function parseMethodResponse<T extends MethodName>(
     typeof response !== 'object' ||
     response === null ||
     !('type' in response) ||
-    !('name' in response) ||
-    !('req_id' in response)
+    !('name' in response)
   ) {
     throw new Error('Invalid method response format');
   }

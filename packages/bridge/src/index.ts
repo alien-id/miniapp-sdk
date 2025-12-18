@@ -4,6 +4,7 @@ import type {
   EventPayloads,
   MethodName,
   MethodPayload,
+  MethodPayloads,
 } from '@alm/contract';
 
 // Re-export types for convenience
@@ -13,6 +14,7 @@ export type {
   EventPayloads,
   MethodName,
   MethodPayload,
+  MethodPayloads,
 };
 
 // Export bridge class

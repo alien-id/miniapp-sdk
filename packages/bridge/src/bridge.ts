@@ -2,10 +2,10 @@ import type {
   EventName,
   EventPayloads,
   MethodName,
-  MethodPayload,
+  MethodPayloads,
 } from '@alm/contract';
 import Emittery from 'emittery';
-import type { Message, MethodResponse } from './messages';
+import type { EventMessage, Message, MethodResponse } from './messages';
 import { buildMethodRequest } from './utils/methods';
 
 /**
@@ -59,20 +59,26 @@ export class Bridge {
   }
 
   /**
-   * Send a method request and wait for response
-   * Methods can only be emitted (called), not handled
+   * Emit a method request
+   * If req_id is provided in payload, waits for response. Otherwise, just emits the request.
    */
   async call<T extends MethodName>(
     name: T,
-    payload: MethodPayload<T>,
+    payload: MethodPayloads[T],
   ): Promise<unknown> {
-    const reqId = this.generateRequestId();
-    const request = buildMethodRequest(name, payload, reqId);
+    const request = buildMethodRequest(name, payload);
+    const reqId = payload.req_id;
 
+    // If no req_id, just emit and return immediately
+    if (!reqId) {
+      this.sendMessage(request);
+      return Promise.resolve(undefined);
+    }
+
+    // If req_id provided, wait for response
     return new Promise((resolve, reject) => {
       this.pendingRequests.set(reqId, { resolve, reject });
 
-      // Send the request (implement your actual sending mechanism here)
       this.sendMessage(request);
 
       // Timeout after 30 seconds
@@ -87,16 +93,15 @@ export class Bridge {
 
   /**
    * Process an incoming message
-   * Only processes events (for listening) and responses (for method calls)
-   * Method requests are not handled - methods can only be emitted
+   * Consumes events and method responses
    */
   async processMessage(message: Message): Promise<void> {
     if (message.type === 'event') {
-      await this.handleEvent(message.name, message.payload);
+      const eventMessage = message as EventMessage<EventName>;
+      await this.handleEvent(eventMessage.name, eventMessage.payload);
     } else if (message.type === 'response') {
       this.handleResponse(message);
     }
-    // Method requests are ignored - methods can only be emitted, not handled
   }
 
   private async handleEvent<T extends EventName>(
@@ -107,6 +112,8 @@ export class Bridge {
   }
 
   private handleResponse(response: MethodResponse): void {
+    if (!response.req_id) return;
+
     const pending = this.pendingRequests.get(response.req_id);
     if (pending) {
       this.pendingRequests.delete(response.req_id);
@@ -116,10 +123,6 @@ export class Bridge {
         pending.resolve(response.payload);
       }
     }
-  }
-
-  private generateRequestId(): string {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
   /**

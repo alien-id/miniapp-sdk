@@ -1,0 +1,64 @@
+name: Generate Contract Artifacts
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'packages/contract/src/**'
+      - 'packages/contract/scripts/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'packages/contract/src/**'
+      - 'packages/contract/scripts/**'
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  generate-artifacts:
+    name: Generate Kotlin and Swift Artifacts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Generate Kotlin types
+        working-directory: packages/contract
+        run: bun run scripts/generate-types.ts kotlin dist/contract.kt
+
+      - name: Generate Swift types
+        working-directory: packages/contract
+        run: bun run scripts/generate-types.ts swift dist/contract.swift
+
+      - name: Upload Kotlin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: contract-kotlin
+          path: packages/contract/dist/contract.kt
+          retention-days: 90
+
+      - name: Upload Swift artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: contract-swift
+          path: packages/contract/dist/contract.swift
+          retention-days: 90
+
