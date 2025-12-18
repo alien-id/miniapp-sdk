@@ -8,7 +8,8 @@
   },
 
   "files": {
-    "ignoreUnknown": false
+    "ignoreUnknown": false,
+    "includes": ["**/*.ts", "!packages/bridge/examples"]
   },
 
   "formatter": {

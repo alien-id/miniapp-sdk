@@ -9,9 +9,9 @@
     },
     "packages/bridge": {
       "name": "@alm/bridge",
+      "version": "0.1.0",
       "dependencies": {
         "@alm/contract": "workspace:*",
-        "emittery": "^1.2.0",
       },
       "devDependencies": {
         "@types/bun": "^1.3.4",
@@ -22,6 +22,7 @@
     },
     "packages/contract": {
       "name": "@alm/contract",
+      "version": "0.0.1",
       "dependencies": {
         "typebox": "^1.0.64",
       },
@@ -169,8 +170,6 @@
     "cross-fetch": ["cross-fetch@4.1.0", "", { "dependencies": { "node-fetch": "^2.7.0" } }, "sha512-uKm5PU+MHTootlWEY+mZ4vvXoCn4fLQxT9dSc1sXVMSFkINTJVN8cAQROpwcKm8bJ/c7rgZVIBWzH5T78sNZZw=="],
 
     "diff": ["diff@4.0.2", "", {}, "sha512-58lmxKSA4BNyLz+HHMUzlOEpg09FV+ev6ZMe3vJihgdxzgcwZ8VoEEPmALCZG9LmqfVoNMMKpttIYTVG6uDY7A=="],
-
-    "emittery": ["emittery@1.2.0", "", {}, "sha512-KxdRyyFcS85pH3dnU8Y5yFUm2YJdaHwcBZWrfG8o89ZY9a13/f9itbN+YG3ELbBo9Pg5zvIozstmuV8bX13q6g=="],
 
     "emoji-regex": ["emoji-regex@10.6.0", "", {}, "sha512-toUI84YS5YmxW219erniWD0CIVOo46xGKColeNQRgOzDorgBi1v4D71/OFzgD9GO2UGKIv1C3Sp8DAn0+j5w7A=="],
 

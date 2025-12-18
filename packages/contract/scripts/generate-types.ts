@@ -6,17 +6,17 @@
  * If lang is not provided, an interactive prompt will ask for it.
  */
 
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { input, select } from '@inquirer/prompts';
-import { spawn } from 'bun';
 import {
   existsSync,
   mkdirSync,
   readFileSync,
   unlinkSync,
   writeFileSync,
-} from 'fs';
+} from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { input, select } from '@inquirer/prompts';
+import { spawn } from 'bun';
 import { contract } from '../src/contract.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

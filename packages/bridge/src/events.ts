@@ -7,11 +7,10 @@ export type EventListener<T extends EventName = EventName> = (
 
 class EventEmitter {
   private listeners = new Map<EventName, Set<EventListener>>();
-  private messageListenerCleanup: (() => void) | null = null;
 
   constructor() {
     // Setup message listener to receive events from host app
-    this.messageListenerCleanup = setupMessageListener((message) => {
+    setupMessageListener((message) => {
       if (message.type === 'event') {
         this.emit(message.name as EventName, message.payload);
       }

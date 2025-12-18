@@ -18,13 +18,21 @@ function generateReqId(): string {
     : Math.random().toString(36).slice(2);
 }
 
-// TODO: Create a proper mapping between methods and their response events
-// For now, we use req_id to match responses, so we listen to all events
-// and filter by req_id. This is a temporary solution.
+// TODO: Move it somewhere else
+// Mapping between methods and their response events
+// Each method request expects a response via the corresponding event
+const METHOD_TO_RESPONSE_EVENT: Record<MethodName, EventName> = {
+  get_auth_data: 'auth_data',
+} as const;
+
 function getResponseEvent(method: MethodName): EventName {
-  // Temporary: use the first available event (auth_data)
-  // This should be replaced with a proper method -> event mapping
-  return 'auth_data' as EventName;
+  const event = METHOD_TO_RESPONSE_EVENT[method];
+  if (!event) {
+    throw new Error(
+      `No response event mapping found for method: ${String(method)}`,
+    );
+  }
+  return event;
 }
 
 export async function request(
@@ -34,7 +42,6 @@ export async function request(
 ): Promise<EventPayloads[EventName]> {
   const reqId = options.reqId || generateReqId();
   const timeout = options.timeout || 30000;
-  // TODO: Replace with proper method -> event mapping
   const responseEvent = getResponseEvent(method);
 
   const paramsWithReqId = {
