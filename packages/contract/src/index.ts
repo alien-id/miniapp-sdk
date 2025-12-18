@@ -12,4 +12,3 @@ export type {
   MethodPayload,
   MethodPayloads,
 } from './types';
-

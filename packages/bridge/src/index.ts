@@ -23,4 +23,3 @@ export type { EventListener } from './types';
 export { parseEvent } from './utils/events';
 // Export method utilities
 export { buildMethodRequest, parseMethodResponse } from './utils/methods';
-

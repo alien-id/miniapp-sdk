@@ -21,4 +21,3 @@ export type EventPayload<T extends EventName> = EventPayloads[T];
 
 export type MethodName = keyof MethodPayloads;
 export type MethodPayload<T extends MethodName> = MethodPayloads[T];
-

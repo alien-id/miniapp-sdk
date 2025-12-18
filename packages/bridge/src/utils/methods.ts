@@ -37,4 +37,3 @@ export function parseMethodResponse<T extends MethodName>(
 
   return response as MethodResponse<T>;
 }
-

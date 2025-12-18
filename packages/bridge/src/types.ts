@@ -6,4 +6,3 @@ import type { EventName, EventPayload } from '@alm/contract';
 export type EventListener<T extends EventName> = (
   payload: EventPayload<T>,
 ) => void;
-

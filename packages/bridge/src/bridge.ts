@@ -123,4 +123,3 @@ export class Bridge {
     // console.log('Sending message:', message);
   }
 }
-

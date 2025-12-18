@@ -11,4 +11,3 @@ export const contract = {
   events,
   methods,
 };
-

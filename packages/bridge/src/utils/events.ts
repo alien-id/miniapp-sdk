@@ -11,4 +11,3 @@ export function parseEvent<T extends EventName>(
   // For now, we rely on TypeScript types for compile-time safety
   return payload as EventPayload<T>;
 }
-

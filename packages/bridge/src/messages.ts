@@ -28,4 +28,3 @@ export interface MethodResponse<T extends MethodName = MethodName> {
 }
 
 export type Message = EventMessage | MethodRequest | MethodResponse;
-
