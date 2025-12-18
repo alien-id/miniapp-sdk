@@ -4,10 +4,10 @@ Alien Mini Apps empower developers to build versatile interfaces directly within
 
 ### Overview
 
-Mini Apps consist of the follwing main compnents:
+Mini Apps consist of the following main components:
 
 - Web application, deployed to your domain
-- manifest.json, that conains metadata about your application, e.g. name, description, icon, domain, permissions. More info on manifest.json avaliable in [manifest.md](manifest.md)
+- manifest.json, that contains metadata about your application, e.g. name, description, icon, domain, permissions. More info on manifest.json available in [manifest.md](manifest.md)
 - Provider id created at the [Developer Portal](https://dev.alien.org).
 
 ### Setting up
@@ -16,7 +16,7 @@ When your web application is ready for deployment, you need to create a `manifes
 
 > Open question: put provider id inside manifest.json?
 
-Register your application at the [Developer Portal](https://dev.alien.org) to get your provider credentials. The provider id is a unique identifier of you Mini App.
+Register your application at the [Developer Portal](https://dev.alien.org) to get your provider credentials. The provider id is a unique identifier of your Mini App.
 
 More info on providers: https://dev.alien.org/docs/what-is-alien-provider
 
