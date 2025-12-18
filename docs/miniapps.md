@@ -1,6 +1,6 @@
 ## Alien Mini Apps
 
-Alien Mini Apps empower developers to build versatile interfaces directly within the app, providing an SDK to seamlessly connect Alien ID to Mini Apps.
+Alien Mini Apps empower developers to build versatile interfaces directly within the Alien App. Our SDK provides a seamless connection between Alien ID and your web applications.
 
 ### Overview
 
