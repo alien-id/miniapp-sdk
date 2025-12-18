@@ -5,11 +5,10 @@
   "types": "./dist/index.d.ts",
   "module": "./dist/index.js",
   "type": "module",
-  "private": true,
   "files": ["dist"],
   "repository": {
     "type": "git",
-    "url": "https://github.com/alien-id/miniapp-sdk.git",
+    "url": "git+https://github.com/alien-id/miniapp-sdk.git",
     "directory": "packages/bridge"
   },
   "publishConfig": {
