@@ -1,4 +1,4 @@
-# @alm/contract
+# @alien-id/contract
 
 This package defines the communication schema used by the bridge to enable seamless interaction between the miniapp and the native app. Think of it as the shared language that both sides speak to understand each other.
 

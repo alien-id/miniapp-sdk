@@ -3,7 +3,7 @@ import type {
   EventPayloads,
   MethodName,
   MethodPayloads,
-} from '@alm/contract';
+} from '@alien-id/contract';
 import { off, on } from './events';
 import { sendMessage } from './transport';
 

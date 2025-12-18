@@ -12,7 +12,7 @@ This directory contains examples showing how to use the bridge from both the min
 ### Miniapp Side
 
 ```typescript
-import { on, emit, request } from '@alm/bridge';
+import { on, emit, request } from '@alien-id/bridge';
 
 // Listen to events from host
 on('auth_data', (payload) => {

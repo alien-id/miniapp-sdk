@@ -6,7 +6,7 @@ export type {
   MethodName,
   MethodPayload,
   MethodPayloads,
-} from '@alm/contract';
+} from '@alien-id/contract';
 
 export type { EventListener } from './events';
 // Events - subscribe and emit

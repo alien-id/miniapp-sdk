@@ -1,4 +1,4 @@
-import type { EventName, EventPayloads } from '@alm/contract';
+import type { EventName, EventPayloads } from '@alien-id/contract';
 import { sendMessage, setupMessageListener } from './transport';
 
 export type EventListener<T extends EventName = EventName> = (

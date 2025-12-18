@@ -4,7 +4,7 @@
  * This runs inside the webview and communicates with the host app.
  */
 
-import { emit, on, request } from '@alm/bridge';
+import { emit, on, request } from '@alien-id/bridge';
 
 // ============================================
 // 1. Listen to events from host app

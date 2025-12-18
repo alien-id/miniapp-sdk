@@ -1,4 +1,4 @@
-import type { EventName, EventPayloads, MethodName } from '@alm/contract';
+import type { EventName, EventPayloads, MethodName } from '@alien-id/contract';
 
 export interface Message {
   type: 'event' | 'method';

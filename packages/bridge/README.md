@@ -1,4 +1,4 @@
-# @alm/bridge
+# @alien-id/bridge
 
 A minimal, type-safe bridge for communication between the miniapp (webview) and native host app.
 
@@ -15,7 +15,7 @@ The bridge uses `postMessage` to communicate between the webview and the host ap
 ### Subscribe to Events (from host app)
 
 ```typescript
-import { on } from '@alm/bridge';
+import { on } from '@alien-id/bridge';
 
 const unsubscribe = on('auth_data', (payload) => {
   console.log('Received from host:', payload);
@@ -28,7 +28,7 @@ unsubscribe();
 ### Emit Events (to host app)
 
 ```typescript
-import { emit } from '@alm/bridge';
+import { emit } from '@alien-id/bridge';
 
 emit('auth_data', { token: 'test-token', req_id: '123' });
 ```
@@ -36,7 +36,7 @@ emit('auth_data', { token: 'test-token', req_id: '123' });
 ### Send Request and Wait for Response
 
 ```typescript
-import { request } from '@alm/bridge';
+import { request } from '@alien-id/bridge';
 
 // Auto-generates req_id
 const response = await request('get_auth_data', { token: 'test-token' });
@@ -99,7 +99,7 @@ The host app needs to:
    }
    ```
 
-All types are provided by `@alm/contract` for full type safety.
+All types are provided by `@alien-id/contract` for full type safety.
 
 ## Examples
 
