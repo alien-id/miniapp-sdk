@@ -1,4 +1,5 @@
-import type {
+// Types
+export type {
   EventName,
   EventPayload,
   EventPayloads,
@@ -7,24 +8,10 @@ import type {
   MethodPayloads,
 } from '@alm/contract';
 
-// Re-export types for convenience
-export type {
-  EventName,
-  EventPayload,
-  EventPayloads,
-  MethodName,
-  MethodPayload,
-  MethodPayloads,
-};
+export type { EventListener } from './events';
+// Events - subscribe and emit
+export { emit, off, on } from './events';
+export type { RequestOptions } from './request';
 
-// Export bridge class
-export { Bridge } from './bridge';
-// Export messages
-export type {
-  EventMessage,
-  Message,
-  MethodRequest,
-  MethodResponse,
-} from './messages';
-// Export method utilities
-export { buildMethodRequest, parseMethodResponse } from './utils/methods';
+// Request - send request and wait for response
+export { request } from './request';
