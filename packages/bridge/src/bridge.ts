@@ -1,7 +1,11 @@
-import type { EventName, MethodName, MethodPayload } from '@alm/contract';
+import type {
+  EventName,
+  EventPayloads,
+  MethodName,
+  MethodPayload,
+} from '@alm/contract';
+import Emittery from 'emittery';
 import type { Message, MethodResponse } from './messages';
-import type { EventListener } from './types';
-import { parseEvent } from './utils/events';
 import { buildMethodRequest } from './utils/methods';
 
 /**
@@ -10,10 +14,7 @@ import { buildMethodRequest } from './utils/methods';
  * - Methods can only be emitted (called)
  */
 export class Bridge {
-  private eventListeners = new Map<
-    EventName,
-    Set<(payload: unknown) => void>
-  >();
+  private emitter = new Emittery<EventPayloads>();
   private pendingRequests = new Map<
     string,
     {
@@ -24,25 +25,36 @@ export class Bridge {
 
   /**
    * Subscribe to an event with type safety
+   * Returns an unsubscribe function
    */
-  on<T extends EventName>(name: T, listener: EventListener<T>): () => void {
-    if (!this.eventListeners.has(name)) {
-      this.eventListeners.set(name, new Set());
-    }
-    const listeners = this.eventListeners.get(name);
-    if (listeners) {
-      listeners.add(listener as (payload: unknown) => void);
-    }
-
-    // Return unsubscribe function
+  on<T extends EventName>(
+    name: T,
+    listener: (payload: EventPayloads[T]) => void,
+  ): () => void {
+    this.emitter.on(name, listener);
     return () => {
-      const listeners = this.eventListeners.get(name);
-      if (listeners) {
-        listeners.delete(listener as (payload: unknown) => void);
-        if (listeners.size === 0) {
-          this.eventListeners.delete(name);
-        }
-      }
+      this.emitter.off(name, listener);
+    };
+  }
+
+  /**
+   * Subscribe to an event once with type safety
+   * Returns a promise that resolves with the event data
+   */
+  once<T extends EventName>(name: T): Promise<EventPayloads[T]> {
+    return this.emitter.once(name);
+  }
+
+  /**
+   * Subscribe to all events with type safety
+   * Returns an unsubscribe function
+   */
+  onAny(
+    listener: (eventName: EventName, payload: EventPayloads[EventName]) => void,
+  ): () => void {
+    this.emitter.onAny(listener);
+    return () => {
+      this.emitter.offAny(listener);
     };
   }
 
@@ -78,24 +90,20 @@ export class Bridge {
    * Only processes events (for listening) and responses (for method calls)
    * Method requests are not handled - methods can only be emitted
    */
-  processMessage(message: Message): void {
+  async processMessage(message: Message): Promise<void> {
     if (message.type === 'event') {
-      this.handleEvent(message.name, message.payload);
+      await this.handleEvent(message.name, message.payload);
     } else if (message.type === 'response') {
       this.handleResponse(message);
     }
     // Method requests are ignored - methods can only be emitted, not handled
   }
 
-  private handleEvent<T extends EventName>(name: T, payload: unknown): void {
-    const listeners = this.eventListeners.get(name);
-    if (listeners) {
-      const parsedPayload = parseEvent(name, payload);
-      for (const listener of listeners) {
-        // Type assertion is safe here because we know the listener was registered with the correct type
-        (listener as EventListener<T>)(parsedPayload);
-      }
-    }
+  private async handleEvent<T extends EventName>(
+    name: T,
+    payload: EventPayloads[T],
+  ): Promise<void> {
+    await this.emitter.emit(name, payload);
   }
 
   private handleResponse(response: MethodResponse): void {
