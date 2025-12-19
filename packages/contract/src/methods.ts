@@ -8,4 +8,5 @@ export const methods = {
       token: Type.String(),
     }),
   ),
+  ping: withReqId(Type.Object({})),
 };

@@ -8,4 +8,5 @@ export const events = {
       token: Type.String(),
     }),
   ),
+  pong: withReqId(Type.Object({})),
 };
