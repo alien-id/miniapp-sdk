@@ -1,8 +1,8 @@
 import type {
   EventName,
-  EventPayloads,
+  EventPayload,
   MethodName,
-  MethodPayloads,
+  MethodPayload,
 } from '@alien-id/contract';
 import { off, on } from './events';
 import { sendMessage } from './transport';
@@ -18,39 +18,22 @@ function generateReqId(): string {
     : Math.random().toString(36).slice(2);
 }
 
-// TODO: Move it somewhere else
-// Mapping between methods and their response events
-// Each method request expects a response via the corresponding event
-const METHOD_TO_RESPONSE_EVENT: Record<MethodName, EventName> = {
-  get_auth_data: 'auth_data',
-  ping: 'pong',
-} as const;
-
-function getResponseEvent(method: MethodName): EventName {
-  const event = METHOD_TO_RESPONSE_EVENT[method];
-  if (!event) {
-    throw new Error(
-      `No response event mapping found for method: ${String(method)}`,
-    );
-  }
-  return event;
-}
-
-export async function request(
-  method: MethodName,
-  params: MethodPayloads[MethodName],
+export async function request<M extends MethodName, E extends EventName>(
+  method: M,
+  params: MethodPayload<M>,
+  responseEvent: E,
   options: RequestOptions = {},
-): Promise<EventPayloads[EventName]> {
+): Promise<EventPayload<E>> {
   const reqId = options.reqId || generateReqId();
   const timeout = options.timeout || 30000;
-  const responseEvent = getResponseEvent(method);
 
+  // Add reqId to params
   const paramsWithReqId = {
     ...params,
-    req_id: reqId,
-  } as MethodPayloads[MethodName];
+    reqId,
+  } as MethodPayload<M> & { reqId: string };
 
-  return new Promise<EventPayloads[EventName]>((resolve, reject) => {
+  return new Promise<EventPayload<E>>((resolve, reject) => {
     const timeoutId = setTimeout(() => {
       cleanup();
       reject(new Error(`Request timeout: ${String(method)}`));
@@ -61,9 +44,9 @@ export async function request(
       off(responseEvent, handleResponse);
     };
 
-    const handleResponse = (payload: EventPayloads[EventName]) => {
-      const response = payload as { req_id?: string };
-      if (response.req_id === reqId) {
+    const handleResponse = (payload: EventPayload<E>) => {
+      const response = payload as { reqId?: string };
+      if (response.reqId === reqId) {
         cleanup();
         resolve(payload);
       }
@@ -75,7 +58,7 @@ export async function request(
     sendMessage({
       type: 'method',
       name: method,
-      payload: paramsWithReqId as unknown as EventPayloads[EventName],
+      payload: paramsWithReqId as MethodPayload<MethodName>,
     });
   });
 }

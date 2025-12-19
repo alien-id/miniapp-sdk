@@ -1,65 +1,41 @@
-import type { EventName, EventPayloads } from '@alien-id/contract';
+import type { EventName, EventPayload, Events } from '@alien-id/contract';
+import Emittery from 'emittery';
 import { sendMessage, setupMessageListener } from './transport';
 
 export type EventListener<T extends EventName = EventName> = (
-  payload: EventPayloads[T],
+  payload: EventPayload<T>,
 ) => void;
 
-class EventEmitter {
-  private listeners = new Map<EventName, Set<EventListener>>();
+// Create Emittery-compatible event map from Events type
+type EmitteryEventMap = {
+  [K in keyof Events]: Events[K];
+};
 
+class BridgeEmitter extends Emittery<EmitteryEventMap> {
   constructor() {
+    super();
     // Setup message listener to receive events from host app
     setupMessageListener((message) => {
       if (message.type === 'event') {
-        this.emit(message.name as EventName, message.payload);
+        void this.emit(
+          message.name as EventName,
+          message.payload as EventPayload<EventName>,
+        );
       }
-    });
-  }
-
-  on<T extends EventName>(name: T, listener: EventListener<T>): () => void {
-    if (!this.listeners.has(name)) {
-      this.listeners.set(name, new Set());
-    }
-    this.listeners.get(name)?.add(listener as EventListener);
-
-    return () => {
-      this.off(name, listener);
-    };
-  }
-
-  off<T extends EventName>(name: T, listener: EventListener<T>): void {
-    const listeners = this.listeners.get(name);
-    if (listeners) {
-      listeners.delete(listener as EventListener);
-    }
-  }
-
-  emit(name: EventName, payload: EventPayloads[EventName]): void {
-    // Emit locally
-    const listeners = this.listeners.get(name);
-    if (listeners) {
-      for (const listener of listeners) {
-        (listener as EventListener)(payload);
-      }
-    }
-
-    // Send to host app via postMessage
-    sendMessage({
-      type: 'event',
-      name,
-      payload,
     });
   }
 }
 
-const emitter = new EventEmitter();
+const emitter = new BridgeEmitter();
 
 export function on<T extends EventName>(
   name: T,
   listener: EventListener<T>,
 ): () => void {
-  return emitter.on(name, listener);
+  emitter.on(name, listener);
+  return () => {
+    emitter.off(name, listener);
+  };
 }
 
 export function off<T extends EventName>(
@@ -69,6 +45,17 @@ export function off<T extends EventName>(
   emitter.off(name, listener);
 }
 
-export function emit(name: EventName, payload: EventPayloads[EventName]): void {
-  emitter.emit(name, payload);
+export async function emit<T extends EventName>(
+  name: T,
+  payload: EventPayload<T>,
+): Promise<void> {
+  // Emit locally (await to ensure listeners are called)
+  await emitter.emit(name, payload);
+
+  // Send to host app via postMessage
+  sendMessage({
+    type: 'event',
+    name,
+    payload,
+  });
 }

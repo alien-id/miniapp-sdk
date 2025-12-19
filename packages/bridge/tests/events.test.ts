@@ -1,37 +1,79 @@
-import { beforeEach, expect, test } from 'bun:test';
+import { afterEach, beforeEach, expect, test } from 'bun:test';
+import type { EventPayload } from '@alien-id/contract';
 import { emit, off, on } from '../src/events';
 
+// Mock window for tests
+let mockWindow: {
+  parent: typeof mockWindow;
+  postMessage: (message: unknown, targetOrigin: string) => void;
+  addEventListener: (
+    type: string,
+    handler: (event: MessageEvent) => void,
+  ) => void;
+  removeEventListener: (
+    type: string,
+    handler: (event: MessageEvent) => void,
+  ) => void;
+};
+
 beforeEach(() => {
-  // Clean up listeners between tests
+  const postMessageFn = () => {
+    // No-op for these tests
+  };
+
+  mockWindow = {
+    parent: {} as typeof mockWindow,
+    postMessage: postMessageFn,
+    addEventListener: () => {
+      // No-op for these tests
+    },
+    removeEventListener: () => {
+      // No-op for these tests
+    },
+  };
+
+  // Set parent to self to indicate not in iframe
+  mockWindow.parent = mockWindow;
+
+  // Set up global window mock
+  Object.defineProperty(globalThis, 'window', {
+    value: mockWindow,
+    writable: true,
+    configurable: true,
+  });
 });
 
-test('on - should register event listener', () => {
+afterEach(() => {
+  delete (globalThis as { window?: unknown }).window;
+});
+
+test('on - should register event listener', async () => {
   let received = false;
-  const removeListener = on('auth_data', () => {
+  const removeListener = on('auth::init::token', () => {
     received = true;
   });
 
-  emit('auth_data', { token: 'test-token', req_id: '123' });
+  await emit('auth::init::token', { token: 'test-token', reqId: '123' });
   expect(received).toBe(true);
 
   removeListener();
 });
 
-test('on - should remove listener when cleanup function is called', () => {
+test('on - should remove listener when cleanup function is called', async () => {
   let callCount = 0;
-  const removeListener = on('auth_data', () => {
+  const removeListener = on('auth::init::token', () => {
     callCount++;
   });
 
-  emit('auth_data', { token: 'test-token', req_id: '123' });
+  await emit('auth::init::token', { token: 'test-token', reqId: '123' });
   expect(callCount).toBe(1);
 
   removeListener();
-  emit('auth_data', { token: 'test-token', req_id: '456' });
+  await emit('auth::init::token', { token: 'test-token', reqId: '456' });
   expect(callCount).toBe(1);
 });
 
-test('off - should remove specific listener', () => {
+test('off - should remove specific listener', async () => {
   let callCount1 = 0;
   let callCount2 = 0;
 
@@ -42,39 +84,43 @@ test('off - should remove specific listener', () => {
     callCount2++;
   };
 
-  on('auth_data', listener1);
-  on('auth_data', listener2);
+  on('auth::init::token', listener1);
+  on('auth::init::token', listener2);
 
-  emit('auth_data', { token: 'test-token', req_id: '123' });
+  await emit('auth::init::token', { token: 'test-token', reqId: '123' });
   expect(callCount1).toBe(1);
   expect(callCount2).toBe(1);
 
-  off('auth_data', listener1);
-  emit('auth_data', { token: 'test-token', req_id: '456' });
+  off('auth::init::token', listener1);
+  await emit('auth::init::token', { token: 'test-token', reqId: '456' });
   expect(callCount1).toBe(1);
   expect(callCount2).toBe(2);
 });
 
-test('emit - should emit to all registered listeners', () => {
+test('emit - should emit to all registered listeners', async () => {
   let callCount = 0;
-  on('auth_data', () => {
+  on('auth::init::token', () => {
     callCount++;
   });
-  on('auth_data', () => {
+  on('auth::init::token', () => {
     callCount++;
   });
 
-  emit('auth_data', { token: 'test-token', req_id: '123' });
+  await emit('auth::init::token', { token: 'test-token', reqId: '123' });
   expect(callCount).toBe(2);
 });
 
-test('emit - should pass correct payload', () => {
-  let receivedPayload: unknown = null;
-  on('auth_data', (payload) => {
+test('emit - should pass correct payload', async () => {
+  let receivedPayload: EventPayload<'auth::init::token'> | undefined;
+  on('auth::init::token', (payload) => {
     receivedPayload = payload;
   });
 
-  const testPayload = { token: 'test-token', req_id: '123' };
-  emit('auth_data', testPayload);
+  const testPayload: EventPayload<'auth::init::token'> = {
+    token: 'test-token',
+    reqId: '123',
+  };
+  await emit('auth::init::token', testPayload);
+  expect(receivedPayload).not.toBeNull();
   expect(receivedPayload).toEqual(testPayload);
 });

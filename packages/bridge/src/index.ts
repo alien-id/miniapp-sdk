@@ -2,10 +2,8 @@
 export type {
   EventName,
   EventPayload,
-  EventPayloads,
   MethodName,
   MethodPayload,
-  MethodPayloads,
 } from '@alien-id/contract';
 
 export type { EventListener } from './events';
