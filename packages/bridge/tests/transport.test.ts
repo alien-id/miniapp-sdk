@@ -241,4 +241,3 @@ test('setupMessageListener - should return cleanup function', () => {
 
   expect(messageHandlers.length).toBe(0);
 });
-
