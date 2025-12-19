@@ -9,13 +9,14 @@
     },
     "packages/bridge": {
       "name": "@alien-id/bridge",
-      "version": "0.1.1-dev",
+      "version": "0.0.1-alpha",
       "dependencies": {
         "@alien-id/contract": "workspace:*",
         "emittery": "^1.2.0",
       },
       "devDependencies": {
         "@types/bun": "^1.3.4",
+        "tsup": "^8.5.1",
       },
       "peerDependencies": {
         "typescript": "^5",
@@ -23,7 +24,7 @@
     },
     "packages/contract": {
       "name": "@alien-id/contract",
-      "version": "0.0.1-alpha",
+      "version": "0.0.2-alpha",
       "devDependencies": {
         "@types/bun": "^1.3.4",
         "tsup": "^8.5.1",
