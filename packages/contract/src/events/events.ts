@@ -4,4 +4,3 @@ export type {
   EventName,
   EventPayload,
 } from './types';
-
