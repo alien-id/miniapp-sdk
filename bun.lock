@@ -11,6 +11,7 @@
       "name": "vite-host-app",
       "version": "0.0.0",
       "dependencies": {
+        "@alien-id/bridge": "workspace:*",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
       },

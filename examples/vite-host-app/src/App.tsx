@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import type { MethodName, MethodPayload, EventName, EventPayload } from '@alien-id/bridge'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
@@ -14,6 +14,53 @@ function App() {
   const [receivedMethods, setReceivedMethods] = useState<ReceivedMethod[]>([])
   const [miniappUrl, setMiniappUrl] = useState('http://localhost:5173')
   const iframeRef = useRef<HTMLIFrameElement>(null)
+
+  const sendEventToMiniapp = useCallback((eventName: EventName, payload: EventPayload<EventName>) => {
+    if (!iframeRef.current?.contentWindow) {
+      console.warn('Cannot send event: iframe not ready')
+      return
+    }
+
+    const message = {
+      type: 'event' as const,
+      name: eventName,
+      payload,
+    }
+
+    console.log('Sending event to miniapp:', message)
+    iframeRef.current.contentWindow.postMessage(message, '*')
+  }, [])
+
+  const handleMethod = useCallback((methodName: MethodName, payload: MethodPayload<MethodName>) => {
+    console.log('Received method from miniapp:', methodName, payload)
+
+    // Add to received methods list
+    setReceivedMethods((prev) => [
+      {
+        name: methodName,
+        payload,
+        timestamp: new Date(),
+      },
+      ...prev,
+    ])
+
+    // Handle specific methods
+    if (methodName === 'auth::init::request') {
+      const methodPayload = payload as MethodPayload<'auth::init::request'>
+      const { reqId, appId, challenge } = methodPayload
+
+      console.log('Handling auth::init::request:', { appId, challenge, reqId })
+
+      // Simulate some processing delay
+      setTimeout(() => {
+        // Send response event back to miniapp
+        sendEventToMiniapp('auth::init::token', {
+          token: `token-for-${appId}-${Date.now()}`,
+          reqId,
+        })
+      }, 500)
+    }
+  }, [sendEventToMiniapp])
 
   useEffect(() => {
     // Listen for messages from the miniapp iframe
@@ -59,54 +106,7 @@ function App() {
     return () => {
       window.removeEventListener('message', messageHandler)
     }
-  }, [])
-
-  const handleMethod = (methodName: MethodName, payload: MethodPayload<MethodName>) => {
-    console.log('Received method from miniapp:', methodName, payload)
-
-    // Add to received methods list
-    setReceivedMethods((prev) => [
-      {
-        name: methodName,
-        payload,
-        timestamp: new Date(),
-      },
-      ...prev,
-    ])
-
-    // Handle specific methods
-    if (methodName === 'auth::init::request') {
-      const methodPayload = payload as MethodPayload<'auth::init::request'>
-      const { reqId, appId, challenge } = methodPayload
-
-      console.log('Handling auth::init::request:', { appId, challenge, reqId })
-
-      // Simulate some processing delay
-      setTimeout(() => {
-        // Send response event back to miniapp
-        sendEventToMiniapp('auth::init::token', {
-          token: `token-for-${appId}-${Date.now()}`,
-          reqId,
-        })
-      }, 500)
-    }
-  }
-
-  const sendEventToMiniapp = (eventName: EventName, payload: EventPayload<EventName>) => {
-    if (!iframeRef.current?.contentWindow) {
-      console.warn('Cannot send event: iframe not ready')
-      return
-    }
-
-    const message = {
-      type: 'event' as const,
-      name: eventName,
-      payload,
-    }
-
-    console.log('Sending event to miniapp:', message)
-    iframeRef.current.contentWindow.postMessage(message, '*')
-  }
+  }, [handleMethod])
 
   const handleSendTestEvent = () => {
     const reqId = `test-${Date.now()}`
