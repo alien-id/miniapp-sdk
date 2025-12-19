@@ -1,6 +1,6 @@
 {
   "name": "@alien-id/contract",
-  "version": "0.0.1-dev",
+  "version": "0.0.1-dev-1",
   "types": "./src/index.ts",
   "type": "module",
   "private": true,

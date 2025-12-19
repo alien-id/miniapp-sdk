@@ -23,6 +23,7 @@ function generateReqId(): string {
 // Each method request expects a response via the corresponding event
 const METHOD_TO_RESPONSE_EVENT: Record<MethodName, EventName> = {
   get_auth_data: 'auth_data',
+  ping: 'pong',
 } as const;
 
 function getResponseEvent(method: MethodName): EventName {
