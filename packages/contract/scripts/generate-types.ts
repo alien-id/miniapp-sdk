@@ -29,16 +29,12 @@ const version = packageJson.version;
 
 // Supported languages for quicktype
 const supportedLanguages = [
-  { name: 'Dart', value: 'dart' },
-  { name: 'Swift', value: 'swift' },
-  { name: 'Kotlin', value: 'kotlin' },
-  { name: 'TypeScript', value: 'typescript' },
-  { name: 'Python', value: 'python' },
-  { name: 'Go', value: 'go' },
-  { name: 'Rust', value: 'rust' },
-  { name: 'Java', value: 'java' },
-  { name: 'C#', value: 'csharp' },
-  { name: 'C++', value: 'cpp' },
+  { name: 'Dart', value: 'dart', extension: 'dart' },
+  { name: 'Swift', value: 'swift', extension: 'swift' },
+  { name: 'Kotlin', value: 'kotlin', extension: 'kt' },
+  { name: 'TypeScript', value: 'typescript', extension: 'ts' },
+  { name: 'C#', value: 'csharp', extension: 'cs' },
+  { name: 'C++', value: 'cpp', extension: 'cpp' },
 ];
 
 // Parse CLI arguments or use interactive prompts
@@ -53,7 +49,9 @@ if (!lang) {
 }
 
 if (!outputPath) {
-  const defaultPath = join(contractDir, 'dist', `contract.${lang}`);
+  // Map language to correct file extension
+  const extension = supportedLanguages.find((l) => l.value === lang)?.extension;
+  const defaultPath = join(contractDir, 'dist', `contract.${extension}`);
   outputPath = await input({
     message: 'Output path:',
     default: defaultPath,
@@ -98,24 +96,28 @@ const schemaPath = join(contractDir, '.contract-schema.json');
 writeFileSync(schemaPath, JSON.stringify(jsonSchema, null, 2));
 
 // Generate types using quicktype
-const quicktypeProcess = spawn(
-  [
-    'bunx',
-    'quicktype',
-    '--src-lang',
-    'schema',
-    '--lang',
-    lang,
-    '--src',
-    schemaPath,
-    '--out',
-    outputPath,
-  ],
-  {
-    stdout: 'inherit',
-    stderr: 'inherit',
-  },
-);
+const quicktypeArgs = [
+  'bunx',
+  'quicktype',
+  '--src-lang',
+  'schema',
+  '--lang',
+  lang,
+  '--src',
+  schemaPath,
+  '--out',
+  outputPath,
+];
+
+// Add kotlinx-serialization framework for Kotlin
+if (lang === 'kotlin') {
+  quicktypeArgs.push('--framework', 'kotlinx');
+}
+
+const quicktypeProcess = spawn(quicktypeArgs, {
+  stdout: 'inherit',
+  stderr: 'inherit',
+});
 
 const exitCode = await quicktypeProcess.exited;
 
