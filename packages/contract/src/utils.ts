@@ -1,15 +1,51 @@
-import { type TObject, type TProperties, Type } from 'typebox';
+/**
+ * Adds a reqId field to the payload.
+ */
+export type WithReqId<T> = T & {
+  reqId: string;
+};
 
 /**
- * Merges a TypeBox schema with an optional request ID field.
- * Returns a merged object schema with optional req_id and all properties from the payload schema.
- * The generic type T is preserved in the return type for better type inference.
+ * Semantic versioning type.
+ * @example
+ * type Version = '1.0.0';
  */
-export const withReqId = <T extends TObject<TProperties>>(payload: T) => {
-  return Type.Intersect([
-    Type.Object({
-      req_id: Type.Optional(Type.String()),
-    }),
-    payload,
-  ]);
-};
+export type Version = `${number}.${number}.${number}`;
+
+/**
+ * Extracts keys, that are present in the type if it is an object.
+ * @example
+ * type Keys = UnionKeys<{ a: string, b: number }>;
+ * // Keys = 'a' | 'b'
+ */
+export type UnionKeys<T> = T extends T ? keyof T : never;
+
+/**
+ * Checks if a type is never.
+ * @example
+ * type IsNever = IsNever<never>;
+ * // IsNever = true
+ */
+export type IsNever<T> = [T] extends [never] ? true : false;
+
+/**
+ * Conditional type.
+ * @example
+ * type If = If<true, 'true', 'false'>;
+ * // If = 'true'
+ */
+export type If<Cond extends boolean, True, False> = Cond extends true
+  ? True
+  : False;
+
+/**
+ * Logical OR type.
+ * @example
+ * type Or = Or<true, false>;
+ * // Or = true
+ */
+export type Or<A extends boolean, B extends boolean> = A extends true
+  ? true
+  : B extends true
+    ? true
+    : false;

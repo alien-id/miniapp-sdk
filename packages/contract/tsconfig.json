@@ -11,11 +11,9 @@
     // Output configuration
     "moduleResolution": "bundler",
     "verbatimModuleSyntax": true,
-    "noEmit": false,
-    "declaration": true,
-    "emitDeclarationOnly": true,
+    "noEmit": true,
     "outDir": "./dist",
-    "rootDir": ".",
+    "rootDir": "./src",
 
     // Best practices
     "strict": true,
@@ -29,6 +27,6 @@
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
   },
-  "exclude": ["src/contract.ts", "dist"],
-  "include": ["src/index.ts"]
+  "exclude": ["dist", "node_modules", "**/*.test.ts", "**/*.spec.ts"],
+  "include": ["src/**/*.ts"]
 }

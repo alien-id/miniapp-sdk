@@ -1,4 +1,4 @@
-name: Generate Contract Artifacts
+name: Contract Package
 
 on:
   push:
@@ -6,31 +6,37 @@ on:
       - main
       - develop
     paths:
-      - 'packages/contract/src/**'
-      - 'packages/contract/scripts/**'
+      - "packages/contract/src/**"
+      - "packages/contract/scripts/**"
+    tags:
+      - "contract@*"
   pull_request:
     branches:
       - main
       - develop
     paths:
-      - 'packages/contract/src/**'
-      - 'packages/contract/scripts/**'
+      - "packages/contract/src/**"
+      - "packages/contract/scripts/**"
   release:
     types: [published]
   workflow_dispatch:
 
 jobs:
-  generate-artifacts:
-    name: Generate Kotlin and Swift Artifacts
+  publish:
+    name: Build and Publish Contract Package
+    if: startsWith(github.ref, 'refs/tags/contract@')
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      packages: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
           persist-credentials: false
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -40,25 +46,31 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Generate Kotlin types
+      - name: Validate tag matches package.json version
         working-directory: packages/contract
-        run: bun run scripts/generate-types.ts kotlin dist/contract.kt
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          PACKAGE_VERSION=$(bun -e "const pkg = await Bun.file('package.json').json(); console.log(pkg.version);")
+          EXPECTED_TAG="contract@${PACKAGE_VERSION}"
+          if [ "$TAG_NAME" != "$EXPECTED_TAG" ]; then
+            echo "Error: Tag $TAG_NAME does not match package.json version $PACKAGE_VERSION"
+            exit 1
+          fi
+          echo "✓ Tag matches package.json version"
 
-      - name: Generate Swift types
+      - name: Build package
         working-directory: packages/contract
-        run: bun run scripts/generate-types.ts swift dist/contract.swift
+        run: bun run build
 
-      - name: Upload Kotlin artifact
-        uses: actions/upload-artifact@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          name: contract-kotlin
-          path: packages/contract/dist/contract.kt
-          retention-days: 90
+          node-version: "20"
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@alien-id"
 
-      - name: Upload Swift artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: contract-swift
-          path: packages/contract/dist/contract.swift
-          retention-days: 90
-
+      - name: Publish to GitHub Packages
+        working-directory: packages/contract
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

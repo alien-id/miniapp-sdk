@@ -1,14 +1,17 @@
-/**
- * Contract type definitions.
- * Only exports TypeScript types - no runtime dependencies.
- * Types are automatically extracted from contract.ts.
- */
+// Re-export methods
 
+// Re-export events
+export type { Events } from './events/events';
 export type {
   EventName,
   EventPayload,
-  EventPayloads,
+} from './events/types';
+export type { Methods } from './methods/methods';
+export type {
+  CreateMethodPayload,
   MethodName,
+  MethodNameWithVersionedPayload,
   MethodPayload,
-  MethodPayloads,
-} from './types';
+  MethodVersionedPayload,
+} from './methods/types';
+export { getReleaseVersion, releases } from './methods/versions';
