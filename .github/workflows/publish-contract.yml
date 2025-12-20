@@ -62,6 +62,10 @@ jobs:
         working-directory: packages/contract
         run: bun run build
 
+      - name: Generate JSON schemas
+        working-directory: packages/contract
+        run: bun run generate-schemas
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -74,3 +78,12 @@ jobs:
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload JSON schema artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: contract-schemas
+          path: |
+            packages/contract/artifacts/events.schema.json
+            packages/contract/artifacts/methods.schema.json
+          retention-days: 90
