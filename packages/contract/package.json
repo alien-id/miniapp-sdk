@@ -1,6 +1,6 @@
 {
   "name": "@alien-id/contract",
-  "version": "0.0.2-alpha",
+  "version": "0.0.3-alpha",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
