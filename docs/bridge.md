@@ -431,16 +431,64 @@ Our bridge implementation has some differences from the [Open Mini Apps communic
 
 ### Host App Setup
 
-For **mobile/desktop clients**, the host app should initialize the bridge:
+For **mobile/desktop clients**, the host app should initialize the bridge. The following example uses Flutter, but it can be adapted to other frameworks (Kotlin, Swift, etc).
 
-```typescript
-// Initialize the native bridge
-window.__miniAppsBridge__ = {
-  postMessage(message: Message) {
-    // Handle message from miniapp
-    // Platform-specific implementation
+```dart
+import 'dart:convert';
+import 'package:webview_flutter/webview_flutter.dart';
+
+class MiniappBridge {
+  final WebViewController webViewController;
+
+  MiniappBridge({
+    required this.webViewController,
+  }) {
+    _setupMessageListener();
   }
-};
+
+  void _setupMessageListener() {
+    webViewController.addJavaScriptChannel(
+      '__miniAppsBridge__',
+      onMessageReceived: (JavaScriptMessage message) {
+        try {
+          final data = json.decode(message.message) as Map<String, dynamic>;
+          _handleMessage(data);
+        } catch (e) {
+          print('Error parsing message: $e');
+        }
+      },
+    );
+  }
+
+  void _handleMessage(Map<String, dynamic> data) {
+    final type = data['type'] as String?;
+    final name = data['name'] as String?;
+    final payload = data['payload'] as Map<String, dynamic>?;
+
+    if (type == null || name == null || payload == null) {
+      print('Invalid message format: $data');
+      return;
+    }
+
+    if (type == 'method') {
+      // Handle method requests from miniapp
+      _handleMethodRequest(name, payload);
+    }
+  }
+
+  void _handleMethodRequest(String methodName, Map<String, dynamic> payload) {
+    switch (methodName) {
+      case 'auth::init::request':
+        // your method handling logic goes here
+        // e.g. _handleGetAuthData(payload);
+        break;
+
+      default:
+        print('Unknown method: $methodName');
+        // Optionally send error response as an event here
+    }
+  }
+}
 ```
 
 For **web clients** (iframe), the host app should listen for `postMessage`:
