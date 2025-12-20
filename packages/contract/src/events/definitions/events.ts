@@ -1,4 +1,5 @@
 import type { WithReqId } from '../../utils';
+import type { CreateEventPayload } from '../types/payload';
 
 /**
  * Events interface defining all available events and their payloads.
@@ -11,12 +12,14 @@ export interface Events {
    * @since 0.0.1
    * @schema
    */
-  'auth::init::token': WithReqId<{
-    /**
-     * Authentication token.
-     * @since 0.0.1
-     * @schema
-     */
-    token: string;
-  }>;
+  'auth::init::token': CreateEventPayload<
+    WithReqId<{
+      /**
+       * Authentication token.
+       * @since 0.0.1
+       * @schema
+       */
+      token: string;
+    }>
+  >;
 }

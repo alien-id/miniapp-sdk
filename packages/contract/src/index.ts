@@ -3,6 +3,7 @@
 // Re-export events
 export type { Events } from './events/events';
 export type {
+  CreateEventPayload,
   EventName,
   EventPayload,
 } from './events/types';
