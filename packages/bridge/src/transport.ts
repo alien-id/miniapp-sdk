@@ -13,7 +13,7 @@ export interface Message {
 
 // Bridge interface for mobile/desktop clients
 interface MiniAppsBridge {
-  postMessage(data: Message): void;
+  postMessage(data: string): void;
 }
 
 // Extend Window interface to include the bridge
@@ -50,7 +50,7 @@ export function sendMessage(message: Message): void {
     // Priority 1: Use native bridge if available (mobile/desktop)
     const bridge = window.__miniAppsBridge__;
     if (bridge && typeof bridge.postMessage === 'function') {
-      bridge.postMessage(message);
+      bridge.postMessage(JSON.stringify(message));
       return;
     }
 
@@ -60,7 +60,7 @@ export function sendMessage(message: Message): void {
     // For web clients, use postMessage directly (modern browsers support objects)
     // For maximum compatibility with old browsers, we could stringify, but
     // modern browsers (IE11+) support structured cloning
-    target.postMessage(message, '*');
+    target.postMessage(JSON.stringify(message), '*');
   } catch (error) {
     console.error('[Bridge] Failed to send message:', error);
   }

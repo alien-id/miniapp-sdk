@@ -5,7 +5,7 @@ import { sendMessage, setupMessageListener } from '../src/transport';
 // Mock window object
 let mockWindow: {
   parent: Window | typeof mockWindow;
-  __miniAppsBridge__?: { postMessage: (data: Message) => void };
+  __miniAppsBridge__?: { postMessage: (data: string) => void };
   postMessage: (message: unknown, targetOrigin: string) => void;
   addEventListener: (
     type: string,
@@ -19,7 +19,7 @@ let mockWindow: {
 
 let messageHandlers: Array<(event: MessageEvent) => void> = [];
 let postMessageCalls: Array<{ message: unknown; targetOrigin: string }> = [];
-let bridgePostMessageCalls: Array<Message> = [];
+let bridgePostMessageCalls: Array<string> = [];
 
 beforeEach(() => {
   postMessageCalls = [];
@@ -68,7 +68,7 @@ afterEach(() => {
 
 test('sendMessage - should use native bridge if available', () => {
   const bridge = {
-    postMessage: (data: Message) => {
+    postMessage: (data: string) => {
       bridgePostMessageCalls.push(data);
     },
   };
@@ -86,7 +86,7 @@ test('sendMessage - should use native bridge if available', () => {
   sendMessage(message);
 
   expect(bridgePostMessageCalls.length).toBe(1);
-  expect(bridgePostMessageCalls[0]).toEqual(message);
+  expect(bridgePostMessageCalls[0]).toEqual(JSON.stringify(message));
   expect(postMessageCalls.length).toBe(0);
 });
 
@@ -109,7 +109,7 @@ test('sendMessage - should fallback to postMessage if bridge not available', () 
   if (!call) {
     throw new Error('Expected postMessage call to exist');
   }
-  expect(call.message).toEqual(message);
+  expect(call.message).toEqual(JSON.stringify(message));
   expect(call.targetOrigin).toBe('*');
 });
 
@@ -137,7 +137,7 @@ test('sendMessage - should use window.parent.postMessage in iframe', () => {
   if (!call) {
     throw new Error('Expected postMessage call to exist');
   }
-  expect(call.message).toEqual(message);
+  expect(call.message).toEqual(JSON.stringify(message));
 });
 
 test('setupMessageListener - should handle object messages', () => {
