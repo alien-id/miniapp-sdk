@@ -8,7 +8,7 @@ export type EventListener<T extends EventName = EventName> = (
 
 // Create Emittery-compatible event map from Events type
 type EmitteryEventMap = {
-  [K in keyof Events]: Events[K];
+  [K in keyof Events]: Events[K]['payload'];
 };
 
 class BridgeEmitter extends Emittery<EmitteryEventMap> {

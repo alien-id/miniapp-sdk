@@ -13,7 +13,6 @@
     "verbatimModuleSyntax": true,
     "noEmit": true,
     "outDir": "./dist",
-    "rootDir": "./src",
 
     // Best practices
     "strict": true,
