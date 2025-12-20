@@ -1,7 +1,12 @@
 /**
  * Adds a reqId field to the payload.
+ * @schema
  */
 export type WithReqId<T> = T & {
+  /**
+   * Request identifier.
+   * @schema
+   */
   reqId: string;
 };
 
