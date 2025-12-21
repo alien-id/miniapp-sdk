@@ -79,7 +79,7 @@ test('sendMessage - should use native bridge if available', () => {
 
   const message: Message = {
     type: 'method',
-    name: 'auth::init::request',
+    name: 'auth.init:request',
     payload: { appId: 'test', challenge: 'challenge', reqId: '123' },
   };
 
@@ -98,7 +98,7 @@ test('sendMessage - should fallback to postMessage if bridge not available', () 
 
   const message: Message = {
     type: 'event',
-    name: 'auth::init::token',
+    name: 'auth.init:response.token',
     payload: { token: 'test', reqId: '123' },
   };
 
@@ -126,7 +126,7 @@ test('sendMessage - should use window.parent.postMessage in iframe', () => {
 
   const message: Message = {
     type: 'event',
-    name: 'auth::init::token',
+    name: 'auth.init:response.token',
     payload: { token: 'test', reqId: '123' },
   };
 
@@ -151,7 +151,7 @@ test('setupMessageListener - should handle object messages', () => {
 
   const testMessage: Message = {
     type: 'event',
-    name: 'auth::init::token',
+    name: 'auth.init:response.token',
     payload: { token: 'test', reqId: '123' },
   };
 
@@ -179,7 +179,7 @@ test('setupMessageListener - should handle stringified messages', () => {
 
   const testMessage: Message = {
     type: 'method',
-    name: 'auth::init::request',
+    name: 'auth.init:request',
     payload: { appId: 'test', challenge: 'challenge', reqId: '123' },
   };
 

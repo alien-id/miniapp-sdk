@@ -8,11 +8,11 @@ import type { CreateEventPayload } from '../types/payload';
  */
 export interface Events {
   /**
-   * Authentication initialization token event.
+   * Authentication initialization response event with token.
    * @since 0.0.1
    * @schema
    */
-  'auth::init::token': CreateEventPayload<
+  'auth.init:response.token': CreateEventPayload<
     WithReqId<{
       /**
        * Authentication token.

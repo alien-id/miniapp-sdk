@@ -11,7 +11,7 @@ export interface Methods {
    * @since 0.0.1
    * @schema
    */
-  'auth::init::request': CreateMethodPayload<
+  'auth.init:request': CreateMethodPayload<
     WithReqId<{
       /**
        * Application identifier.

@@ -1,6 +1,7 @@
 # Host App Example
 
 This is a host app example that demonstrates how to:
+
 - Load a miniapp in an iframe
 - Listen to **methods** from the miniapp
 - Send **events** back to the miniapp
@@ -13,27 +14,33 @@ This is a host app example that demonstrates how to:
 ## Running the Example
 
 1. **Start the miniapp** (in a separate terminal):
+
    ```bash
    cd ../vite-miniapp
    npm run dev
    ```
+
    The miniapp will run on `http://localhost:5173`
 
 2. **Start the host app**:
+
    ```bash
    npm run dev
    ```
+
    The host app will run on `http://localhost:5174`
 
 3. **Open the host app** in your browser at `http://localhost:5174`
 
 The host app will load the miniapp in an iframe and handle bridge communication:
-- When the miniapp sends a method (e.g., `auth::init::request`), the host app receives it
-- The host app processes the method and responds with an event (e.g., `auth::init::token`)
+
+- When the miniapp sends a method (e.g., `auth.init:request`), the host app receives it
+- The host app processes the method and responds with an event (e.g., `auth.init:response.token`)
 
 ## How It Works
 
 The host app:
+
 1. Loads the miniapp in an `<iframe>` element
 2. Listens for `postMessage` events from the iframe
 3. When it receives a method, it handles it and sends back an event using `postMessage`
@@ -41,7 +48,7 @@ The host app:
 
 ---
 
-# React + TypeScript + Vite
+## React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

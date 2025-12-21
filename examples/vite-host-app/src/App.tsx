@@ -45,16 +45,16 @@ function App() {
     ])
 
     // Handle specific methods
-    if (methodName === 'auth::init::request') {
-      const methodPayload = payload as MethodPayload<'auth::init::request'>
+    if (methodName === 'auth.init:request') {
+      const methodPayload = payload as MethodPayload<'auth.init:request'>
       const { reqId, appId, challenge } = methodPayload
 
-      console.log('Handling auth::init::request:', { appId, challenge, reqId })
+      console.log('Handling auth.init:request:', { appId, challenge, reqId })
 
       // Simulate some processing delay
       setTimeout(() => {
         // Send response event back to miniapp
-        sendEventToMiniapp('auth::init::token', {
+        sendEventToMiniapp('auth.init:response.token', {
           token: `token-for-${appId}-${Date.now()}`,
           reqId,
         })
@@ -110,7 +110,7 @@ function App() {
 
   const handleSendTestEvent = () => {
     const reqId = `test-${Date.now()}`
-    sendEventToMiniapp('auth::init::token', {
+    sendEventToMiniapp('auth.init:response.token', {
       token: 'test-token-from-host',
       reqId,
     })

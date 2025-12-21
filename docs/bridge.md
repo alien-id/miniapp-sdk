@@ -10,6 +10,7 @@ The bridge automatically detects the communication channel and uses the appropri
 2. **PostMessage** (Web/Iframe): Falls back to `window.postMessage()` for web-based clients
 
 This makes it compatible with:
+
 - **Web clients**: Iframe-based miniapps using `window.postMessage`
 - **Mobile clients**: WebView-based miniapps (iOS WKWebView, Android WebView) using native bridge
 - **Desktop clients**: Electron, Tauri, or similar webview-based applications using native bridge
@@ -24,7 +25,7 @@ sequenceDiagram
     participant HostApp
 
     Note over Miniapp,HostApp: Event Flow (One-way)
-    Miniapp->>Bridge: emit('event::name', payload)
+    Miniapp->>Bridge: emit('domain:action', payload)
     Bridge->>Transport: sendMessage({type: 'event', name, payload})
     alt Native Bridge Available
         Transport->>HostApp: window.__miniAppsBridge__.postMessage(message)
@@ -33,7 +34,7 @@ sequenceDiagram
     end
     
     Note over Miniapp,HostApp: Method Request Flow (Request-Response)
-    Miniapp->>Bridge: request('method::name', params, 'response::event')
+    Miniapp->>Bridge: request('domain:action', params, 'domain:action')
     Bridge->>Bridge: Generate reqId
     Bridge->>Transport: sendMessage({type: 'method', name, payload: {...params, reqId}})
     alt Native Bridge Available
@@ -43,7 +44,7 @@ sequenceDiagram
     end
     
     Note over HostApp,Miniapp: Response Flow
-    HostApp->>Transport: window.postMessage({type: 'event', name: 'response::event', payload: {...response, reqId}})
+    HostApp->>Transport: window.postMessage({type: 'event', name: 'domain:action', payload: {...response, reqId}})
     Transport->>Bridge: setupMessageListener receives message
     Bridge->>Bridge: Emittery emits event locally
     Bridge->>Miniapp: Promise resolves with response payload
@@ -56,28 +57,86 @@ sequenceDiagram
 Events are one-way messages that can be sent from either the miniapp or the host app. They are used for notifications, state updates, or broadcasting information.
 
 **Event Structure:**
+
 ```typescript
 {
   type: 'event',
-  name: EventName,        // e.g., 'auth::init::token'
+  name: EventName,        // e.g., 'auth.init:response.token'
   payload: EventPayload   // Type-safe payload from contract
 }
 ```
+
+### Event Naming Convention
+
+Event names follow a strict naming convention: `<domain>:<action>`
+
+**Format:**
+
+- **Domain** (left of `:`) describes the subsystem or resource (nouns)
+  - Examples: `auth`, `auth.init`, `storage.kv`, `ui.modal`
+- **Action** (right of `:`) describes what happened or what is requested (verbs), optionally followed by variants/outcomes
+  - Examples: `init`, `request`, `open`, `set`, `response.ok`, `response.token`, `handshake.error`
+
+**Rules:**
+
+- Use lowercase letters, digits, dots, and colons only
+- No spaces, underscores, slashes, or double colons
+- Two-word concepts use dot hierarchy: `auth.init:response.token` (not `authInit:responseToken`)
+- Outcomes are encoded as dot variants: `auth:response.ok`, `auth:response.denied`
+- Versioning: prefer payload `schemaVersion` field; if breaking change needed, append version: `auth:request.v2`
+
+**Examples:**
+
+- `bridge:ready`
+- `bridge:handshake.start`
+- `app:init`
+- `auth:request`
+- `auth.init:response.token`
+- `storage.kv:get`
+- `ui.modal:open`
 
 ### Methods
 
 Methods are request-response patterns initiated by the miniapp. They allow the miniapp to request data or trigger actions in the host app and wait for a response.
 
 **Method Structure:**
+
 ```typescript
 {
   type: 'method',
-  name: MethodName,       // e.g., 'auth::init::request'
+  name: MethodName,       // e.g., 'auth.init:request'
   payload: MethodPayload & { reqId: string }  // Includes reqId for matching
 }
 ```
 
+### Method Naming Convention
+
+Methods follow the same naming convention as events: `<domain>:<action>`
+
+**Format:**
+
+- **Domain** (left of `:`) describes the subsystem or resource (nouns)
+  - Examples: `auth`, `auth.init`, `storage.kv`, `ui.modal`
+- **Action** (right of `:`) describes what is being requested (verbs)
+  - Examples: `request`, `get`, `set`, `create`, `delete`
+
+**Rules:**
+
+- Same rules as events: lowercase letters, digits, dots, and colons only
+- No spaces, underscores, slashes, or double colons
+- Two-word concepts use dot hierarchy: `auth.init:request` (not `authInit:request`)
+- Versioning: prefer payload `schemaVersion` field; if breaking change needed, append version: `auth:request.v2`
+
+**Examples:**
+
+- `auth.init:request`
+- `storage.kv:get`
+- `storage.kv:set`
+- `ui.modal:open`
+- `payments.invoice:create`
+
 **Response Structure:**
+
 ```typescript
 {
   type: 'event',
@@ -88,7 +147,7 @@ Methods are request-response patterns initiated by the miniapp. They allow the m
 
 ## API Reference
 
-### Events
+### Event API
 
 #### `on<T extends EventName>(name: T, listener: EventListener<T>): () => void`
 
@@ -97,7 +156,7 @@ Subscribe to an event from the host app.
 ```typescript
 import { on } from '@alien-id/bridge';
 
-const unsubscribe = on('auth::init::token', (payload) => {
+const unsubscribe = on('auth.init:response.token', (payload) => {
   console.log('Received token:', payload.token);
   console.log('Request ID:', payload.reqId);
 });
@@ -117,9 +176,9 @@ const listener = (payload) => {
   // Handle event
 };
 
-on('auth::init::token', listener);
+on('auth.init:response.token', listener);
 // Later...
-off('auth::init::token', listener);
+off('auth.init:response.token', listener);
 ```
 
 #### `emit<T extends EventName>(name: T, payload: EventPayload<T>): Promise<void>`
@@ -129,13 +188,13 @@ Emit an event to the host app.
 ```typescript
 import { emit } from '@alien-id/bridge';
 
-await emit('auth::init::token', {
+await emit('auth.init:response.token', {
   token: 'my-token',
   reqId: 'optional-request-id',
 });
 ```
 
-### Methods
+### Method API
 
 #### `request<M extends MethodName, E extends EventName>(method: M, params: MethodPayload<M>, responseEvent: E, options?: RequestOptions): Promise<EventPayload<E>>`
 
@@ -146,21 +205,21 @@ import { request } from '@alien-id/bridge';
 
 // Basic usage
 const response = await request(
-  'auth::init::request',
+  'auth.init:request',
   {
     appId: 'my-app-id',
     challenge: 'random-challenge',
   },
-  'auth::init::token', // Response event name
+  'auth.init:response.token', // Response event name
 );
 
 console.log('Received token:', response.token);
 
 // With custom options
 const response = await request(
-  'auth::init::request',
+  'auth.init:request',
   { appId: 'my-app-id', challenge: 'challenge' },
-  'auth::init::token',
+  'auth.init:response.token',
   {
     reqId: 'custom-request-id', // Optional: custom request ID
     timeout: 5000,               // Optional: timeout in ms (default: 30000)
@@ -169,6 +228,7 @@ const response = await request(
 ```
 
 **RequestOptions:**
+
 - `reqId?: string` - Custom request ID (auto-generated if not provided)
 - `timeout?: number` - Request timeout in milliseconds (default: 30000)
 
@@ -189,7 +249,7 @@ interface Message {
 ```typescript
 {
   type: 'event',
-  name: 'auth::init::token',
+  name: 'auth.init:response.token',
   payload: {
     token: 'abc123',
     reqId: 'req-456'  // Optional, included in response events
@@ -202,7 +262,7 @@ interface Message {
 ```typescript
 {
   type: 'method',
-  name: 'auth::init::request',
+  name: 'auth.init:request',
   payload: {
     appId: 'my-app',
     challenge: 'random-string',
@@ -229,10 +289,12 @@ The bridge automatically selects the appropriate transport method based on the e
 ### Message Reception
 
 All platforms use `window.addEventListener('message', ...)` to receive messages. The bridge handles:
+
 - **Object messages**: Directly processed
 - **Stringified messages**: Automatically parsed from JSON (for compatibility with old browsers)
 
 The transport layer automatically:
+
 - Detects if native bridge is available
 - Detects if running in an iframe/webview
 - Handles both object and stringified messages
@@ -258,7 +320,7 @@ This ensures compile-time type checking and IntelliSense support.
 import { on } from '@alien-id/bridge';
 
 // Listen for auth token updates
-on('auth::init::token', (payload) => {
+on('auth.init:response.token', (payload) => {
   // Update UI or state
   updateAuthToken(payload.token);
 });
@@ -270,7 +332,7 @@ on('auth::init::token', (payload) => {
 import { emit } from '@alien-id/bridge';
 
 // Notify host app of user action
-await emit('auth::init::token', {
+await emit('auth.init:response.token', {
   token: 'user-action-token',
   reqId: 'action-123',
 });
@@ -284,12 +346,12 @@ import { request } from '@alien-id/bridge';
 async function initializeApp() {
   try {
     const authData = await request(
-      'auth::init::request',
+      'auth.init:request',
       {
         appId: 'my-app-id',
         challenge: generateChallenge(),
       },
-      'auth::init::token',
+      'auth.init:response.token',
     );
     
     // Use the response
@@ -306,68 +368,68 @@ The host app needs to:
 
 1. **Listen for messages from the miniapp:**
 
-```typescript
-// Web (iframe)
-iframe.contentWindow.addEventListener('message', (event) => {
-  const message = event.data;
-  
-  if (message.type === 'method') {
-    handleMethod(message.name, message.payload);
-  } else if (message.type === 'event') {
-    handleEvent(message.name, message.payload);
-  }
-});
+    ```typescript
+    // Web (iframe)
+    iframe.contentWindow.addEventListener('message', (event) => {
+      const message = event.data;
+      
+      if (message.type === 'method') {
+        handleMethod(message.name, message.payload);
+      } else if (message.type === 'event') {
+        handleEvent(message.name, message.payload);
+      }
+    });
 
-// Mobile (WebView)
-// Platform-specific implementation
-```
+    // Mobile (WebView)
+    // Platform-specific implementation
+    ```
 
 2. **Send events to the miniapp:**
 
-```typescript
-// Web (iframe)
-iframe.contentWindow.postMessage({
-  type: 'event',
-  name: 'auth::init::token',
-  payload: {
-    token: 'new-token',
-    reqId: requestId, // Include if responding to a method
-  },
-}, '*');
+    ```typescript
+    // Web (iframe)
+    iframe.contentWindow.postMessage({
+      type: 'event',
+      name: 'auth.init:response.token',
+      payload: {
+        token: 'new-token',
+        reqId: requestId, // Include if responding to a method
+      },
+    }, '*');
 
-// Mobile (WebView)
-// Platform-specific implementation
-```
+    // Mobile (WebView)
+    // Platform-specific implementation
+    ```
 
 3. **Handle method requests:**
 
-```typescript
-function handleMethod(methodName: string, payload: any) {
-  const { reqId, ...params } = payload;
-  
-  switch (methodName) {
-    case 'auth::init::request':
-      handleAuthRequest(params, reqId);
-      break;
-    // ... other methods
-  }
-}
+    ```typescript
+    function handleMethod(methodName: string, payload: any) {
+      const { reqId, ...params } = payload;
+      
+      switch (methodName) {
+        case 'auth.init:request':
+          handleAuthRequest(params, reqId);
+          break;
+        // ... other methods
+      }
+    }
 
-async function handleAuthRequest(params: any, reqId: string) {
-  // Process request
-  const token = await generateToken(params);
-  
-  // Send response
-  sendToMiniapp({
-    type: 'event',
-    name: 'auth::init::token',
-    payload: {
-      token,
-      reqId, // Must match the request
-    },
-  });
-}
-```
+    async function handleAuthRequest(params: any, reqId: string) {
+      // Process request
+      const token = await generateToken(params);
+      
+      // Send response
+      sendToMiniapp({
+        type: 'event',
+        name: 'auth.init:response.token',
+        payload: {
+          token,
+          reqId, // Must match the request
+        },
+      });
+    }
+    ```
 
 ## Compatibility with Open Mini Apps Standard
 
@@ -384,40 +446,41 @@ Our bridge implementation has some differences from the [Open Mini Apps communic
 ### Differences ⚠️
 
 1. **Message Structure**:
-   - **Open Mini Apps**: `{ name, payload, requestId? }` (requestId at top level)
-   - **Our Bridge**: `{ type: 'event' | 'method', name, payload }` (reqId inside payload)
-   - We use a `type` field to distinguish events from methods explicitly
-   - Request ID is nested in the payload rather than at the top level
+    - **Open Mini Apps**: `{ name, payload, requestId? }` (requestId at top level)
+    - **Our Bridge**: `{ type: 'event' | 'method', name, payload }` (reqId inside payload)
+    - We use a `type` field to distinguish events from methods explicitly
+    - Request ID is nested in the payload rather than at the top level
 
 2. **Request ID Naming**:
-   - **Open Mini Apps**: `requestId` (camelCase, at top level)
-   - **Our Bridge**: `reqId` (camelCase, inside payload)
-   - Both use camelCase, but placement differs
+    - **Open Mini Apps**: `requestId` (camelCase, at top level)
+    - **Our Bridge**: `reqId` (camelCase, inside payload)
+    - Both use camelCase, but placement differs
 
 3. **JSON Stringification**:
-   - **Open Mini Apps**: Requires `JSON.stringify()` for web clients (for older browser compatibility)
-   - **Our Bridge**: Sends objects directly (modern browsers support structured cloning)
-   - Our approach is simpler but may not work in very old browsers
+    - **Open Mini Apps**: Requires `JSON.stringify()` for web clients (for older browser compatibility)
+    - **Our Bridge**: Sends objects directly (modern browsers support structured cloning)
+    - Our approach is simpler but may not work in very old browsers
 
 4. **Mobile Bridge Interface**:
-   - **Open Mini Apps**: Requires `window.__miniAppsBridge__.postMessage()` for mobile/desktop
-   - **Our Bridge**: ✅ **Now supports both!** Uses `window.__miniAppsBridge__.postMessage()` if available, falls back to `window.postMessage()`
-   - Our approach automatically detects and uses the appropriate method
+    - **Open Mini Apps**: Requires `window.__miniAppsBridge__.postMessage()` for mobile/desktop
+    - **Our Bridge**: ✅ **Now supports both!** Uses `window.__miniAppsBridge__.postMessage()` if available, falls back to `window.postMessage()`
+    - Our approach automatically detects and uses the appropriate method
 
 5. **Event Handling**:
-   - **Open Mini Apps**: Manual event listener setup with `window.addEventListener('message')`
-   - **Our Bridge**: Uses Emittery for better event management, async support, and automatic cleanup
+    - **Open Mini Apps**: Manual event listener setup with `window.addEventListener('message')`
+    - **Our Bridge**: Uses Emittery for better event management, async support, and automatic cleanup
 
 6. **Method-Event Distinction**:
-   - **Open Mini Apps**: Methods identified by presence of `requestId` (required for methods)
-   - **Our Bridge**: Methods explicitly marked with `type: 'method'`
-   - Our approach is more explicit and type-safe
+    - **Open Mini Apps**: Methods identified by presence of `requestId` (required for methods)
+    - **Our Bridge**: Methods explicitly marked with `type: 'method'`
+    - Our approach is more explicit and type-safe
 
 ### Compatibility Assessment
 
 **High Compatibility**: Our bridge is now highly compatible with Open Mini Apps-compliant host apps:
 
 ✅ **Fully Compatible aspects:**
+
 - ✅ Supports `window.__miniAppsBridge__.postMessage()` for mobile/desktop
 - ✅ Falls back to `window.postMessage()` for web clients
 - ✅ Both use `window.addEventListener('message')` for receiving
@@ -425,6 +488,7 @@ Our bridge implementation has some differences from the [Open Mini Apps communic
 - ✅ Both include request IDs for matching
 
 ⚠️ **Minor differences:**
+
 - Host app must handle our message format (`type` field)
 - Host app must extract `reqId` from payload instead of top level
 - We send objects directly (not stringified) - modern browsers support this
@@ -478,7 +542,7 @@ class MiniappBridge {
 
   void _handleMethodRequest(String methodName, Map<String, dynamic> payload) {
     switch (methodName) {
-      case 'auth::init::request':
+      case 'auth.init:request':
         // your method handling logic goes here
         // e.g. _handleGetAuthData(payload);
         break;
@@ -515,15 +579,17 @@ Our bridge is now compatible with Open Mini Apps standard. The main differences 
 ## Best Practices
 
 1. **Always specify the response event** when using `request()`:
+
    ```typescript
    // ✅ Good
-   await request('auth::init::request', params, 'auth::init::token');
+   await request('auth.init:request', params, 'auth.init:response.token');
    
    // ❌ Bad - no way to match response
-   await request('auth::init::request', params);
+   await request('auth.init:request', params);
    ```
 
 2. **Handle timeouts gracefully**:
+
    ```typescript
    try {
      const response = await request(method, params, event, { timeout: 5000 });
@@ -535,16 +601,18 @@ Our bridge is now compatible with Open Mini Apps standard. The main differences 
    ```
 
 3. **Clean up event listeners**:
+
    ```typescript
-   const unsubscribe = on('event::name', handler);
+   const unsubscribe = on('domain:action', handler);
    // ... later
    unsubscribe(); // Important for memory management
    ```
 
 4. **Use type-safe event names**:
+
    ```typescript
    // ✅ Good - type-checked
-   on('auth::init::token', handler);
+   on('auth.init:response.token', handler);
    
    // ❌ Bad - no type safety
    on('custom-event' as any, handler);
@@ -581,6 +649,7 @@ try {
 ⚠️ **Important**: The bridge uses `'*'` as the target origin for `postMessage`. In production:
 
 1. **Validate message origin** in the host app:
+
    ```typescript
    window.addEventListener('message', (event) => {
      if (event.origin !== 'https://trusted-domain.com') {

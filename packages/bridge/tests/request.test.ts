@@ -50,14 +50,14 @@ afterEach(() => {
 test('request - should wait for response with matching reqId', async () => {
   const customReqId = 'test-req-123';
   const promise = request(
-    'auth::init::request',
+    'auth.init:request',
     { appId: 'test-app', challenge: 'test-challenge' },
-    'auth::init::token',
+    'auth.init:response.token',
     { reqId: customReqId },
   );
 
   setTimeout(() => {
-    emit('auth::init::token', { token: 'test-token', reqId: customReqId });
+    emit('auth.init:response.token', { token: 'test-token', reqId: customReqId });
   }, 10);
 
   const result = await promise;
@@ -68,14 +68,14 @@ test('request - should wait for response with matching reqId', async () => {
 test('request - should support custom reqId', async () => {
   const customReqId = 'custom-123';
   const promise = request(
-    'auth::init::request',
+    'auth.init:request',
     { appId: 'test-app', challenge: 'test-challenge' },
-    'auth::init::token',
+    'auth.init:response.token',
     { reqId: customReqId },
   );
 
   setTimeout(() => {
-    emit('auth::init::token', { token: 'test-token', reqId: customReqId });
+    emit('auth.init:response.token', { token: 'test-token', reqId: customReqId });
   }, 10);
 
   const result = await promise;
@@ -84,9 +84,9 @@ test('request - should support custom reqId', async () => {
 
 test('request - should timeout if no response', async () => {
   const promise = request(
-    'auth::init::request',
+    'auth.init:request',
     { appId: 'test-app', challenge: 'test-challenge' },
-    'auth::init::token',
+    'auth.init:response.token',
     { timeout: 50 },
   );
 
@@ -95,18 +95,18 @@ test('request - should timeout if no response', async () => {
 
 test('request - should ignore responses with different reqId', async () => {
   const promise = request(
-    'auth::init::request',
+    'auth.init:request',
     { appId: 'test-app', challenge: 'test-challenge' },
-    'auth::init::token',
+    'auth.init:response.token',
     { reqId: 'req-1' },
   );
 
   setTimeout(() => {
-    emit('auth::init::token', { token: 'test-token', reqId: 'req-2' });
+    emit('auth.init:response.token', { token: 'test-token', reqId: 'req-2' });
   }, 10);
 
   setTimeout(() => {
-    emit('auth::init::token', { token: 'test-token', reqId: 'req-1' });
+    emit('auth.init:response.token', { token: 'test-token', reqId: 'req-1' });
   }, 50);
 
   const result = await promise;

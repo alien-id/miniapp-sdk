@@ -49,11 +49,11 @@ afterEach(() => {
 
 test('on - should register event listener', async () => {
   let received = false;
-  const removeListener = on('auth::init::token', () => {
+  const removeListener = on('auth.init:response.token', () => {
     received = true;
   });
 
-  await emit('auth::init::token', { token: 'test-token', reqId: '123' });
+  await emit('auth.init:response.token', { token: 'test-token', reqId: '123' });
   expect(received).toBe(true);
 
   removeListener();
@@ -61,15 +61,15 @@ test('on - should register event listener', async () => {
 
 test('on - should remove listener when cleanup function is called', async () => {
   let callCount = 0;
-  const removeListener = on('auth::init::token', () => {
+  const removeListener = on('auth.init:response.token', () => {
     callCount++;
   });
 
-  await emit('auth::init::token', { token: 'test-token', reqId: '123' });
+  await emit('auth.init:response.token', { token: 'test-token', reqId: '123' });
   expect(callCount).toBe(1);
 
   removeListener();
-  await emit('auth::init::token', { token: 'test-token', reqId: '456' });
+  await emit('auth.init:response.token', { token: 'test-token', reqId: '456' });
   expect(callCount).toBe(1);
 });
 
@@ -84,43 +84,43 @@ test('off - should remove specific listener', async () => {
     callCount2++;
   };
 
-  on('auth::init::token', listener1);
-  on('auth::init::token', listener2);
+  on('auth.init:response.token', listener1);
+  on('auth.init:response.token', listener2);
 
-  await emit('auth::init::token', { token: 'test-token', reqId: '123' });
+  await emit('auth.init:response.token', { token: 'test-token', reqId: '123' });
   expect(callCount1).toBe(1);
   expect(callCount2).toBe(1);
 
-  off('auth::init::token', listener1);
-  await emit('auth::init::token', { token: 'test-token', reqId: '456' });
+  off('auth.init:response.token', listener1);
+  await emit('auth.init:response.token', { token: 'test-token', reqId: '456' });
   expect(callCount1).toBe(1);
   expect(callCount2).toBe(2);
 });
 
 test('emit - should emit to all registered listeners', async () => {
   let callCount = 0;
-  on('auth::init::token', () => {
+  on('auth.init:response.token', () => {
     callCount++;
   });
-  on('auth::init::token', () => {
+  on('auth.init:response.token', () => {
     callCount++;
   });
 
-  await emit('auth::init::token', { token: 'test-token', reqId: '123' });
+  await emit('auth.init:response.token', { token: 'test-token', reqId: '123' });
   expect(callCount).toBe(2);
 });
 
 test('emit - should pass correct payload', async () => {
-  let receivedPayload: EventPayload<'auth::init::token'> | undefined;
-  on('auth::init::token', (payload) => {
+  let receivedPayload: EventPayload<'auth.init:response.token'> | undefined;
+  on('auth.init:response.token', (payload) => {
     receivedPayload = payload;
   });
 
-  const testPayload: EventPayload<'auth::init::token'> = {
+  const testPayload: EventPayload<'auth.init:response.token'> = {
     token: 'test-token',
     reqId: '123',
   };
-  await emit('auth::init::token', testPayload);
+  await emit('auth.init:response.token', testPayload);
   expect(receivedPayload).not.toBeNull();
   expect(receivedPayload).toEqual(testPayload);
 });

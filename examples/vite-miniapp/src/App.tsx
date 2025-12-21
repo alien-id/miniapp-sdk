@@ -20,11 +20,11 @@ function App() {
 
   useEffect(() => {
     // Subscribe to events from the host app
-    const unsubscribe = on('auth::init::token', (payload) => {
+    const unsubscribe = on('auth.init:response.token', (payload) => {
       console.log('Received event from host:', payload)
       setReceivedEvents((prev) => [
         {
-          name: 'auth::init::token',
+          name: 'auth.init:response.token',
           payload,
           timestamp: new Date(),
         },
@@ -43,12 +43,12 @@ function App() {
     try {
       // Send method request to host app and wait for response event
       const response = await request(
-        'auth::init::request',
+        'auth.init:request',
         {
           appId,
           challenge,
         },
-        'auth::init::token', // Response event name
+        'auth.init:response.token', // Response event name
         { timeout: 5000 }
       )
       console.log('Received response from host:', response)
@@ -57,7 +57,7 @@ function App() {
       // Add error to events list for visibility
       setReceivedEvents((prev) => [
         {
-          name: 'auth::init::token' as EventName,
+          name: 'auth.init:response.token' as EventName,
           payload: { 
             reqId: 'error',
             error: error instanceof Error ? error.message : String(error)
@@ -151,7 +151,7 @@ function App() {
             }}
           />
           <button onClick={handleSendMethod} disabled={isLoading}>
-            {isLoading ? 'Sending...' : 'Send Method (auth::init::request)'}
+            {isLoading ? 'Sending...' : 'Send Method (auth.init:request)'}
           </button>
         </div>
 

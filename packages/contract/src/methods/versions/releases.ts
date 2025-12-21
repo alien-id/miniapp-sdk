@@ -15,5 +15,5 @@ export const releases: Record<
       }
   )[]
 > = {
-  '0.0.1': ['auth::init::request'],
+  '0.0.1': ['auth.init:request'],
 };
