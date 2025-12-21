@@ -11,7 +11,7 @@ The contract organizes communication into two main types:
 
 ### Methods
 
-Methods are a special subset of events that enable two-way communication. When the miniapp sends a method to the native app, it includes a `req_id` to track the request and match it with the corresponding response. This allows the miniapp to make requests and wait for specific answers, like asking for user permissions or requesting device information.
+Methods are a special subset of events that enable two-way communication. When the miniapp sends a method to the native app, it includes a `reqId` to track the request and match it with the corresponding response. This allows the miniapp to make requests and wait for specific answers, like asking for user permissions or requesting device information.
 
 ### Events
 

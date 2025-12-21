@@ -30,7 +30,7 @@ unsubscribe();
 ```typescript
 import { emit } from '@alien-id/bridge';
 
-emit('auth_data', { token: 'test-token', req_id: '123' });
+emit('auth_data', { token: 'test-token', reqId: '123' });
 ```
 
 ### Send Request and Wait for Response
@@ -38,10 +38,10 @@ emit('auth_data', { token: 'test-token', req_id: '123' });
 ```typescript
 import { request } from '@alien-id/bridge';
 
-// Auto-generates req_id
+// Auto-generates reqId
 const response = await request('get_auth_data', { token: 'test-token' });
 
-// Or specify req_id
+// Or specify reqId
 const response = await request(
   'get_auth_data',
   { token: 'test-token' },
@@ -80,7 +80,7 @@ The host app needs to:
    webview.postMessage({
      type: 'event',
      name: 'auth_data',
-     payload: { token: '...', req_id: '...' }
+     payload: { token: '...', reqId: '...' }
    });
    ```
 
@@ -88,12 +88,12 @@ The host app needs to:
    ```javascript
    function handleMethod(name, payload) {
      if (name === 'get_auth_data') {
-       const { req_id } = payload;
+       const { reqId } = payload;
        // Process request...
        webview.postMessage({
          type: 'event',
          name: 'auth_data',
-         payload: { token: 'result', req_id }
+         payload: { token: 'result', reqId }
        });
      }
    }
