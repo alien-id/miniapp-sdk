@@ -57,7 +57,10 @@ test('request - should wait for response with matching reqId', async () => {
   );
 
   setTimeout(() => {
-    emit('auth.init:response.token', { token: 'test-token', reqId: customReqId });
+    emit('auth.init:response.token', {
+      token: 'test-token',
+      reqId: customReqId,
+    });
   }, 10);
 
   const result = await promise;
@@ -75,7 +78,10 @@ test('request - should support custom reqId', async () => {
   );
 
   setTimeout(() => {
-    emit('auth.init:response.token', { token: 'test-token', reqId: customReqId });
+    emit('auth.init:response.token', {
+      token: 'test-token',
+      reqId: customReqId,
+    });
   }, 10);
 
   const result = await promise;

@@ -20,7 +20,7 @@ function generateReqId(): string {
 
 export async function request<M extends MethodName, E extends EventName>(
   method: M,
-  params: MethodPayload<M>,
+  params: Omit<MethodPayload<M>, 'reqId'>,
   responseEvent: E,
   options: RequestOptions = {},
 ): Promise<EventPayload<E>> {
