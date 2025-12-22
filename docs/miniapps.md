@@ -28,7 +28,7 @@ Shema for WebView to Alien App communication is defined below.
 
 ```mermaid
 flowchart TB
- subgraph subGraph0["Native env (iOS/Android)"]
+ subgraph subGraph0["Alien App (iOS/Android)"]
         NB["Callback Queue"]
         NM["Method Handler"]
   end
@@ -43,7 +43,7 @@ flowchart TB
         UIR["JS Callback / Effect"]
   end
     NM -- Return Payload --> NB
-    WB -- "window.\_\_ALIEN_BRIDGE\_\_.postMessage(event, callback)" --> NM
+    WB -- "window.\_\_miniAppsBridge\_\_.postMessage(event, callback)" --> NM
     NB -- Trigger callback event --> CB
     UIA -->  SDK
     SDK -- JSON method, callback name, req_id --> WB
