@@ -90,9 +90,8 @@ test('sendMessage - should use native bridge if available', () => {
   expect(postMessageCalls.length).toBe(0);
 });
 
-test('sendMessage - should fallback to postMessage if bridge not available', () => {
+test('sendMessage - should log warning and not throw if bridge not available', () => {
   delete mockWindow.__miniAppsBridge__;
-  mockWindow.parent = mockWindow; // Not in iframe
   // Update the global window reference
   (globalThis as { window: typeof mockWindow }).window = mockWindow;
 
@@ -102,27 +101,36 @@ test('sendMessage - should fallback to postMessage if bridge not available', () 
     payload: { token: 'test', reqId: '123' },
   };
 
-  sendMessage(message);
+  // Mock console.warn to verify warning is logged
+  const originalWarn = console.warn;
+  const warnCalls: unknown[] = [];
+  console.warn = (...args: unknown[]) => {
+    warnCalls.push(...args);
+  };
 
-  expect(postMessageCalls.length).toBe(1);
-  const call = postMessageCalls[0];
-  if (!call) {
-    throw new Error('Expected postMessage call to exist');
-  }
-  expect(call.message).toEqual(JSON.stringify(message));
-  expect(call.targetOrigin).toBe('*');
+  // Should not throw, just log warning
+  expect(() => sendMessage(message)).not.toThrow();
+
+  // Verify warning was logged
+  expect(warnCalls.length).toBeGreaterThan(0);
+  expect(
+    warnCalls.some(
+      (arg) =>
+        typeof arg === 'string' && arg.includes('bridge is not available'),
+    ),
+  ).toBe(true);
+
+  // Verify message was not sent
+  expect(postMessageCalls.length).toBe(0);
+  expect(bridgePostMessageCalls.length).toBe(0);
+
+  // Restore console.warn
+  console.warn = originalWarn;
 });
 
-test('sendMessage - should use window.parent.postMessage in iframe', () => {
-  delete mockWindow.__miniAppsBridge__;
-  const parentWindow = {
-    postMessage: (message: unknown, targetOrigin: string) => {
-      postMessageCalls.push({ message, targetOrigin });
-    },
-  } as Window;
-  mockWindow.parent = parentWindow;
-  // Update the global window reference
-  (globalThis as { window: typeof mockWindow }).window = mockWindow;
+test('sendMessage - should log warning if window is undefined (SSR)', () => {
+  // Delete window to simulate SSR environment
+  delete (globalThis as { window?: unknown }).window;
 
   const message: Message = {
     type: 'event',
@@ -130,14 +138,29 @@ test('sendMessage - should use window.parent.postMessage in iframe', () => {
     payload: { token: 'test', reqId: '123' },
   };
 
-  sendMessage(message);
+  // Mock console.warn to verify warning is logged
+  const originalWarn = console.warn;
+  const warnCalls: unknown[] = [];
+  console.warn = (...args: unknown[]) => {
+    warnCalls.push(...args);
+  };
 
-  expect(postMessageCalls.length).toBe(1);
-  const call = postMessageCalls[0];
-  if (!call) {
-    throw new Error('Expected postMessage call to exist');
-  }
-  expect(call.message).toEqual(JSON.stringify(message));
+  // Should not throw, just log warning
+  expect(() => sendMessage(message)).not.toThrow();
+
+  // Verify warning was logged
+  expect(warnCalls.length).toBeGreaterThan(0);
+  expect(
+    warnCalls.some(
+      (arg) =>
+        typeof arg === 'string' && arg.includes('window is not available'),
+    ),
+  ).toBe(true);
+
+  // Restore console.warn and window
+  console.warn = originalWarn;
+  // Restore window for other tests
+  (globalThis as { window: typeof mockWindow }).window = mockWindow;
 });
 
 test('setupMessageListener - should handle object messages', () => {

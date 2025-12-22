@@ -2,10 +2,8 @@ import { afterEach, beforeEach, expect, test } from 'bun:test';
 import { emit } from '../src/events';
 import { request } from '../src/request';
 
-// Mock window for tests
+// Mock window for tests - only mock what's actually needed
 let mockWindow: {
-  parent: typeof mockWindow;
-  postMessage: (message: unknown, targetOrigin: string) => void;
   addEventListener: (
     type: string,
     handler: (event: MessageEvent) => void,
@@ -14,26 +12,27 @@ let mockWindow: {
     type: string,
     handler: (event: MessageEvent) => void,
   ) => void;
+  __miniAppsBridge__?: {
+    postMessage: (data: string) => void;
+  };
 };
 
 beforeEach(() => {
-  const postMessageFn = () => {
+  const bridgePostMessageFn = () => {
     // No-op for these tests
   };
 
   mockWindow = {
-    parent: {} as typeof mockWindow,
-    postMessage: postMessageFn,
     addEventListener: () => {
       // No-op for these tests
     },
     removeEventListener: () => {
       // No-op for these tests
     },
+    __miniAppsBridge__: {
+      postMessage: bridgePostMessageFn,
+    },
   };
-
-  // Set parent to self to indicate not in iframe
-  mockWindow.parent = mockWindow;
 
   // Set up global window mock
   Object.defineProperty(globalThis, 'window', {

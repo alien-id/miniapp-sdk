@@ -7,6 +7,8 @@ import type {
 import { off, on } from './events';
 import { sendMessage } from './transport';
 
+const DEFAULT_TIMEOUT = 30000; // 30 seconds
+
 export interface RequestOptions {
   reqId?: string;
   timeout?: number;
@@ -25,13 +27,13 @@ export async function request<M extends MethodName, E extends EventName>(
   options: RequestOptions = {},
 ): Promise<EventPayload<E>> {
   const reqId = options.reqId || generateReqId();
-  const timeout = options.timeout || 30000;
+  const timeout = options.timeout || DEFAULT_TIMEOUT;
 
   // Add reqId to params
-  const paramsWithReqId = {
+  const payload: MethodPayload<M> = {
     ...params,
     reqId,
-  } as MethodPayload<M> & { reqId: string };
+  };
 
   return new Promise<EventPayload<E>>((resolve, reject) => {
     const timeoutId = setTimeout(() => {
@@ -45,8 +47,7 @@ export async function request<M extends MethodName, E extends EventName>(
     };
 
     const handleResponse = (payload: EventPayload<E>) => {
-      const response = payload as { reqId?: string };
-      if (response.reqId === reqId) {
+      if (payload.reqId === reqId) {
         cleanup();
         resolve(payload);
       }
@@ -58,7 +59,7 @@ export async function request<M extends MethodName, E extends EventName>(
     sendMessage({
       type: 'method',
       name: method,
-      payload: paramsWithReqId as MethodPayload<MethodName>,
+      payload,
     });
   });
 }

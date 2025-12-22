@@ -1,6 +1,6 @@
 # @alien-id/contract
 
-This package defines the communication schema used by the bridge to enable seamless interaction between the miniapp and the native app. Think of it as the shared language that both sides speak to understand each other.
+This package defines the communication schema used by the bridge to enable seamless interaction between the miniapp and the host app. Think of it as the shared language that both sides speak to understand each other.
 
 ## Types of Communication
 
@@ -11,11 +11,17 @@ The contract organizes communication into two main types:
 
 ### Methods
 
-Methods are a special subset of events that enable two-way communication. When the miniapp sends a method to the native app, it includes a `reqId` to track the request and match it with the corresponding response. This allows the miniapp to make requests and wait for specific answers, like asking for user permissions or requesting device information.
+Methods enable two-way communication between the miniapp and the host app. When the miniapp sends a method request to the host app, it includes a `reqId` to track the request. The host app then responds with an **event** that includes the same `reqId`, allowing the miniapp to match the response to the original request. This allows the miniapp to make requests and wait for specific answers, like asking for user permissions.
 
 ### Events
 
-Events are one-way notifications sent from the native app to the miniapp. These are perfect for situations where the native app needs to inform the miniapp about something happening (like a network status change or a user action), but doesn't need a response back. The miniapp simply listens and reacts accordingly.
+Events serve two purposes in the communication protocol:
+
+1. **Callbacks for Methods**: Events act as responses to method requests. When the miniapp sends a method request, the host app responds with an event that includes the same `reqId` to match the request. This enables the request-response pattern where the miniapp can wait for a specific response.
+
+2. **One-way Notifications**: Events can also be standalone notifications sent from the host app to the miniapp. These are perfect for situations where the host app needs to inform the miniapp about something happening (like a network status change or a user action), but doesn't need a response back. The miniapp simply listens and reacts accordingly.
+
+The presence of a `reqId` in the event payload indicates it's a response to a method request, while events without a `reqId` are standalone notifications.
 
 ### Versioning
 

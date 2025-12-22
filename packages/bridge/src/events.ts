@@ -17,10 +17,7 @@ class BridgeEmitter extends Emittery<EmitteryEventMap> {
     // Setup message listener to receive events from host app
     setupMessageListener((message) => {
       if (message.type === 'event') {
-        void this.emit(
-          message.name as EventName,
-          message.payload as EventPayload<EventName>,
-        );
+        void this.emit(message.name, message.payload);
       }
     });
   }

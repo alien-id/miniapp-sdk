@@ -5,9 +5,9 @@ import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 
-interface ReceivedEvent {
-  name: EventName
-  payload: EventPayload<EventName>
+interface ReceivedEvent<E extends EventName = EventName> {
+  name: E
+  payload: EventPayload<E>
   timestamp: Date
 }
 
@@ -57,11 +57,12 @@ function App() {
       // Add error to events list for visibility
       setReceivedEvents((prev) => [
         {
-          name: 'auth.init:response.token' as EventName,
+          name: 'auth.init:response.token',
           payload: { 
             reqId: 'error',
+            token: '',
             error: error instanceof Error ? error.message : String(error)
-          } as EventPayload<EventName>,
+          },
           timestamp: new Date(),
         },
         ...prev,

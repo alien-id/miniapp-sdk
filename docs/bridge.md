@@ -4,16 +4,13 @@ The Bridge package provides a simple, type-safe communication channel between a 
 
 ## Overview
 
-The bridge automatically detects the communication channel and uses the appropriate method:
+**Important**: This bridge is designed to work **only** in the **Alien App** environment. The host app must be Alien App, which provides the required bridge interface.
 
-1. **Native Bridge** (Mobile/Desktop): Uses `window.__miniAppsBridge__.postMessage()` if available
-2. **PostMessage** (Web/Iframe): Falls back to `window.postMessage()` for web-based clients
+The bridge uses the native bridge for communication:
 
-This makes it compatible with:
+- **Native Bridge**: Uses `window.__miniAppsBridge__.postMessage()` - **required** (provided by Alien App)
 
-- **Web clients**: Iframe-based miniapps using `window.postMessage`
-- **Mobile clients**: WebView-based miniapps (iOS WKWebView, Android WebView) using native bridge
-- **Desktop clients**: Electron, Tauri, or similar webview-based applications using native bridge
+**Development Mode**: If the bridge is not available (e.g., running in a regular browser for development), the SDK will log warnings to the console but will not throw errors. This allows developers to test their miniapp code outside of Alien App. However, actual communication will not work - requests will timeout and events will not be received.
 
 ## Architecture
 
@@ -27,21 +24,13 @@ sequenceDiagram
     Note over Miniapp,HostApp: Event Flow (One-way)
     Miniapp->>Bridge: emit('domain:action', payload)
     Bridge->>Transport: sendMessage({type: 'event', name, payload})
-    alt Native Bridge Available
-        Transport->>HostApp: window.__miniAppsBridge__.postMessage(message)
-    else Web/Iframe
-        Transport->>HostApp: window.postMessage(message, '*')
-    end
+    Transport->>HostApp: window.__miniAppsBridge__.postMessage(message)
     
     Note over Miniapp,HostApp: Method Request Flow (Request-Response)
     Miniapp->>Bridge: request('domain:action', params, 'domain:action')
     Bridge->>Bridge: Generate reqId
     Bridge->>Transport: sendMessage({type: 'method', name, payload: {...params, reqId}})
-    alt Native Bridge Available
-        Transport->>HostApp: window.__miniAppsBridge__.postMessage(message)
-    else Web/Iframe
-        Transport->>HostApp: window.postMessage(message, '*')
-    end
+    Transport->>HostApp: window.__miniAppsBridge__.postMessage(message)
     
     Note over HostApp,Miniapp: Response Flow
     HostApp->>Transport: window.postMessage({type: 'event', name: 'domain:action', payload: {...response, reqId}})
@@ -273,18 +262,15 @@ interface Message {
 
 ## Transport Layer
 
-The bridge automatically selects the appropriate transport method based on the environment:
+The bridge uses the native bridge provided by Alien App for communication:
 
-### Transport Priority
+### Transport Method
 
-1. **Native Bridge** (Mobile/Desktop): If `window.__miniAppsBridge__` is available, uses `window.__miniAppsBridge__.postMessage(message)`
-   - Sends messages as objects (not stringified)
-   - Used by mobile and desktop clients that inject the bridge
+**Native Bridge** (Required): Uses `window.__miniAppsBridge__.postMessage(message)`
 
-2. **PostMessage** (Web/Iframe): Falls back to `window.postMessage(message, '*')`
-   - Uses `window.parent.postMessage()` if in an iframe
-   - Uses `window.postMessage()` if not in an iframe
-   - Sends messages as objects (modern browsers support structured cloning)
+- Sends messages as JSON strings
+- Provided by Alien App (the host app)
+- **Required**: If the bridge is not available (not running in Alien App), sending messages will log a warning and the message will not be sent. This allows development testing outside of Alien App, but communication will not work.
 
 ### Message Reception
 
@@ -295,11 +281,9 @@ All platforms use `window.addEventListener('message', ...)` to receive messages.
 
 The transport layer automatically:
 
-- Detects if native bridge is available
-- Detects if running in an iframe/webview
-- Handles both object and stringified messages
 - Validates message structure
-- Provides error handling for unavailable windows
+- Handles both object and stringified messages
+- Provides error handling for unavailable windows or missing bridge
 
 ## Type Safety
 
@@ -369,39 +353,11 @@ The host app needs to:
 1. **Listen for messages from the miniapp:**
 
     ```typescript
-    // Web (iframe)
-    iframe.contentWindow.addEventListener('message', (event) => {
-      const message = event.data;
-      
-      if (message.type === 'method') {
-        handleMethod(message.name, message.payload);
-      } else if (message.type === 'event') {
-        handleEvent(message.name, message.payload);
-      }
-    });
-
-    // Mobile (WebView)
-    // Platform-specific implementation
+    // Alien App provides the bridge interface automatically
+    // Messages are received via the native bridge interface
     ```
 
-2. **Send events to the miniapp:**
-
-    ```typescript
-    // Web (iframe)
-    iframe.contentWindow.postMessage({
-      type: 'event',
-      name: 'auth.init:response.token',
-      payload: {
-        token: 'new-token',
-        reqId: requestId, // Include if responding to a method
-      },
-    }, '*');
-
-    // Mobile (WebView)
-    // Platform-specific implementation
-    ```
-
-3. **Handle method requests:**
+2. **Handle method requests:**
 
     ```typescript
     function handleMethod(methodName: string, payload: any) {
@@ -431,71 +387,22 @@ The host app needs to:
     }
     ```
 
-## Compatibility with Open Mini Apps Standard
-
-Our bridge implementation has some differences from the [Open Mini Apps communication standard](https://raw.githubusercontent.com/open-mini-apps/monorepo/refs/heads/main/apps/docs/ru/communication.md):
-
-### Similarities ✅
-
-- Uses `window.postMessage` for web-based communication
-- Supports request-response pattern with request IDs
-- Event-driven architecture
-- Type-safe payloads
-- Request IDs included in payload for matching responses
-
-### Differences ⚠️
-
-1. **Message Structure**:
-    - **Open Mini Apps**: `{ name, payload, requestId? }` (requestId at top level)
-    - **Our Bridge**: `{ type: 'event' | 'method', name, payload }` (reqId inside payload)
-    - We use a `type` field to distinguish events from methods explicitly
-    - Request ID is nested in the payload rather than at the top level
-
-2. **Request ID Naming**:
-    - **Open Mini Apps**: `requestId` (camelCase, at top level)
-    - **Our Bridge**: `reqId` (camelCase, inside payload)
-    - Both use camelCase, but placement differs
-
-3. **JSON Stringification**:
-    - **Open Mini Apps**: Requires `JSON.stringify()` for web clients (for older browser compatibility)
-    - **Our Bridge**: Sends objects directly (modern browsers support structured cloning)
-    - Our approach is simpler but may not work in very old browsers
-
-4. **Mobile Bridge Interface**:
-    - **Open Mini Apps**: Requires `window.__miniAppsBridge__.postMessage()` for mobile/desktop
-    - **Our Bridge**: ✅ **Now supports both!** Uses `window.__miniAppsBridge__.postMessage()` if available, falls back to `window.postMessage()`
-    - Our approach automatically detects and uses the appropriate method
-
-5. **Event Handling**:
-    - **Open Mini Apps**: Manual event listener setup with `window.addEventListener('message')`
-    - **Our Bridge**: Uses Emittery for better event management, async support, and automatic cleanup
-
-6. **Method-Event Distinction**:
-    - **Open Mini Apps**: Methods identified by presence of `requestId` (required for methods)
-    - **Our Bridge**: Methods explicitly marked with `type: 'method'`
-    - Our approach is more explicit and type-safe
-
 ### Compatibility Assessment
 
-**High Compatibility**: Our bridge is now highly compatible with Open Mini Apps-compliant host apps:
+**Note**: Our bridge is designed to work only with Alien App as the host app. Alien App provides the required bridge interface.
 
 ✅ **Fully Compatible aspects:**
 
-- ✅ Supports `window.__miniAppsBridge__.postMessage()` for mobile/desktop
-- ✅ Falls back to `window.postMessage()` for web clients
+- ✅ Supports `window.__miniAppsBridge__.postMessage()` for mobile/desktop (provided by Alien App)
 - ✅ Both use `window.addEventListener('message')` for receiving
 - ✅ Both support request-response patterns
 - ✅ Both include request IDs for matching
 
-⚠️ **Minor differences:**
-
-- Host app must handle our message format (`type` field)
-- Host app must extract `reqId` from payload instead of top level
-- We send objects directly (not stringified) - modern browsers support this
-
 ### Host App Setup
 
-For **mobile/desktop clients**, the host app should initialize the bridge. The following example uses Flutter, but it can be adapted to other frameworks (Kotlin, Swift, etc).
+**Note**: This section is for reference only. Alien App already provides the bridge interface. If you're building a custom host app, you would need to implement the bridge interface similar to the example below.
+
+The following example shows how Alien App initializes the bridge (using Flutter as an example, but it can be adapted to other frameworks like Kotlin, Swift, etc):
 
 ```dart
 import 'dart:convert';
@@ -554,27 +461,6 @@ class MiniappBridge {
   }
 }
 ```
-
-For **web clients** (iframe), the host app should listen for `postMessage`:
-
-```typescript
-iframe.contentWindow.addEventListener('message', (event) => {
-  const message = event.data;
-  // Handle message from miniapp
-});
-```
-
-The miniapp automatically uses the appropriate method - no code changes needed!
-
-### Migration Notes
-
-Our bridge is now compatible with Open Mini Apps standard. The main differences are:
-
-1. **Message format**: We use `{ type, name, payload }` instead of `{ name, payload, requestId }`
-2. **Request ID location**: `reqId` is inside `payload` instead of at the top level
-3. **No stringification**: We send objects directly (modern browsers support this)
-
-**Recommendation**: Our bridge automatically detects and uses the native bridge when available, making it fully compatible with Open Mini Apps-compliant host apps.
 
 ## Best Practices
 
@@ -646,36 +532,29 @@ try {
 
 ## Security Considerations
 
-⚠️ **Important**: The bridge uses `'*'` as the target origin for `postMessage`. In production:
+⚠️ **Important**: The bridge uses `'*'` as the target origin for `postMessage`. Alien App (the host app) handles security:
 
-1. **Validate message origin** in the host app:
+1. **Message origin validation**: Alien App validates message origins to ensure security
+2. **Message structure validation**: Alien App validates message structure before processing
+3. **Payload sanitization**: Alien App sanitizes payloads before use
+4. **HTTPS**: Alien App uses HTTPS in production
 
-   ```typescript
-   window.addEventListener('message', (event) => {
-     if (event.origin !== 'https://trusted-domain.com') {
-       return; // Ignore untrusted messages
-     }
-     // Process message
-   });
-   ```
-
-2. **Validate message structure** before processing
-3. **Sanitize payloads** before use
-4. **Use HTTPS** in production
+**Note**: As a miniapp developer, you don't need to implement these security measures - Alien App handles them. However, you should still validate and sanitize any data you receive from Alien App before using it in your miniapp.
 
 ## Troubleshooting
 
 ### Messages not received
 
-- Check if running in iframe/webview context
-- Verify `window.postMessage` is available
-- Check browser console for errors
-- Ensure host app is listening for messages
+- **Verify you're running in Alien App**: The bridge only works in Alien App environment. If you see warnings about the bridge not being available, you're not running in Alien App.
+- Check browser console for warnings (the SDK logs warnings when the bridge is unavailable)
+- Ensure Alien App (host app) is properly initialized and listening for messages
+- Verify `window.__miniAppsBridge__` is available (this is provided by Alien App)
 
 ### Request timeouts
 
-- Increase timeout value
-- Check if host app is responding
+- **Verify you're running in Alien App**: If you're not running in Alien App, requests will timeout because the bridge is not available
+- Increase timeout value if needed
+- Check if Alien App (host app) is responding
 - Verify response event name matches
 - Check if `reqId` matches between request and response
 

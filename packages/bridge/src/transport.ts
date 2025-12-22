@@ -5,11 +5,19 @@ import type {
   MethodPayload,
 } from '@alien-id/contract';
 
-export interface Message {
-  type: 'event' | 'method';
-  name: EventName | MethodName;
-  payload: EventPayload<EventName> | MethodPayload<MethodName>;
-}
+export type EventMessage<E extends EventName = EventName> = {
+  type: 'event';
+  name: E;
+  payload: EventPayload<E>;
+};
+
+export type MethodMessage<M extends MethodName = MethodName> = {
+  type: 'method';
+  name: M;
+  payload: MethodPayload<M>;
+};
+
+export type Message = EventMessage | MethodMessage;
 
 // Bridge interface for mobile/desktop clients
 interface MiniAppsBridge {
@@ -24,57 +32,61 @@ declare global {
 }
 
 /**
- * Detects if we're running in an iframe/webview context.
- */
-function isInIframe(): boolean {
-  if (typeof window === 'undefined') return false;
-  try {
-    return window.parent !== window;
-  } catch {
-    // Cross-origin iframe will throw, assume we're in iframe
-    return true;
-  }
-}
-
-/**
- * Sends a message using the appropriate transport method.
- * Priority: native bridge > postMessage (iframe) > postMessage (window)
+ * Sends a message using the native bridge.
+ * Logs warnings instead of throwing errors to allow dev mode without host app.
  */
 export function sendMessage(message: Message): void {
   if (typeof window === 'undefined') {
-    console.warn('[Bridge] Cannot send message: window is not available');
+    console.warn(
+      '[Bridge] Cannot send message: window is not available. This SDK requires a browser environment.',
+      message,
+    );
     return;
   }
 
-  try {
-    // Priority 1: Use native bridge if available (mobile/desktop)
-    const bridge = window.__miniAppsBridge__;
-    if (bridge && typeof bridge.postMessage === 'function') {
-      bridge.postMessage(JSON.stringify(message));
-      return;
-    }
-
-    // Priority 2: Use postMessage (web/iframe)
-    const target = isInIframe() ? window.parent : window;
-
-    // For web clients, use postMessage directly (modern browsers support objects)
-    // For maximum compatibility with old browsers, we could stringify, but
-    // modern browsers (IE11+) support structured cloning
-    target.postMessage(JSON.stringify(message), '*');
-  } catch (error) {
-    console.error('[Bridge] Failed to send message:', error);
+  // Use native bridge if available
+  const bridge = window.__miniAppsBridge__;
+  if (!bridge || typeof bridge.postMessage !== 'function') {
+    console.warn(
+      '[Bridge] Cannot send message: bridge is not available. Running in dev mode without host app?',
+      'Message:',
+      message,
+    );
+    return;
   }
+
+  // Fallback to postMessage if bridge is not available
+  bridge.postMessage(JSON.stringify(message));
+}
+
+/**
+ * Type guard to validate if data is a valid Message.
+ */
+function isMessage(data: unknown): data is Message {
+  return (
+    data !== null &&
+    typeof data === 'object' &&
+    'type' in data &&
+    'name' in data &&
+    'payload' in data &&
+    (data.type === 'event' || data.type === 'method')
+  );
 }
 
 /**
  * Sets up a message listener that handles both stringified and object messages.
  * This works for all platforms (web, mobile, desktop).
+ * Returns a no-op cleanup function if window is not available (e.g., in test environments).
  */
 export function setupMessageListener(
   handler: (message: Message) => void,
 ): () => void {
   if (typeof window === 'undefined') {
-    return () => {};
+    return () => {
+      console.warn(
+        '[Bridge] Cannot setup message listener: window is not available. This SDK requires a browser environment.',
+      );
+    };
   }
 
   const messageHandler = (event: MessageEvent) => {
@@ -90,16 +102,8 @@ export function setupMessageListener(
       }
     }
 
-    // Verify message structure
-    if (
-      data &&
-      typeof data === 'object' &&
-      'type' in data &&
-      'name' in data &&
-      'payload' in data &&
-      (data.type === 'event' || data.type === 'method')
-    ) {
-      handler(data as Message);
+    if (isMessage(data)) {
+      handler(data);
     }
   };
 
