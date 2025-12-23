@@ -1,10 +1,43 @@
 {
-  "name": "@alm/contract",
-  "module": "index.ts",
+  "name": "@alien-id/contract",
+  "version": "0.0.8-alpha",
   "type": "module",
-  "private": true,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alien-id/miniapp-sdk.git",
+    "directory": "packages/contract"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "prepublishOnly": "bun run build",
+    "generate-schemas": "bun run scripts/generate-schemas.ts"
+  },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "^1.3.5",
+    "@types/node": "^25.0.3",
+    "tsdown": "^0.18.1",
+    "typescript-json-schema": "^0.67.1"
   },
   "peerDependencies": {
     "typescript": "^5"
