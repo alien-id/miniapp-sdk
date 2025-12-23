@@ -1,111 +1,197 @@
----
-description: Use Bun instead of Node.js, npm, pnpm, or vite.
-globs: "*.ts, *.tsx, *.html, *.css, *.js, *.jsx, package.json"
-alwaysApply: false
----
+# Alien Miniapp SDK
 
-Default to using Bun instead of Node.js.
+Miniapp infrastructure SDK for the Alien App ecosystem. Enables 3rd party developers to create lightweight applications (webviews) that run within the Alien mobile app (iOS/Android).
+
+## Project Structure
+
+Monorepo using Bun workspaces:
+
+```
+miniapp-sdk/
+├── packages/
+│   ├── bridge/       # Communication bridge (@alien-id/bridge)
+│   ├── contract/     # Type definitions & protocol (@alien-id/contract)
+│   └── react/        # React bindings (@alien-id/react)
+├── examples/
+│   ├── vite-miniapp/ # React + TypeScript example
+│   └── miniapp-bridge/
+├── docs/
+│   ├── bridge.md          # Bridge documentation
+│   ├── host-integration.md # Host app requirements
+│   └── manifest.md        # Manifest requirements
+```
+
+## Packages
+
+### @alien-id/bridge
+Minimal, type-safe bridge for WebView ↔ Host App communication.
+- API: `on()`, `off()`, `emit()`, `request()`
+- Uses `window.__miniAppsBridge__` for native communication
+- Graceful dev-mode fallback (logs warnings when bridge unavailable)
+
+### @alien-id/contract
+Defines the communication schema and type-safe contracts.
+- Defines all Methods (request-response) and Events (one-way)
+- Protocol versioning support via `releases.ts`
+- `isMethodSupported(method, version)` - Check method compatibility
+- `getMethodMinVersion(method)` - Get minimum required version
+- TypeScript types for type-safe communication
+
+### @alien-id/react
+React bindings for the bridge (TMA-style patterns).
+- `AlienProvider` - Context provider, wrap your app
+- `useAuthToken()` - Get auth token from `window.__ALIEN_AUTH_TOKEN__`
+- `useContractVersion()` - Get version from `window.__ALIEN_CONTRACT_VERSION__`
+- `useMethodSupported(method)` - Check if method is supported
+- `useEvent(name, callback)` - Subscribe to events
+- `useRequest(method, responseEvent)` - Request with version checking & state
+- `useAlien()` - Access full context (authToken, contractVersion, isInAlienApp)
+
+## Communication Protocol
+
+### Naming Convention
+Both methods and events follow: `<domain>:<action>`
+- Domain: Subsystem (e.g., `auth`, `storage.kv`, `ui.modal`)
+- Action: Operation (e.g., `request`, `response.token`)
+
+### Current Protocol (v0.0.1)
+- Methods: `auth.init:request` → `{ appId, challenge, reqId }`
+- Events: `auth.init:response.token` → `{ token, reqId }`
+
+### Message Flow
+```
+Miniapp (WebView)
+    ↓ bridge API (on, off, emit, request)
+    ↓ transport.ts (window.__miniAppsBridge__.postMessage)
+    ↓ Native Bridge (injected by Alien App)
+Host App (iOS/Android)
+```
+
+### Host App Requirements
+The host app must inject (see `docs/host-integration.md`):
+- `window.__miniAppsBridge__` - Bridge with `postMessage(data: string)`
+- `window.__ALIEN_AUTH_TOKEN__` - JWT auth token
+- `window.__ALIEN_CONTRACT_VERSION__` - Semantic version (e.g., '0.0.1')
+
+## Development
+
+Use Bun instead of Node.js.
+
+```bash
+bun install              # Install dependencies
+bun run build           # Build all packages (uses tsdown)
+bun test                # Run tests
+bun run <script>        # Run package scripts
+```
+
+### Testing
+
+Run tests with Bun's test runner:
+```bash
+cd packages/bridge
+bun test --preload tests/setup.ts tests
+```
+
+Test files in `packages/bridge/tests/`:
+- `transport.test.ts` - Message transport tests
+- `events.test.ts` - Event subscription tests
+- `request.test.ts` - Request-response pattern tests
+- `index.test.ts` - Integration tests
+
+Test files in `packages/contract/tests/`:
+- `versions.test.ts` - isMethodSupported, getMethodMinVersion tests
+
+### Linting & Formatting
+
+Uses Biomejs (config: `biome.json`):
+- Single quotes, 2-space indent, trailing commas, LF line endings
+
+## Bridge API
+
+### Events
+```typescript
+import { on, off, emit } from '@alien-id/bridge';
+
+const unsubscribe = on('auth.init:response.token', (payload) => {
+  console.log(payload.token, payload.reqId);
+});
+
+await emit('auth.init:response.token', { token: '...', reqId: '...' });
+```
+
+### Request-Response
+```typescript
+import { request } from '@alien-id/bridge';
+
+const response = await request(
+  'auth.init:request',
+  { appId: 'app-1', challenge: 'challenge' },
+  'auth.init:response.token',
+  { timeout: 5000 }
+);
+```
+
+## React API
+
+```tsx
+import { AlienProvider, useAuthToken, useEvent, useRequest, useMethodSupported } from '@alien-id/react';
+
+// Wrap app with provider
+<AlienProvider><App /></AlienProvider>
+
+// Get injected auth token
+const token = useAuthToken();
+
+// Subscribe to events
+useEvent('auth.init:response.token', (payload) => {
+  console.log(payload.token);
+});
+
+// Check method compatibility before using
+const { supported, minVersion } = useMethodSupported('auth.init:request');
+if (!supported) return <div>Requires v{minVersion}</div>;
+
+// Make requests with state management (auto version check)
+const { execute, data, error, isLoading, supported } = useRequest(
+  'auth.init:request',
+  'auth.init:response.token',
+);
+await execute({ appId: 'my-app', challenge: 'random' });
+```
+
+## Adding New Methods/Events
+
+1. Define in `packages/contract/src/methods/definitions/methods.ts` or `events/definitions/events.ts`
+2. Use `CreateMethodPayload` or `CreateEventPayload` types
+3. Update version in `packages/contract/src/methods/versions/releases.ts`
+4. Run `bun run build` in contract package
+
+## Key Files
+
+### Bridge Package
+- `src/transport.ts` - Low-level message transport
+- `src/request.ts` - Request-response with timeout (default 30s)
+- `src/events.ts` - Event management using Emittery
+
+### Contract Package
+- `src/methods/definitions/methods.ts` - Method interface definitions
+- `src/methods/versions/releases.ts` - Version → method mapping
+- `src/methods/versions/index.ts` - isMethodSupported, getMethodMinVersion
+- `src/events/definitions/events.ts` - Event interface definitions
+- `src/utils.ts` - TypeScript utility types (WithReqId, Version, etc.)
+
+### React Package
+- `src/context.tsx` - AlienProvider and useAlien hook
+- `src/hooks/useAuthToken.ts` - Auth token from window.__ALIEN_AUTH_TOKEN__
+- `src/hooks/useContractVersion.ts` - Contract version from window.__ALIEN_CONTRACT_VERSION__
+- `src/hooks/useMethodSupported.ts` - Check method compatibility
+- `src/hooks/useEvent.ts` - Event subscription hook
+- `src/hooks/useRequest.ts` - Request with version checking & state
+
+## Bun Guidelines
 
 - Use `bun <file>` instead of `node <file>` or `ts-node <file>`
 - Use `bun test` instead of `jest` or `vitest`
-- Use `bun build <file.html|file.ts|file.css>` instead of `webpack` or `esbuild`
-- Use `bun install` instead of `npm install` or `yarn install` or `pnpm install`
-- Use `bun run <script>` instead of `npm run <script>` or `yarn run <script>` or `pnpm run <script>`
-- Bun automatically loads .env, so don't use dotenv.
-
-## APIs
-
-- `Bun.serve()` supports WebSockets, HTTPS, and routes. Don't use `express`.
-- `bun:sqlite` for SQLite. Don't use `better-sqlite3`.
-- `Bun.redis` for Redis. Don't use `ioredis`.
-- `Bun.sql` for Postgres. Don't use `pg` or `postgres.js`.
-- `WebSocket` is built-in. Don't use `ws`.
-- Prefer `Bun.file` over `node:fs`'s readFile/writeFile
-- Bun.$`ls` instead of execa.
-
-## Testing
-
-Use `bun test` to run tests.
-
-```ts#index.test.ts
-import { test, expect } from "bun:test";
-
-test("hello world", () => {
-  expect(1).toBe(1);
-});
-```
-
-## Frontend
-
-Use HTML imports with `Bun.serve()`. Don't use `vite`. HTML imports fully support React, CSS, Tailwind.
-
-Server:
-
-```ts#index.ts
-import index from "./index.html"
-
-Bun.serve({
-  routes: {
-    "/": index,
-    "/api/users/:id": {
-      GET: (req) => {
-        return new Response(JSON.stringify({ id: req.params.id }));
-      },
-    },
-  },
-  // optional websocket support
-  websocket: {
-    open: (ws) => {
-      ws.send("Hello, world!");
-    },
-    message: (ws, message) => {
-      ws.send(message);
-    },
-    close: (ws) => {
-      // handle close
-    }
-  },
-  development: {
-    hmr: true,
-    console: true,
-  }
-})
-```
-
-HTML files can import .tsx, .jsx or .js files directly and Bun's bundler will transpile & bundle automatically. `<link>` tags can point to stylesheets and Bun's CSS bundler will bundle.
-
-```html#index.html
-<html>
-  <body>
-    <h1>Hello, world!</h1>
-    <script type="module" src="./frontend.tsx"></script>
-  </body>
-</html>
-```
-
-With the following `frontend.tsx`:
-
-```tsx#frontend.tsx
-import React from "react";
-
-// import .css files directly and it works
-import './index.css';
-
-import { createRoot } from "react-dom/client";
-
-const root = createRoot(document.body);
-
-export default function Frontend() {
-  return <h1>Hello, world!</h1>;
-}
-
-root.render(<Frontend />);
-```
-
-Then, run index.ts
-
-```sh
-bun --hot ./index.ts
-```
-
-For more information, read the Bun API docs in `node_modules/bun-types/docs/**.md`.
+- Use `bun install` instead of `npm install`
+- Bun automatically loads .env, so don't use dotenv
+- Prefer `Bun.file` over `node:fs`

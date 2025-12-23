@@ -44,15 +44,16 @@ export function sendMessage(message: Message): void {
     return;
   }
 
+  // TODO: Decide if we need to throw an error here or just log a warning and return
   // Use native bridge if available
   const bridge = window.__miniAppsBridge__;
   if (!bridge || typeof bridge.postMessage !== 'function') {
-    console.warn(
+    console.error(
       '[Bridge] Cannot send message: bridge is not available. Running in dev mode without host app?',
       'Message:',
       message,
     );
-    return;
+    throw new Error('Bridge is not available');
   }
 
   // Fallback to postMessage if bridge is not available

@@ -90,7 +90,7 @@ test('sendMessage - should use native bridge if available', () => {
   expect(postMessageCalls.length).toBe(0);
 });
 
-test('sendMessage - should log warning and not throw if bridge not available', () => {
+test('sendMessage - should log warning and throw if bridge not available', () => {
   delete mockWindow.__miniAppsBridge__;
   // Update the global window reference
   (globalThis as { window: typeof mockWindow }).window = mockWindow;
@@ -101,20 +101,20 @@ test('sendMessage - should log warning and not throw if bridge not available', (
     payload: { token: 'test', reqId: '123' },
   };
 
-  // Mock console.warn to verify warning is logged
-  const originalWarn = console.warn;
-  const warnCalls: unknown[] = [];
-  console.warn = (...args: unknown[]) => {
-    warnCalls.push(...args);
+  // Mock console.error to verify error is logged
+  const originalError = console.error;
+  const errorCalls: unknown[] = [];
+  console.error = (...args: unknown[]) => {
+    errorCalls.push(...args);
   };
 
-  // Should not throw, just log warning
-  expect(() => sendMessage(message)).not.toThrow();
+  // Should throw error if bridge is not available
+  expect(() => sendMessage(message)).toThrow();
 
-  // Verify warning was logged
-  expect(warnCalls.length).toBeGreaterThan(0);
+  // Verify error was logged
+  expect(errorCalls.length).toBeGreaterThan(0);
   expect(
-    warnCalls.some(
+    errorCalls.some(
       (arg) =>
         typeof arg === 'string' && arg.includes('bridge is not available'),
     ),
@@ -124,8 +124,8 @@ test('sendMessage - should log warning and not throw if bridge not available', (
   expect(postMessageCalls.length).toBe(0);
   expect(bridgePostMessageCalls.length).toBe(0);
 
-  // Restore console.warn
-  console.warn = originalWarn;
+  // Restore console.error
+  console.error = originalError;
 });
 
 test('sendMessage - should log warning if window is undefined (SSR)', () => {

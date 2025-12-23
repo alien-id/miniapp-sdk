@@ -1,75 +1,28 @@
-import { useState, useEffect } from 'react'
-import { on, request } from '@alien-id/bridge'
-import type { EventName, EventPayload } from '@alien-id/bridge'
+import { useState } from 'react'
+import { useRequest } from '@alien-id/react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 
-interface ReceivedEvent<E extends EventName = EventName> {
-  name: E
-  payload: EventPayload<E>
-  timestamp: Date
-}
-
 function App() {
   const [count, setCount] = useState(0)
-  const [receivedEvents, setReceivedEvents] = useState<ReceivedEvent[]>([])
   const [appId, setAppId] = useState('my-app-id')
   const [challenge, setChallenge] = useState('challenge-123')
-  const [isLoading, setIsLoading] = useState(false)
 
-  useEffect(() => {
-    // Subscribe to events from the host app
-    const unsubscribe = on('auth.init:response.token', (payload) => {
-      console.log('Received event from host:', payload)
-      setReceivedEvents((prev) => [
-        {
-          name: 'auth.init:response.token',
-          payload,
-          timestamp: new Date(),
-        },
-        ...prev,
-      ])
-    })
-
-    // Cleanup on unmount
-    return () => {
-      unsubscribe()
-    }
-  }, [])
+  // useRequest handles everything: sending request, listening for response, loading, and errors
+  const { execute, isLoading, error, data } = useRequest(
+    'auth.init:request',
+    'auth.init:response.token',
+  )
 
   const handleSendMethod = async () => {
-    setIsLoading(true)
-    try {
-      // Send method request to host app and wait for response event
-      const response = await request(
-        'auth.init:request',
-        {
-          appId,
-          challenge,
-        },
-        'auth.init:response.token', // Response event name
-        { timeout: 5000 }
-      )
-      console.log('Received response from host:', response)
-    } catch (error) {
-      console.error('Request failed:', error)
-      // Add error to events list for visibility
-      setReceivedEvents((prev) => [
-        {
-          name: 'auth.init:response.token',
-          payload: { 
-            reqId: 'error',
-            token: '',
-            error: error instanceof Error ? error.message : String(error)
-          },
-          timestamp: new Date(),
-        },
-        ...prev,
-      ])
-    } finally {
-      setIsLoading(false)
-    }
+    await execute(
+      {
+        appId,
+        challenge,
+      },
+      { timeout: 5000 }
+    )
   }
 
   return (
@@ -156,73 +109,50 @@ function App() {
           </button>
         </div>
 
-        <div>
-          <h3 style={{ color: 'rgba(255, 255, 255, 0.87)' }}>
-            Received Events ({receivedEvents.length})
-          </h3>
-          {receivedEvents.length === 0 ? (
-            <p style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-              No events received yet. Events from the host app will appear here.
-            </p>
-          ) : (
-            <div
+        {error && (
+          <div
+            style={{
+              marginTop: '1rem',
+              padding: '0.75rem',
+              backgroundColor: '#3a1a1a',
+              border: '1px solid #ff4444',
+              borderRadius: '8px',
+              color: '#ff8888',
+            }}
+          >
+            <strong>Error:</strong> {error.message}
+          </div>
+        )}
+
+        {data && (
+          <div
+            style={{
+              marginTop: '1rem',
+              padding: '1rem',
+              backgroundColor: '#1a1a1a',
+              border: '1px solid #646cff',
+              borderRadius: '8px',
+            }}
+          >
+            <h3 style={{ color: 'rgba(255, 255, 255, 0.87)', marginBottom: '0.5rem' }}>
+              Response
+            </h3>
+            <pre
               style={{
-                maxHeight: '300px',
-                overflowY: 'auto',
-                border: '1px solid #646cff',
-                borderRadius: '8px',
-                padding: '1rem',
-                backgroundColor: '#1a1a1a',
+                margin: 0,
+                fontSize: '0.85rem',
+                overflow: 'auto',
+                color: 'rgba(255, 255, 255, 0.87)',
+                backgroundColor: '#242424',
+                padding: '0.75rem',
+                borderRadius: '4px',
+                border: '1px solid #333',
               }}
             >
-              {receivedEvents.map((event, index) => (
-                <div
-                  key={`${event.timestamp.getTime()}-${event.payload.reqId}-${index}`}
-                  style={{
-                    marginBottom: '1rem',
-                    padding: '0.75rem',
-                    backgroundColor: '#242424',
-                    borderRadius: '4px',
-                    border: '1px solid #646cff',
-                  }}
-                >
-                  <div 
-                    style={{ 
-                      fontWeight: 'bold', 
-                      marginBottom: '0.5rem',
-                      color: 'rgba(255, 255, 255, 0.87)',
-                    }}
-                  >
-                    {event.name}
-                  </div>
-                  <div 
-                    style={{ 
-                      fontSize: '0.9rem', 
-                      color: 'rgba(255, 255, 255, 0.6)', 
-                      marginBottom: '0.5rem' 
-                    }}
-                  >
-                    {event.timestamp.toLocaleTimeString()}
-                  </div>
-                  <pre
-                    style={{
-                      margin: 0,
-                      fontSize: '0.85rem',
-                      overflow: 'auto',
-                      color: 'rgba(255, 255, 255, 0.87)',
-                      backgroundColor: '#1a1a1a',
-                      padding: '0.5rem',
-                      borderRadius: '4px',
-                      border: '1px solid #333',
-                    }}
-                  >
-                    {JSON.stringify(event.payload, null, 2)}
-                  </pre>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+              {JSON.stringify(data, null, 2)}
+            </pre>
+          </div>
+        )}
       </div>
 
       <p className="read-the-docs">
