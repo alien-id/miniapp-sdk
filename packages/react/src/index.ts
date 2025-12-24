@@ -1,3 +1,6 @@
+// Re-export request options type
+export type { RequestOptions } from '@alien-id/bridge';
+export { send } from '@alien-id/bridge';
 // Re-export types from contract for convenience
 export type {
   EventName,

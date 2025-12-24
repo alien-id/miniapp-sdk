@@ -10,11 +10,13 @@ import type { MethodName } from '../src/methods/types/method-types';
  */
 const mockReleases = {
   '0.0.1': ['auth:request', 'storage:get'],
+  '0.0.9': ['auth:request', 'storage:get', 'app:ready'],
   '0.1.0': [
     'auth:request',
     'auth:logout',
     'storage:get',
     'storage:set',
+    'app:ready',
     { method: 'ui:showModal', param: 'basic' },
   ],
   '0.2.0': [
@@ -22,6 +24,7 @@ const mockReleases = {
     'auth:logout',
     'storage:get',
     'storage:set',
+    'app:ready',
     { method: 'ui:showModal', param: 'basic' },
     { method: 'ui:showModal', param: 'extended' },
     'ui:hideModal',
@@ -31,6 +34,7 @@ const mockReleases = {
     'auth:logout',
     'storage:get',
     'storage:set',
+    'app:ready',
     { method: 'ui:showModal', param: 'basic' },
     { method: 'ui:showModal', param: 'extended' },
     { method: 'ui:showModal', param: 'premium' },
@@ -55,6 +59,7 @@ type MockMethodName =
   | 'auth:logout'
   | 'storage:get'
   | 'storage:set'
+  | 'app:ready'
   | 'ui:showModal'
   | 'ui:hideModal'
   | 'payment:init';
@@ -95,6 +100,32 @@ describe('isMethodSupported', () => {
       expect(
         isMethodSupported('payment:init' as unknown as MethodName, '0.0.1'),
       ).toBe(false);
+    });
+
+    test('app:ready is NOT supported', () => {
+      expect(
+        isMethodSupported('app:ready' as unknown as MethodName, '0.0.1'),
+      ).toBe(false);
+    });
+  });
+
+  describe('version 0.0.9', () => {
+    test('app:ready is supported (newly added)', () => {
+      expect(
+        isMethodSupported('app:ready' as unknown as MethodName, '0.0.9'),
+      ).toBe(true);
+    });
+
+    test('auth:request is still supported', () => {
+      expect(
+        isMethodSupported('auth:request' as unknown as MethodName, '0.0.9'),
+      ).toBe(true);
+    });
+
+    test('storage:get is still supported', () => {
+      expect(
+        isMethodSupported('storage:get' as unknown as MethodName, '0.0.9'),
+      ).toBe(true);
     });
   });
 
@@ -151,6 +182,7 @@ describe('isMethodSupported', () => {
         'auth:logout',
         'storage:get',
         'storage:set',
+        'app:ready',
         'ui:showModal',
         'ui:hideModal',
         'payment:init',
@@ -223,6 +255,14 @@ describe('getMethodMinVersion', () => {
     test('returns 0.2.0 for ui:hideModal', () => {
       expect(getMethodMinVersion('ui:hideModal' as unknown as MethodName)).toBe(
         '0.2.0',
+      );
+    });
+  });
+
+  describe('methods from v0.0.9', () => {
+    test('returns 0.0.9 for app:ready', () => {
+      expect(getMethodMinVersion('app:ready' as unknown as MethodName)).toBe(
+        '0.0.9',
       );
     });
   });
