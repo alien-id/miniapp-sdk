@@ -216,6 +216,7 @@ function MyComponent() {
 ## Development Mode
 
 When running outside of Alien App (e.g., in a regular browser for development), the SDK will:
+
 - **Warn** you that the bridge is not available (does not throw)
 - Handle errors gracefully by setting error state
 - Allow your app to render and function (though bridge communication won't work)
