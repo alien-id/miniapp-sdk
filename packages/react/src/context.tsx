@@ -58,9 +58,7 @@ export function AlienProvider({ children }: AlienProviderProps): ReactNode {
     if (typeof window !== 'undefined' && window.__ALIEN_CONTRACT_VERSION__) {
       const version = window.__ALIEN_CONTRACT_VERSION__;
       // Validate version format
-      if (
-        /^\d+\.\d+\.\d+(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.test(version)
-      ) {
+      if (/^\d+\.\d+\.\d+$/.test(version)) {
         contractVersion = version as Version;
       }
     }
