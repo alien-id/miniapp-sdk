@@ -149,7 +149,7 @@ export function useMethod<M extends MethodName, E extends EventName>(
         // Handle other errors
         const error = err instanceof Error ? err : new Error(String(err));
         setState({ data: undefined, error, isLoading: false });
-        return
+        return;
       }
     },
     [method, responseEvent, checkVersion, contractVersion, isBridgeAvailable],
