@@ -2,10 +2,10 @@ import { isBridgeAvailable } from '@alien-id/bridge';
 import type { Version } from '@alien-id/contract';
 import {
   createContext,
+  type ReactNode,
   useContext,
   useEffect,
   useMemo,
-  type ReactNode,
 } from 'react';
 
 declare global {
