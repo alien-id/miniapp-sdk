@@ -92,15 +92,15 @@ function MyComponent() {
 }
 ```
 
-### useRequest
+### useMethod
 
 Make bridge requests with state management and version checking:
 
 ```tsx
-import { useRequest } from '@alien-id/react';
+import { useMethod } from '@alien-id/react';
 
 function AuthButton() {
-  const { execute, data, error, isLoading, supported } = useRequest(
+  const { execute, data, error, isLoading, supported } = useMethod(
     'auth.init:request',
     'auth.init:response.token',
   );

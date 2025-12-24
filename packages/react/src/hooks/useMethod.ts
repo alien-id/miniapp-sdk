@@ -7,17 +7,17 @@ import {
   type MethodName,
   type MethodPayload,
 } from '@alien-id/contract';
-import { useCallback, useState } from 'react';
-import { useAlien } from '../context';
+import { useCallback, useMemo, useState } from 'react';
 import { BridgeError, MethodNotSupportedError } from '../errors';
+import { useAlien } from './useAlien';
 
-interface UseRequestState<E extends EventName> {
+interface UseMethodState<E extends EventName> {
   data: EventPayload<E> | undefined;
   error: Error | undefined;
   isLoading: boolean;
 }
 
-export interface UseRequestOptions {
+export interface UseMethodOptions {
   /**
    * Whether to check if the method is supported before executing.
    * If unsupported, sets error state with `MethodNotSupportedError`.
@@ -26,8 +26,8 @@ export interface UseRequestOptions {
   checkVersion?: boolean;
 }
 
-interface UseRequestResult<M extends MethodName, E extends EventName>
-  extends UseRequestState<E> {
+interface UseMethodResult<M extends MethodName, E extends EventName>
+  extends UseMethodState<E> {
   execute: (
     params: Omit<MethodPayload<M>, 'reqId'>,
     options?: RequestOptions,
@@ -49,10 +49,10 @@ interface UseRequestResult<M extends MethodName, E extends EventName>
  *
  * @example
  * ```tsx
- * import { useRequest } from '@alien-id/react';
+ * import { useMethod } from '@alien-id/react';
  *
  * function AuthButton() {
- *   const { execute, data, error, isLoading, supported } = useRequest(
+ *   const { execute, data, error, isLoading, supported } = useMethod(
  *     'auth.init:request',
  *     'auth.init:response.token',
  *   );
@@ -77,15 +77,15 @@ interface UseRequestResult<M extends MethodName, E extends EventName>
  * }
  * ```
  */
-export function useRequest<M extends MethodName, E extends EventName>(
+export function useMethod<M extends MethodName, E extends EventName>(
   method: M,
   responseEvent: E,
-  options: UseRequestOptions = {},
-): UseRequestResult<M, E> {
+  options: UseMethodOptions = {},
+): UseMethodResult<M, E> {
   const { checkVersion = true } = options;
   const { contractVersion, isBridgeAvailable } = useAlien();
 
-  const [state, setState] = useState<UseRequestState<E>>({
+  const [state, setState] = useState<UseMethodState<E>>({
     data: undefined,
     error: undefined,
     isLoading: false,
@@ -108,7 +108,7 @@ export function useRequest<M extends MethodName, E extends EventName>(
         );
         console.warn('[@alien-id/react]', error.message);
         setState({ data: undefined, error, isLoading: false });
-        return undefined;
+        return;
       }
 
       // Check version support before executing
@@ -120,7 +120,7 @@ export function useRequest<M extends MethodName, E extends EventName>(
             getMethodMinVersion(method),
           );
           setState({ data: undefined, error, isLoading: false });
-          return undefined;
+          return;
         }
       }
 
@@ -143,13 +143,13 @@ export function useRequest<M extends MethodName, E extends EventName>(
             `Bridge communication failed: ${err.message}`,
           );
           setState({ data: undefined, error, isLoading: false });
-          return undefined;
+          return;
         }
 
         // Handle other errors
         const error = err instanceof Error ? err : new Error(String(err));
         setState({ data: undefined, error, isLoading: false });
-        return undefined;
+        return
       }
     },
     [method, responseEvent, checkVersion, contractVersion, isBridgeAvailable],
@@ -159,5 +159,8 @@ export function useRequest<M extends MethodName, E extends EventName>(
     setState({ data: undefined, error: undefined, isLoading: false });
   }, []);
 
-  return { ...state, execute, reset, supported };
+  return useMemo(
+    () => ({ ...state, execute, reset, supported }),
+    [state, execute, reset, supported],
+  );
 }

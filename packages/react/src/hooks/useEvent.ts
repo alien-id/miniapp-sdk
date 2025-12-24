@@ -1,7 +1,7 @@
 import { on } from '@alien-id/bridge';
 import type { EventName, EventPayload } from '@alien-id/contract';
 import { useEffect, useRef } from 'react';
-import { useAlien } from '../context';
+import { useAlien } from '.';
 
 type EventCallback<E extends EventName> = (payload: EventPayload<E>) => void;
 

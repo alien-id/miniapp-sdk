@@ -1,12 +1,6 @@
-import type { Version } from '@alien-id/contract';
 import { isBridgeAvailable } from '@alien-id/bridge';
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  type ReactNode,
-} from 'react';
+import type { Version } from '@alien-id/contract';
+import { createContext, type ReactNode, useEffect, useMemo } from 'react';
 
 declare global {
   interface Window {
@@ -15,7 +9,7 @@ declare global {
   }
 }
 
-interface AlienContextValue {
+export interface AlienContextValue {
   /**
    * Auth token injected by the host app.
    * `undefined` if not yet available.
@@ -32,7 +26,7 @@ interface AlienContextValue {
   isBridgeAvailable: boolean;
 }
 
-const AlienContext = createContext<AlienContextValue | null>(null);
+export const AlienContext = createContext<AlienContextValue | null>(null);
 
 export interface AlienProviderProps {
   children: ReactNode;
@@ -64,12 +58,16 @@ export function AlienProvider({ children }: AlienProviderProps): ReactNode {
     if (typeof window !== 'undefined' && window.__ALIEN_CONTRACT_VERSION__) {
       const version = window.__ALIEN_CONTRACT_VERSION__;
       // Validate version format
-      if (/^\d+\.\d+\.\d+$/.test(version)) {
+      if (/^\d+\.\d+\.\d+(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.test(version)) {
         contractVersion = version as Version;
       }
     }
 
-    return { authToken, contractVersion, isBridgeAvailable: isBridgeAvailable() };
+    return {
+      authToken,
+      contractVersion,
+      isBridgeAvailable: isBridgeAvailable(),
+    };
   }, []);
 
   // Warn if bridge is not available on mount
@@ -81,22 +79,7 @@ export function AlienProvider({ children }: AlienProviderProps): ReactNode {
     }
   }, [value.isBridgeAvailable]);
 
-  return <AlienContext.Provider value={value}>{children}</AlienContext.Provider>;
-}
-
-/**
- * Hook to access the Alien context.
- * Must be used within an AlienProvider.
- *
- * @example
- * ```tsx
- * const { authToken, contractVersion, isBridgeAvailable } = useAlien();
- * ```
- */
-export function useAlien(): AlienContextValue {
-  const context = useContext(AlienContext);
-  if (!context) {
-    throw new Error('useAlien must be used within an AlienProvider');
-  }
-  return context;
+  return (
+    <AlienContext.Provider value={value}>{children}</AlienContext.Provider>
+  );
 }

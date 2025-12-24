@@ -1,5 +1,3 @@
-// Re-export request options type
-export type { RequestOptions } from '@alien-id/bridge';
 // Re-export types from contract for convenience
 export type {
   EventName,
@@ -10,8 +8,8 @@ export type {
 } from '@alien-id/contract';
 // Re-export version utilities from contract
 export { getMethodMinVersion, isMethodSupported } from '@alien-id/contract';
-// Context & Provider
-export { AlienProvider, type AlienProviderProps, useAlien } from './context';
+// Provider
+export { AlienProvider, type AlienProviderProps } from './context';
 // Errors
 export {
   BridgeError,
@@ -24,11 +22,9 @@ export {
 // Hooks
 export {
   type MethodSupportResult,
-  type UseRequestOptions,
-  useAuthToken,
-  useBridgeAvailable,
-  useContractVersion,
+  type UseMethodOptions,
+  useAlien,
   useEvent,
-  useMethodSupported,
-  useRequest,
+  useIsMethodSupported,
+  useMethod,
 } from './hooks';

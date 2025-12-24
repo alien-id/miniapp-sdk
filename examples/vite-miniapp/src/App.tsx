@@ -1,39 +1,36 @@
-import { useState } from 'react'
-import { 
-  useRequest, 
-  useEvent, 
-  useBridgeAvailable, 
-  useAuthToken, 
-  useContractVersion,
-  type EventPayload,
-  type MethodName,
+import {
   type EventName,
-} from '@alien-id/react'
-import './App.css'
+  type MethodName,
+  useAlien,
+  useEvent,
+  useMethod,
+} from '@alien-id/react';
+import { useState } from 'react';
+import './App.css';
 
 interface EventLog {
-  id: string
-  timestamp: Date
-  event: string
-  payload: unknown
+  id: string;
+  timestamp: Date;
+  event: string;
+  payload: unknown;
 }
 
 interface RequestLog {
-  id: string
-  timestamp: Date
-  method: MethodName
-  requestPayload: unknown
-  response?: unknown
-  error?: string
-  status: 'pending' | 'success' | 'error'
+  id: string;
+  timestamp: Date;
+  method: MethodName;
+  requestPayload: unknown;
+  response?: unknown;
+  error?: string;
+  status: 'pending' | 'success' | 'error';
 }
 
 type MethodEventPair = {
-  method: MethodName
-  event: EventName
-  label: string
-  getPayload: () => Record<string, unknown>
-}
+  method: MethodName;
+  event: EventName;
+  label: string;
+  getPayload: () => Record<string, unknown>;
+};
 
 const METHOD_EVENT_PAIRS: MethodEventPair[] = [
   {
@@ -53,107 +50,84 @@ const METHOD_EVENT_PAIRS: MethodEventPair[] = [
       message: `Hello from miniapp at ${new Date().toLocaleTimeString()}`,
     }),
   },
-]
+];
 
 function App() {
-  const isBridgeAvailable = useBridgeAvailable()
-  const authToken = useAuthToken()
-  const contractVersion = useContractVersion()
-  const [events, setEvents] = useState<EventLog[]>([])
-  const [requests, setRequests] = useState<RequestLog[]>([])
-  const [selectedPair, setSelectedPair] = useState<MethodEventPair>(METHOD_EVENT_PAIRS[0])
-  const [customPayload, setCustomPayload] = useState<string>('')
+  const { isBridgeAvailable, authToken, contractVersion } = useAlien();
+  const [events, setEvents] = useState<EventLog[]>([]);
+  const [requests, setRequests] = useState<RequestLog[]>([]);
+  const [customPayload, setCustomPayload] = useState<string>('');
+  const [selectedPair, setSelectedPair] = useState<MethodEventPair>(
+    METHOD_EVENT_PAIRS[0],
+  );
 
-  // Listen for auth token events
-  useEvent('auth.init:response.token', (payload: EventPayload<'auth.init:response.token'>) => {
+  // Setup selected method
+  const { execute, supported, error, data, isLoading } = useMethod(
+    selectedPair.method,
+    selectedPair.event,
+  );
+
+  // Listen for events from the host app
+  useEvent(selectedPair.event, (payload: unknown) => {
     const newEvent: EventLog = {
       id: crypto.randomUUID(),
       timestamp: new Date(),
-      event: 'auth.init:response.token',
+      event: selectedPair.event,
       payload,
-    }
-    setEvents((prev) => [newEvent, ...prev])
-  })
+    };
+    setEvents((prev) => [newEvent, ...prev]);
+  });
 
-  // Listen for ping response events
-  useEvent('ping:response', (payload: EventPayload<'ping:response'>) => {
-    const newEvent: EventLog = {
-      id: crypto.randomUUID(),
-      timestamp: new Date(),
-      event: 'ping:response',
-      payload,
-    }
-    setEvents((prev) => [newEvent, ...prev])
-  })
+  const handleSendRequest = async (executeFn: typeof execute) => {
+    let payload: Record<string, unknown>;
 
-  // useRequest hooks for each method/event pair
-  const authRequest = useRequest('auth.init:request', 'auth.init:response.token')
-  const pingRequest = useRequest('ping:request', 'ping:response')
-
-  // Get the appropriate hook based on selected pair
-  const getRequestHook = () => {
-    if (selectedPair.method === 'auth.init:request') return authRequest
-    if (selectedPair.method === 'ping:request') return pingRequest
-    return authRequest // fallback
-  }
-
-  const { execute, isLoading, error, data, supported } = getRequestHook()
-
-  const handleSendRequest = async () => {
-    let payload: Record<string, unknown>
-    
     try {
       if (customPayload.trim()) {
-        payload = JSON.parse(customPayload)
+        payload = JSON.parse(customPayload);
       } else {
-        payload = selectedPair.getPayload()
+        payload = selectedPair.getPayload();
       }
-    } catch (err) {
-      alert('Invalid JSON payload')
-      return
+    } catch (error) {
+      alert(`Invalid JSON payload. ${(error as Error).message}`);
+      return;
     }
 
-    const requestId = crypto.randomUUID()
+    const requestId = crypto.randomUUID();
     const requestLog: RequestLog = {
       id: requestId,
       timestamp: new Date(),
       method: selectedPair.method,
       requestPayload: payload,
       status: 'pending',
-    }
+    };
 
-    setRequests((prev) => [requestLog, ...prev])
+    setRequests((prev) => [requestLog, ...prev]);
 
-    try {
-      // Type assertion needed because execute is typed for specific method payload
-      const response = await execute(payload as any, { timeout: 5000 })
-      
-      setRequests((prev) =>
-        prev.map((req) =>
-          req.id === requestId
-            ? { ...req, response, status: 'success' as const }
-            : req
-        )
-      )
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err)
-      setRequests((prev) =>
-        prev.map((req) =>
-          req.id === requestId
-            ? { ...req, error: errorMessage, status: 'error' as const }
-            : req
-        )
-      )
-    }
-  }
+    const response = await executeFn(
+      payload as Parameters<typeof executeFn>[0],
+      { timeout: 5000 },
+    );
+
+    setRequests((prev) =>
+      prev.map((req) =>
+        req.id === requestId
+          ? {
+              ...req,
+              response,
+              status: response ? ('success' as const) : ('error' as const),
+            }
+          : req,
+      ),
+    );
+  };
 
   const clearEvents = () => {
-    setEvents([])
-  }
+    setEvents([]);
+  };
 
   const clearRequests = () => {
-    setRequests([])
-  }
+    setRequests([]);
+  };
 
   return (
     <div className="app">
@@ -165,7 +139,9 @@ function App() {
       <div className="status-grid">
         <div className="status-card">
           <div className="status-label">Bridge Status</div>
-          <div className={`status-value ${isBridgeAvailable ? 'status-success' : 'status-warning'}`}>
+          <div
+            className={`status-value ${isBridgeAvailable ? 'status-success' : 'status-warning'}`}
+          >
             {isBridgeAvailable ? 'Available' : 'Not Available'}
           </div>
           {!isBridgeAvailable && (
@@ -177,7 +153,9 @@ function App() {
 
         <div className="status-card">
           <div className="status-label">Auth Token</div>
-          <div className={`status-value ${authToken ? 'status-success' : 'status-info'}`}>
+          <div
+            className={`status-value ${authToken ? 'status-success' : 'status-info'}`}
+          >
             {authToken ? 'Present' : 'Not Available'}
           </div>
           {authToken && (
@@ -202,11 +180,13 @@ function App() {
             <label htmlFor="method-select">Method / Event Pair</label>
             <select
               id="method-select"
-              value={METHOD_EVENT_PAIRS.findIndex((p) => p.method === selectedPair.method)}
+              value={METHOD_EVENT_PAIRS.findIndex(
+                (p) => p.method === selectedPair.method,
+              )}
               onChange={(e) => {
-                const pair = METHOD_EVENT_PAIRS[Number(e.target.value)]
-                setSelectedPair(pair)
-                setCustomPayload('')
+                const pair = METHOD_EVENT_PAIRS[Number(e.target.value)];
+                setSelectedPair(pair);
+                setCustomPayload('');
               }}
               className="form-select"
             >
@@ -220,7 +200,8 @@ function App() {
 
           <div className="form-group">
             <label htmlFor="payload-input">
-              Payload (JSON) <span className="label-hint">Leave empty for default</span>
+              Payload (JSON){' '}
+              <span className="label-hint">Leave empty for default</span>
             </label>
             <textarea
               id="payload-input"
@@ -234,14 +215,17 @@ function App() {
 
           <div className="form-actions">
             <button
-              onClick={handleSendRequest}
+              type="button"
+              onClick={() => handleSendRequest(execute)}
               disabled={isLoading || !supported || !isBridgeAvailable}
               className="send-button"
             >
               {isLoading ? 'Sending...' : 'Send Request'}
             </button>
             {!supported && (
-              <span className="form-error">Method not supported in current version</span>
+              <span className="form-error">
+                Method not supported in current version
+              </span>
             )}
             {!isBridgeAvailable && (
               <span className="form-error">Bridge not available</span>
@@ -266,7 +250,12 @@ function App() {
       <div className="requests-section">
         <div className="section-header">
           <h2>Request History</h2>
-          <button onClick={clearRequests} className="clear-button" disabled={requests.length === 0}>
+          <button
+            type="button"
+            onClick={clearRequests}
+            className="clear-button"
+            disabled={requests.length === 0}
+          >
             Clear
           </button>
         </div>
@@ -282,7 +271,10 @@ function App() {
         ) : (
           <div className="requests-list">
             {requests.map((request) => (
-              <div key={request.id} className={`request-card ${request.status}`}>
+              <div
+                key={request.id}
+                className={`request-card ${request.status}`}
+              >
                 <div className="request-header">
                   <span className="request-method">{request.method}</span>
                   <span className="request-time">
@@ -321,7 +313,12 @@ function App() {
       <div className="events-section">
         <div className="section-header">
           <h2>Received Events</h2>
-          <button onClick={clearEvents} className="clear-button" disabled={events.length === 0}>
+          <button
+            type="button"
+            onClick={clearEvents}
+            className="clear-button"
+            disabled={events.length === 0}
+          >
             Clear
           </button>
         </div>
@@ -356,19 +353,22 @@ function App() {
       <div className="info-section">
         <h3>How it works</h3>
         <p>
-          This example demonstrates both <code>useRequest</code> and <code>useEvent</code> hooks from the React SDK.
+          This example demonstrates both <code>useMethod</code> and{' '}
+          <code>useEvent</code> hooks from the React SDK.
         </p>
         <p>
-          <strong>useRequest:</strong> Send methods to the host app and automatically wait for responses.
-          The hook handles loading states, errors, and version checking.
+          <strong>useMethod:</strong> Send methods to the host app and
+          automatically wait for responses. The hook handles loading states,
+          errors, and version checking.
         </p>
         <p>
-          <strong>useEvent:</strong> Listen for events from the host app. Events can be responses to requests
-          or standalone notifications. The hook handles subscription and cleanup automatically.
+          <strong>useEvent:</strong> Listen for events from the host app. Events
+          can be responses to requests or standalone notifications. The hook
+          handles subscription and cleanup automatically.
         </p>
       </div>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

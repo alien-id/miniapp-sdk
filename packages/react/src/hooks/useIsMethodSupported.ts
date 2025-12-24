@@ -4,7 +4,7 @@ import {
   type MethodName,
   type Version,
 } from '@alien-id/contract';
-import { useAlien } from '../context';
+import { useAlien } from '.';
 
 export interface MethodSupportResult {
   /**
@@ -43,7 +43,7 @@ export interface MethodSupportResult {
  * }
  * ```
  */
-export function useMethodSupported(method: MethodName): MethodSupportResult {
+export function useIsMethodSupported(method: MethodName): MethodSupportResult {
   const { contractVersion } = useAlien();
 
   // Check if method is supported - only check if version exists
