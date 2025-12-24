@@ -1,7 +1,9 @@
+import { isBridgeAvailable } from '@alien-id/bridge';
 import type { Version } from '@alien-id/contract';
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   type ReactNode,
 } from 'react';
@@ -13,7 +15,7 @@ declare global {
   }
 }
 
-interface AlienContextValue {
+export interface AlienContextValue {
   /**
    * Auth token injected by the host app.
    * `undefined` if not yet available.
@@ -27,10 +29,10 @@ interface AlienContextValue {
   /**
    * Whether the bridge is available (running inside Alien App).
    */
-  isInAlienApp: boolean;
+  isBridgeAvailable: boolean;
 }
 
-const AlienContext = createContext<AlienContextValue | null>(null);
+export const AlienContext = createContext<AlienContextValue | null>(null);
 
 export interface AlienProviderProps {
   children: ReactNode;
@@ -67,13 +69,25 @@ export function AlienProvider({ children }: AlienProviderProps): ReactNode {
       }
     }
 
-    const isInAlienApp =
-      typeof window !== 'undefined' && '__miniAppsBridge__' in window;
-
-    return { authToken, contractVersion, isInAlienApp };
+    return {
+      authToken,
+      contractVersion,
+      isBridgeAvailable: isBridgeAvailable(),
+    };
   }, []);
 
-  return <AlienContext.Provider value={value}>{children}</AlienContext.Provider>;
+  // Warn if bridge is not available on mount
+  useEffect(() => {
+    if (!value.isBridgeAvailable) {
+      console.warn(
+        '[@alien-id/react] Bridge is not available. Running in dev mode? The SDK will handle errors gracefully, but bridge communication will not work.',
+      );
+    }
+  }, [value.isBridgeAvailable]);
+
+  return (
+    <AlienContext.Provider value={value}>{children}</AlienContext.Provider>
+  );
 }
 
 /**
@@ -82,7 +96,7 @@ export function AlienProvider({ children }: AlienProviderProps): ReactNode {
  *
  * @example
  * ```tsx
- * const { authToken, contractVersion, isInAlienApp } = useAlien();
+ * const { authToken, contractVersion, isBridgeAvailable } = useAlien();
  * ```
  */
 export function useAlien(): AlienContextValue {
