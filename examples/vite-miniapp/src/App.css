@@ -144,7 +144,7 @@
 }
 
 .form-textarea {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
   resize: vertical;
   min-height: 100px;
 }
@@ -257,7 +257,7 @@
 }
 
 .request-method {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
   font-size: 0.875rem;
   color: #646cff;
   font-weight: 600;
@@ -327,7 +327,7 @@
 .request-payload pre,
 .request-response pre {
   margin: 0;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
   font-size: 0.8125rem;
   color: rgba(255, 255, 255, 0.87);
   line-height: 1.5;
@@ -398,7 +398,7 @@
 }
 
 .event-name {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
   font-size: 0.875rem;
   color: #646cff;
   font-weight: 600;
@@ -419,7 +419,7 @@
 
 .event-payload pre {
   margin: 0;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
   font-size: 0.8125rem;
   color: rgba(255, 255, 255, 0.87);
   line-height: 1.5;
@@ -451,7 +451,7 @@
   background: #242424;
   padding: 0.2rem 0.4rem;
   border-radius: 4px;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
   font-size: 0.875rem;
   color: #646cff;
 }
