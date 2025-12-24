@@ -27,4 +27,19 @@ export interface Methods {
       challenge: string;
     }>
   >;
+  /**
+   * Ping request method for testing communication.
+   * @since 0.0.1
+   * @schema
+   */
+  'ping:request': CreateMethodPayload<
+    WithReqId<{
+      /**
+       * Message to send in the ping request.
+       * @since 0.0.1
+       * @schema
+       */
+      message: string;
+    }>
+  >;
 }

@@ -13,12 +13,20 @@ export { getMethodMinVersion, isMethodSupported } from '@alien-id/contract';
 // Context & Provider
 export { AlienProvider, type AlienProviderProps, useAlien } from './context';
 // Errors
-export { MethodNotSupportedError } from './errors';
+export {
+  BridgeError,
+  BridgeTimeoutError,
+  BridgeUnavailableError,
+  BridgeWindowUnavailableError,
+  MethodNotSupportedError,
+  ReactSDKError,
+} from './errors';
 // Hooks
 export {
   type MethodSupportResult,
   type UseRequestOptions,
   useAuthToken,
+  useBridgeAvailable,
   useContractVersion,
   useEvent,
   useMethodSupported,

@@ -1,9 +1,25 @@
+import {
+  BridgeError,
+  BridgeTimeoutError,
+  BridgeUnavailableError,
+  BridgeWindowUnavailableError,
+} from '@alien-id/bridge';
 import type { MethodName, Version } from '@alien-id/contract';
+
+/**
+ * Base class for all React SDK errors.
+ */
+export class ReactSDKError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ReactSDKError';
+  }
+}
 
 /**
  * Error thrown when a method is not supported by the current contract version.
  */
-export class MethodNotSupportedError extends Error {
+export class MethodNotSupportedError extends ReactSDKError {
   readonly method: MethodName;
   readonly contractVersion: Version | undefined;
   readonly minVersion: Version | undefined;
@@ -23,3 +39,11 @@ export class MethodNotSupportedError extends Error {
     this.minVersion = minVersion;
   }
 }
+
+// Re-export bridge errors for convenience
+export {
+  BridgeError,
+  BridgeTimeoutError,
+  BridgeUnavailableError,
+  BridgeWindowUnavailableError,
+};

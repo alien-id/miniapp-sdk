@@ -4,6 +4,19 @@ import type {
   MethodName,
   MethodPayload,
 } from '@alien-id/contract';
+import { BridgeUnavailableError } from './errors';
+
+// Bridge interface for mobile/desktop clients
+interface MiniAppsBridge {
+  postMessage(data: string): void;
+}
+
+// Extend Window interface to include the bridge
+declare global {
+  interface Window {
+    __miniAppsBridge__?: MiniAppsBridge;
+  }
+}
 
 export type EventMessage<E extends EventName = EventName> = {
   type: 'event';
@@ -19,44 +32,34 @@ export type MethodMessage<M extends MethodName = MethodName> = {
 
 export type Message = EventMessage | MethodMessage;
 
-// Bridge interface for mobile/desktop clients
-interface MiniAppsBridge {
-  postMessage(data: string): void;
-}
-
-// Extend Window interface to include the bridge
-declare global {
-  interface Window {
-    __miniAppsBridge__?: MiniAppsBridge;
+/**
+ * Gets the bridge instance if available.
+ * Core function used internally by the bridge package.
+ * @returns The bridge instance, or `undefined` if not available.
+ */
+export function getBridge(): MiniAppsBridge | undefined {
+  if (typeof window === 'undefined') {
+    return undefined;
   }
+
+  const bridge = window.__miniAppsBridge__;
+  if (!bridge || typeof bridge.postMessage !== 'function') {
+    return undefined;
+  }
+
+  return bridge;
 }
 
 /**
  * Sends a message using the native bridge.
- * Logs warnings instead of throwing errors to allow dev mode without host app.
+ * Throws errors if bridge is unavailable (strict behavior).
  */
 export function sendMessage(message: Message): void {
-  if (typeof window === 'undefined') {
-    console.warn(
-      '[Bridge] Cannot send message: window is not available. This SDK requires a browser environment.',
-      message,
-    );
-    return;
+  const bridge = getBridge();
+  if (!bridge) {
+    throw new BridgeUnavailableError();
   }
 
-  // TODO: Decide if we need to throw an error here or just log a warning and return
-  // Use native bridge if available
-  const bridge = window.__miniAppsBridge__;
-  if (!bridge || typeof bridge.postMessage !== 'function') {
-    console.error(
-      '[Bridge] Cannot send message: bridge is not available. Running in dev mode without host app?',
-      'Message:',
-      message,
-    );
-    throw new Error('Bridge is not available');
-  }
-
-  // Fallback to postMessage if bridge is not available
   bridge.postMessage(JSON.stringify(message));
 }
 
@@ -77,16 +80,15 @@ function isMessage(data: unknown): data is Message {
 /**
  * Sets up a message listener that handles both stringified and object messages.
  * This works for all platforms (web, mobile, desktop).
- * Returns a no-op cleanup function if window is not available (e.g., in test environments).
+ * Returns a no-op cleanup function if window is not available (e.g., SSR scenarios).
  */
 export function setupMessageListener(
   handler: (message: Message) => void,
 ): () => void {
   if (typeof window === 'undefined') {
+    // Return no-op cleanup function for SSR compatibility
     return () => {
-      console.warn(
-        '[Bridge] Cannot setup message listener: window is not available. This SDK requires a browser environment.',
-      );
+      // No-op
     };
   }
 

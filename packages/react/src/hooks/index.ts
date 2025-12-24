@@ -1,4 +1,5 @@
 export { useAuthToken } from './useAuthToken';
+export { useBridgeAvailable } from './useBridgeAvailable';
 export { useContractVersion } from './useContractVersion';
 export { useEvent } from './useEvent';
 export {

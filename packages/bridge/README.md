@@ -12,7 +12,7 @@ The bridge uses the native bridge to communicate between the webview and the hos
 - **Host → Miniapp**: Messages are received via `window.addEventListener('message')`
 - **Message Format**: `{ type: 'event' | 'method', name: string, payload: object }`
 
-**Development Mode**: If the bridge is not available (e.g., running in a regular browser for development), the SDK will log warnings to the console but will not throw errors. This allows developers to test their miniapp code outside of Alien App. However, actual communication will not work - requests will timeout and events will not be received.
+**Strict Behavior**: This package throws errors when the bridge is unavailable. If you're building a React app, use `@alien-id/react` instead, which handles errors gracefully and provides a better developer experience.
 
 ## API
 
@@ -109,6 +109,35 @@ The host app needs to:
    ```
 
 All types are provided by `@alien-id/contract` for full type safety.
+
+## Error Handling
+
+This package uses strict error handling - it throws errors when the bridge is unavailable. Error classes are organized hierarchically:
+
+- **`BridgeError`**: Base class for all bridge-related errors
+  - **`BridgeUnavailableError`**: Thrown when `window.__miniAppsBridge__` is not available
+  - **`BridgeTimeoutError`**: Thrown when a request times out
+  - **`BridgeWindowUnavailableError`**: Thrown when `window` is undefined
+
+### Example: Handling Errors
+
+```typescript
+import { request, BridgeError, BridgeUnavailableError } from '@alien-id/bridge';
+
+try {
+  const response = await request('auth.init:request', params, 'auth.init:response.token');
+} catch (error) {
+  if (error instanceof BridgeUnavailableError) {
+    console.error('Bridge is not available - are you running in Alien App?');
+  } else if (error instanceof BridgeError) {
+    console.error('Bridge error:', error.message);
+  } else {
+    console.error('Unexpected error:', error);
+  }
+}
+```
+
+**Note**: For React applications, use `@alien-id/react` which handles these errors gracefully and provides a better developer experience.
 
 ## Examples
 

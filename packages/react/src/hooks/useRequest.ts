@@ -9,7 +9,7 @@ import {
 } from '@alien-id/contract';
 import { useCallback, useState } from 'react';
 import { useAlien } from '../context';
-import { MethodNotSupportedError } from '../errors';
+import { BridgeError, MethodNotSupportedError } from '../errors';
 
 interface UseRequestState<E extends EventName> {
   data: EventPayload<E> | undefined;
@@ -83,7 +83,7 @@ export function useRequest<M extends MethodName, E extends EventName>(
   options: UseRequestOptions = {},
 ): UseRequestResult<M, E> {
   const { checkVersion = true } = options;
-  const { contractVersion } = useAlien();
+  const { contractVersion, isBridgeAvailable } = useAlien();
 
   const [state, setState] = useState<UseRequestState<E>>({
     data: undefined,
@@ -101,15 +101,19 @@ export function useRequest<M extends MethodName, E extends EventName>(
       params: Omit<MethodPayload<M>, 'reqId'>,
       requestOptions?: RequestOptions,
     ): Promise<EventPayload<E> | undefined> => {
+      // Check if bridge is available
+      if (!isBridgeAvailable) {
+        const error = new Error(
+          'Bridge is not available. Running in dev mode? Bridge communication will not work.',
+        );
+        console.warn('[@alien-id/react]', error.message);
+        setState({ data: undefined, error, isLoading: false });
+        return undefined;
+      }
+
       // Check version support before executing
       if (checkVersion) {
-        if (!contractVersion) {
-          // No version provided - allow execution (fallback behavior)
-          // Could optionally log a warning here if needed
-          console.warn(
-            '[useRequest] No contract version provided, allowing execution',
-          );
-        } else if (!isMethodSupported(method, contractVersion)) {
+        if (contractVersion && !isMethodSupported(method, contractVersion)) {
           const error = new MethodNotSupportedError(
             method,
             contractVersion,
@@ -132,12 +136,23 @@ export function useRequest<M extends MethodName, E extends EventName>(
         setState({ data: response, error: undefined, isLoading: false });
         return response;
       } catch (err) {
+        // Handle bridge errors gracefully
+        if (err instanceof BridgeError) {
+          console.warn('[@alien-id/react] Bridge error:', err.message);
+          const error = new Error(
+            `Bridge communication failed: ${err.message}`,
+          );
+          setState({ data: undefined, error, isLoading: false });
+          return undefined;
+        }
+
+        // Handle other errors
         const error = err instanceof Error ? err : new Error(String(err));
         setState({ data: undefined, error, isLoading: false });
         return undefined;
       }
     },
-    [method, responseEvent, checkVersion, contractVersion],
+    [method, responseEvent, checkVersion, contractVersion, isBridgeAvailable],
   );
 
   const reset = useCallback(() => {

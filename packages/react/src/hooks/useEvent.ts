@@ -1,6 +1,7 @@
 import { on } from '@alien-id/bridge';
 import type { EventName, EventPayload } from '@alien-id/contract';
 import { useEffect, useRef } from 'react';
+import { useAlien } from '../context';
 
 type EventCallback<E extends EventName> = (payload: EventPayload<E>) => void;
 
@@ -30,13 +31,31 @@ export function useEvent<E extends EventName>(
 ): void {
   const callbackRef = useRef(callback);
   callbackRef.current = callback;
+  const { isBridgeAvailable } = useAlien();
 
   useEffect(() => {
+    // Return early if bridge is not available
+    if (!isBridgeAvailable) {
+      console.warn(
+        '[@alien-id/react] Bridge is not available. Event listener will not be set up. Running in dev mode?',
+      );
+      return;
+    }
+
     const handler: EventCallback<E> = (payload) => {
       callbackRef.current(payload);
     };
 
-    const unsubscribe = on(event, handler);
-    return unsubscribe;
-  }, [event]);
+    try {
+      const unsubscribe = on(event, handler);
+      return unsubscribe;
+    } catch (error) {
+      // Handle any errors gracefully (shouldn't happen with on(), but just in case)
+      console.warn(
+        '[@alien-id/react] Failed to set up event listener:',
+        error instanceof Error ? error.message : String(error),
+      );
+      return;
+    }
+  }, [event, isBridgeAvailable]);
 }

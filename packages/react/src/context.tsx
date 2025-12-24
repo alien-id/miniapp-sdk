@@ -1,7 +1,9 @@
 import type { Version } from '@alien-id/contract';
+import { isBridgeAvailable } from '@alien-id/bridge';
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   type ReactNode,
 } from 'react';
@@ -27,7 +29,7 @@ interface AlienContextValue {
   /**
    * Whether the bridge is available (running inside Alien App).
    */
-  isInAlienApp: boolean;
+  isBridgeAvailable: boolean;
 }
 
 const AlienContext = createContext<AlienContextValue | null>(null);
@@ -67,11 +69,17 @@ export function AlienProvider({ children }: AlienProviderProps): ReactNode {
       }
     }
 
-    const isInAlienApp =
-      typeof window !== 'undefined' && '__miniAppsBridge__' in window;
-
-    return { authToken, contractVersion, isInAlienApp };
+    return { authToken, contractVersion, isBridgeAvailable: isBridgeAvailable() };
   }, []);
+
+  // Warn if bridge is not available on mount
+  useEffect(() => {
+    if (!value.isBridgeAvailable) {
+      console.warn(
+        '[@alien-id/react] Bridge is not available. Running in dev mode? The SDK will handle errors gracefully, but bridge communication will not work.',
+      );
+    }
+  }, [value.isBridgeAvailable]);
 
   return <AlienContext.Provider value={value}>{children}</AlienContext.Provider>;
 }
@@ -82,7 +90,7 @@ export function AlienProvider({ children }: AlienProviderProps): ReactNode {
  *
  * @example
  * ```tsx
- * const { authToken, contractVersion, isInAlienApp } = useAlien();
+ * const { authToken, contractVersion, isBridgeAvailable } = useAlien();
  * ```
  */
 export function useAlien(): AlienContextValue {
