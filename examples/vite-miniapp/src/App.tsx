@@ -103,7 +103,7 @@ function App() {
 
     setRequests((prev) => [requestLog, ...prev]);
 
-    const response = await executeFn(
+    const { data, error } = await executeFn(
       payload as Parameters<typeof executeFn>[0],
       { timeout: 5000 },
     );
@@ -113,8 +113,8 @@ function App() {
         req.id === requestId
           ? {
               ...req,
-              response,
-              status: response ? ('success' as const) : ('error' as const),
+              response: error ? { error: error.message } : data,
+              status: error ? ('error' as const) : ('success' as const),
             }
           : req,
       ),

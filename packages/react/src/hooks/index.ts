@@ -4,4 +4,8 @@ export {
   type MethodSupportResult,
   useIsMethodSupported,
 } from './useIsMethodSupported';
-export { type UseMethodOptions, useMethod } from './useMethod';
+export {
+  type UseMethodExecuteResult,
+  type UseMethodOptions,
+  useMethod,
+} from './useMethod';

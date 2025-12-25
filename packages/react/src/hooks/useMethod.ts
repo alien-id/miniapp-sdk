@@ -11,9 +11,13 @@ import { useCallback, useMemo, useState } from 'react';
 import { BridgeError, MethodNotSupportedError } from '../errors';
 import { useAlien } from './useAlien';
 
-interface UseMethodState<E extends EventName> {
+export interface UseMethodExecuteResult<E extends EventName> {
   data: EventPayload<E> | undefined;
   error: Error | undefined;
+}
+
+interface UseMethodState<E extends EventName>
+  extends UseMethodExecuteResult<E> {
   isLoading: boolean;
 }
 
@@ -31,7 +35,7 @@ interface UseMethodResult<M extends MethodName, E extends EventName>
   execute: (
     params: Omit<MethodPayload<M>, 'reqId'>,
     options?: RequestOptions,
-  ) => Promise<EventPayload<E> | undefined>;
+  ) => Promise<UseMethodExecuteResult<E>>;
   reset: () => void;
   /**
    * Whether the method is supported by the current contract version.
@@ -63,9 +67,13 @@ interface UseMethodResult<M extends MethodName, E extends EventName>
  *
  *   const handleAuth = async () => {
  *     // Errors are automatically set in the `error` state - no try/catch needed!
- *     const response = await execute({ appId: 'my-app', challenge: 'random' });
- *     if (response) {
- *       console.log('Success:', response);
+ *     const { error, data } = await execute({ appId: 'my-app', challenge: 'random' });
+ *     if (error) {
+ *         console.error(error);
+ *         return;
+ *     }
+ *     if (data) {
+ *       console.log('Success:', data);
  *     }
  *   };
  *
@@ -100,7 +108,7 @@ export function useMethod<M extends MethodName, E extends EventName>(
     async (
       params: Omit<MethodPayload<M>, 'reqId'>,
       requestOptions?: RequestOptions,
-    ): Promise<EventPayload<E> | undefined> => {
+    ): Promise<UseMethodExecuteResult<E>> => {
       // Check if bridge is available
       if (!isBridgeAvailable) {
         const error = new Error(
@@ -108,7 +116,7 @@ export function useMethod<M extends MethodName, E extends EventName>(
         );
         console.warn('[@alien-id/react]', error.message);
         setState({ data: undefined, error, isLoading: false });
-        return;
+        return { data: undefined, error };
       }
 
       // Check version support before executing
@@ -120,7 +128,7 @@ export function useMethod<M extends MethodName, E extends EventName>(
             getMethodMinVersion(method),
           );
           setState({ data: undefined, error, isLoading: false });
-          return;
+          return { data: undefined, error };
         }
       }
 
@@ -134,22 +142,19 @@ export function useMethod<M extends MethodName, E extends EventName>(
           requestOptions,
         );
         setState({ data: response, error: undefined, isLoading: false });
-        return response;
+        return { data: response, error: undefined };
       } catch (err) {
         // Handle bridge errors gracefully
         if (err instanceof BridgeError) {
           console.warn('[@alien-id/react] Bridge error:', err.message);
-          const error = new Error(
-            `Bridge communication failed: ${err.message}`,
-          );
-          setState({ data: undefined, error, isLoading: false });
-          return;
+          setState({ data: undefined, error: err, isLoading: false });
+          return { data: undefined, error: err };
         }
 
         // Handle other errors
         const error = err instanceof Error ? err : new Error(String(err));
         setState({ data: undefined, error, isLoading: false });
-        return;
+        return { data: undefined, error };
       }
     },
     [method, responseEvent, checkVersion, contractVersion, isBridgeAvailable],

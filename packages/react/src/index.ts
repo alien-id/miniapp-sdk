@@ -25,6 +25,7 @@ export {
 // Hooks
 export {
   type MethodSupportResult,
+  type UseMethodExecuteResult,
   type UseMethodOptions,
   useAlien,
   useEvent,
