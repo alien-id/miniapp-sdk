@@ -1,5 +1,6 @@
-import { isBridgeAvailable } from '@alien-id/bridge';
+import { isBridgeAvailable, send } from '@alien-id/bridge';
 import type { Version } from '@alien-id/contract';
+
 import {
   createContext,
   type ReactNode,
@@ -82,6 +83,13 @@ export function AlienProvider({ children }: AlienProviderProps): ReactNode {
       console.warn(
         '[@alien-id/react] Bridge is not available. Running in dev mode? The SDK will handle errors gracefully, but bridge communication will not work.',
       );
+    }
+  }, [value.isBridgeAvailable]);
+
+  // Signal ready to host app when miniapp is loaded
+  useEffect(() => {
+    if (value.isBridgeAvailable) {
+      send('app:ready', {});
     }
   }, [value.isBridgeAvailable]);
 
