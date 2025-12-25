@@ -9,7 +9,7 @@
 
   "files": {
     "ignoreUnknown": false,
-    "includes": ["**/*.ts", "!packages/bridge/examples"]
+    "includes": ["**/*.ts", "**/*.tsx", "!packages/bridge/examples"]
   },
 
   "formatter": {

@@ -15,4 +15,10 @@ export type {
   MethodPayload,
   MethodVersionedPayload,
 } from './methods/types';
-export { getReleaseVersion, releases } from './methods/versions';
+export {
+  getMethodMinVersion,
+  getReleaseVersion,
+  isMethodSupported,
+  releases,
+} from './methods/versions';
+export type { Version } from './utils';

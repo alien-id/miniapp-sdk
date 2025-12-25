@@ -1,235 +1,374 @@
-import { useState, useEffect } from 'react'
-import { on, request } from '@alien-id/bridge'
-import type { EventName, EventPayload } from '@alien-id/bridge'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import {
+  type EventName,
+  type MethodName,
+  useAlien,
+  useEvent,
+  useMethod,
+} from '@alien-id/react';
+import { useState } from 'react';
+import './App.css';
 
-interface ReceivedEvent<E extends EventName = EventName> {
-  name: E
-  payload: EventPayload<E>
-  timestamp: Date
+interface EventLog {
+  id: string;
+  timestamp: Date;
+  event: string;
+  payload: unknown;
 }
 
+interface RequestLog {
+  id: string;
+  timestamp: Date;
+  method: MethodName;
+  requestPayload: unknown;
+  response?: unknown;
+  error?: string;
+  status: 'pending' | 'success' | 'error';
+}
+
+type MethodEventPair = {
+  method: MethodName;
+  event: EventName;
+  label: string;
+  getPayload: () => Record<string, unknown>;
+};
+
+const METHOD_EVENT_PAIRS: MethodEventPair[] = [
+  {
+    method: 'auth.init:request',
+    event: 'auth.init:response.token',
+    label: 'Auth Init',
+    getPayload: () => ({
+      appId: 'my-app-id',
+      challenge: `challenge-${Date.now()}`,
+    }),
+  },
+  {
+    method: 'ping:request',
+    event: 'ping:response',
+    label: 'Ping',
+    getPayload: () => ({
+      message: `Hello from miniapp at ${new Date().toLocaleTimeString()}`,
+    }),
+  },
+];
+
 function App() {
-  const [count, setCount] = useState(0)
-  const [receivedEvents, setReceivedEvents] = useState<ReceivedEvent[]>([])
-  const [appId, setAppId] = useState('my-app-id')
-  const [challenge, setChallenge] = useState('challenge-123')
-  const [isLoading, setIsLoading] = useState(false)
+  const { isBridgeAvailable, authToken, contractVersion } = useAlien();
+  const [events, setEvents] = useState<EventLog[]>([]);
+  const [requests, setRequests] = useState<RequestLog[]>([]);
+  const [customPayload, setCustomPayload] = useState<string>('');
+  const [selectedPair, setSelectedPair] = useState<MethodEventPair>(
+    METHOD_EVENT_PAIRS[0],
+  );
 
-  useEffect(() => {
-    // Subscribe to events from the host app
-    const unsubscribe = on('auth.init:response.token', (payload) => {
-      console.log('Received event from host:', payload)
-      setReceivedEvents((prev) => [
-        {
-          name: 'auth.init:response.token',
-          payload,
-          timestamp: new Date(),
-        },
-        ...prev,
-      ])
-    })
+  // Setup selected method
+  const { execute, supported, error, data, isLoading } = useMethod(
+    selectedPair.method,
+    selectedPair.event,
+  );
 
-    // Cleanup on unmount
-    return () => {
-      unsubscribe()
-    }
-  }, [])
+  // Listen for events from the host app
+  useEvent(selectedPair.event, (payload: unknown) => {
+    const newEvent: EventLog = {
+      id: crypto.randomUUID(),
+      timestamp: new Date(),
+      event: selectedPair.event,
+      payload,
+    };
+    setEvents((prev) => [newEvent, ...prev]);
+  });
 
-  const handleSendMethod = async () => {
-    setIsLoading(true)
+  const handleSendRequest = async (executeFn: typeof execute) => {
+    let payload: Record<string, unknown>;
+
     try {
-      // Send method request to host app and wait for response event
-      const response = await request(
-        'auth.init:request',
-        {
-          appId,
-          challenge,
-        },
-        'auth.init:response.token', // Response event name
-        { timeout: 5000 }
-      )
-      console.log('Received response from host:', response)
+      if (customPayload.trim()) {
+        payload = JSON.parse(customPayload);
+      } else {
+        payload = selectedPair.getPayload();
+      }
     } catch (error) {
-      console.error('Request failed:', error)
-      // Add error to events list for visibility
-      setReceivedEvents((prev) => [
-        {
-          name: 'auth.init:response.token',
-          payload: { 
-            reqId: 'error',
-            token: '',
-            error: error instanceof Error ? error.message : String(error)
-          },
-          timestamp: new Date(),
-        },
-        ...prev,
-      ])
-    } finally {
-      setIsLoading(false)
+      alert(`Invalid JSON payload. ${(error as Error).message}`);
+      return;
     }
-  }
+
+    const requestId = crypto.randomUUID();
+    const requestLog: RequestLog = {
+      id: requestId,
+      timestamp: new Date(),
+      method: selectedPair.method,
+      requestPayload: payload,
+      status: 'pending',
+    };
+
+    setRequests((prev) => [requestLog, ...prev]);
+
+    const { data, error } = await executeFn(
+      payload as Parameters<typeof executeFn>[0],
+      { timeout: 5000 },
+    );
+
+    setRequests((prev) =>
+      prev.map((req) =>
+        req.id === requestId
+          ? {
+              ...req,
+              response: error ? { error: error.message } : data,
+              status: error ? ('error' as const) : ('success' as const),
+            }
+          : req,
+      ),
+    );
+  };
+
+  const clearEvents = () => {
+    setEvents([]);
+  };
+
+  const clearRequests = () => {
+    setRequests([]);
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React + Bridge</h1>
-      
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
+    <div className="app">
+      <header className="header">
+        <h1>Alien Miniapp SDK</h1>
+        <p className="subtitle">Request & Event Example</p>
+      </header>
 
-      <div className="card">
-        <h2>Bridge Communication</h2>
-        <p style={{ color: 'rgba(255, 255, 255, 0.6)', marginBottom: '1rem' }}>
-          Miniapp sends <strong>methods</strong> to host app and listens to <strong>events</strong> from host app
-        </p>
-        <div style={{ marginBottom: '1rem' }}>
-          <label 
-            htmlFor="appId-input" 
-            style={{ 
-              display: 'block', 
-              marginBottom: '0.5rem',
-              color: 'rgba(255, 255, 255, 0.87)',
-            }}
+      <div className="status-grid">
+        <div className="status-card">
+          <div className="status-label">Bridge Status</div>
+          <div
+            className={`status-value ${isBridgeAvailable ? 'status-success' : 'status-warning'}`}
           >
-            App ID:
-          </label>
-          <input
-            id="appId-input"
-            type="text"
-            value={appId}
-            onChange={(e) => setAppId(e.target.value)}
-            style={{
-              padding: '0.5rem',
-              width: '100%',
-              maxWidth: '300px',
-              marginBottom: '0.5rem',
-              backgroundColor: '#1a1a1a',
-              color: 'rgba(255, 255, 255, 0.87)',
-              border: '1px solid #646cff',
-              borderRadius: '8px',
-            }}
-          />
-          <label 
-            htmlFor="challenge-input" 
-            style={{ 
-              display: 'block', 
-              marginBottom: '0.5rem',
-              color: 'rgba(255, 255, 255, 0.87)',
-            }}
-          >
-            Challenge:
-          </label>
-          <input
-            id="challenge-input"
-            type="text"
-            value={challenge}
-            onChange={(e) => setChallenge(e.target.value)}
-            style={{
-              padding: '0.5rem',
-              width: '100%',
-              maxWidth: '300px',
-              marginBottom: '0.5rem',
-              backgroundColor: '#1a1a1a',
-              color: 'rgba(255, 255, 255, 0.87)',
-              border: '1px solid #646cff',
-              borderRadius: '8px',
-            }}
-          />
-          <button onClick={handleSendMethod} disabled={isLoading}>
-            {isLoading ? 'Sending...' : 'Send Method (auth.init:request)'}
-          </button>
+            {isBridgeAvailable ? 'Available' : 'Not Available'}
+          </div>
+          {!isBridgeAvailable && (
+            <div className="status-hint">
+              Open this miniapp in Alien App to enable bridge communication
+            </div>
+          )}
         </div>
 
-        <div>
-          <h3 style={{ color: 'rgba(255, 255, 255, 0.87)' }}>
-            Received Events ({receivedEvents.length})
-          </h3>
-          {receivedEvents.length === 0 ? (
-            <p style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-              No events received yet. Events from the host app will appear here.
-            </p>
-          ) : (
-            <div
-              style={{
-                maxHeight: '300px',
-                overflowY: 'auto',
-                border: '1px solid #646cff',
-                borderRadius: '8px',
-                padding: '1rem',
-                backgroundColor: '#1a1a1a',
+        <div className="status-card">
+          <div className="status-label">Auth Token</div>
+          <div
+            className={`status-value ${authToken ? 'status-success' : 'status-info'}`}
+          >
+            {authToken ? 'Present' : 'Not Available'}
+          </div>
+          {authToken && (
+            <div className="status-hint">
+              Token: {authToken.substring(0, 20)}...
+            </div>
+          )}
+        </div>
+
+        <div className="status-card">
+          <div className="status-label">Contract Version</div>
+          <div className="status-value status-info">
+            {contractVersion ?? 'Unknown'}
+          </div>
+        </div>
+      </div>
+
+      <div className="request-section">
+        <h2>Send Request</h2>
+        <div className="request-form">
+          <div className="form-group">
+            <label htmlFor="method-select">Method / Event Pair</label>
+            <select
+              id="method-select"
+              value={METHOD_EVENT_PAIRS.findIndex(
+                (p) => p.method === selectedPair.method,
+              )}
+              onChange={(e) => {
+                const pair = METHOD_EVENT_PAIRS[Number(e.target.value)];
+                setSelectedPair(pair);
+                setCustomPayload('');
               }}
+              className="form-select"
             >
-              {receivedEvents.map((event, index) => (
-                <div
-                  key={`${event.timestamp.getTime()}-${event.payload.reqId}-${index}`}
-                  style={{
-                    marginBottom: '1rem',
-                    padding: '0.75rem',
-                    backgroundColor: '#242424',
-                    borderRadius: '4px',
-                    border: '1px solid #646cff',
-                  }}
-                >
-                  <div 
-                    style={{ 
-                      fontWeight: 'bold', 
-                      marginBottom: '0.5rem',
-                      color: 'rgba(255, 255, 255, 0.87)',
-                    }}
-                  >
-                    {event.name}
-                  </div>
-                  <div 
-                    style={{ 
-                      fontSize: '0.9rem', 
-                      color: 'rgba(255, 255, 255, 0.6)', 
-                      marginBottom: '0.5rem' 
-                    }}
-                  >
-                    {event.timestamp.toLocaleTimeString()}
-                  </div>
-                  <pre
-                    style={{
-                      margin: 0,
-                      fontSize: '0.85rem',
-                      overflow: 'auto',
-                      color: 'rgba(255, 255, 255, 0.87)',
-                      backgroundColor: '#1a1a1a',
-                      padding: '0.5rem',
-                      borderRadius: '4px',
-                      border: '1px solid #333',
-                    }}
-                  >
-                    {JSON.stringify(event.payload, null, 2)}
-                  </pre>
-                </div>
+              {METHOD_EVENT_PAIRS.map((pair, index) => (
+                <option key={pair.method} value={index}>
+                  {pair.label} ({pair.method} → {pair.event})
+                </option>
               ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="payload-input">
+              Payload (JSON){' '}
+              <span className="label-hint">Leave empty for default</span>
+            </label>
+            <textarea
+              id="payload-input"
+              value={customPayload}
+              onChange={(e) => setCustomPayload(e.target.value)}
+              placeholder={JSON.stringify(selectedPair.getPayload(), null, 2)}
+              className="form-textarea"
+              rows={4}
+            />
+          </div>
+
+          <div className="form-actions">
+            <button
+              type="button"
+              onClick={() => handleSendRequest(execute)}
+              disabled={isLoading || !supported || !isBridgeAvailable}
+              className="send-button"
+            >
+              {isLoading ? 'Sending...' : 'Send Request'}
+            </button>
+            {!supported && (
+              <span className="form-error">
+                Method not supported in current version
+              </span>
+            )}
+            {!isBridgeAvailable && (
+              <span className="form-error">Bridge not available</span>
+            )}
+          </div>
+
+          {error && (
+            <div className="error-banner">
+              <strong>Error:</strong> {error.message}
+            </div>
+          )}
+
+          {data && (
+            <div className="success-banner">
+              <strong>Last Response:</strong>
+              <pre>{JSON.stringify(data, null, 2)}</pre>
             </div>
           )}
         </div>
       </div>
 
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+      <div className="requests-section">
+        <div className="section-header">
+          <h2>Request History</h2>
+          <button
+            type="button"
+            onClick={clearRequests}
+            className="clear-button"
+            disabled={requests.length === 0}
+          >
+            Clear
+          </button>
+        </div>
+
+        {requests.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">📤</div>
+            <p>No requests sent yet</p>
+            <p className="empty-hint">
+              Send a request using the form above to see it here
+            </p>
+          </div>
+        ) : (
+          <div className="requests-list">
+            {requests.map((request) => (
+              <div
+                key={request.id}
+                className={`request-card ${request.status}`}
+              >
+                <div className="request-header">
+                  <span className="request-method">{request.method}</span>
+                  <span className="request-time">
+                    {request.timestamp.toLocaleTimeString()}
+                  </span>
+                  <span className={`request-status ${request.status}`}>
+                    {request.status === 'pending' && '⏳ Pending'}
+                    {request.status === 'success' && '✅ Success'}
+                    {request.status === 'error' && '❌ Error'}
+                  </span>
+                </div>
+                <div className="request-details">
+                  <div className="request-payload">
+                    <strong>Request:</strong>
+                    <pre>{JSON.stringify(request.requestPayload, null, 2)}</pre>
+                  </div>
+                  {request.response !== undefined && (
+                    <div className="request-response success">
+                      <strong>Response:</strong>
+                      <pre>{JSON.stringify(request.response, null, 2)}</pre>
+                    </div>
+                  )}
+                  {request.error && (
+                    <div className="request-response error">
+                      <strong>Error:</strong>
+                      <pre>{String(request.error)}</pre>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="events-section">
+        <div className="section-header">
+          <h2>Received Events</h2>
+          <button
+            type="button"
+            onClick={clearEvents}
+            className="clear-button"
+            disabled={events.length === 0}
+          >
+            Clear
+          </button>
+        </div>
+
+        {events.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">📡</div>
+            <p>No events received yet</p>
+            <p className="empty-hint">
+              Events from the host app will appear here when received
+            </p>
+          </div>
+        ) : (
+          <div className="events-list">
+            {events.map((event) => (
+              <div key={event.id} className="event-card">
+                <div className="event-header">
+                  <span className="event-name">{event.event}</span>
+                  <span className="event-time">
+                    {event.timestamp.toLocaleTimeString()}
+                  </span>
+                </div>
+                <div className="event-payload">
+                  <pre>{JSON.stringify(event.payload, null, 2)}</pre>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="info-section">
+        <h3>How it works</h3>
+        <p>
+          This example demonstrates both <code>useMethod</code> and{' '}
+          <code>useEvent</code> hooks from the React SDK.
+        </p>
+        <p>
+          <strong>useMethod:</strong> Send methods to the host app and
+          automatically wait for responses. The hook handles loading states,
+          errors, and version checking.
+        </p>
+        <p>
+          <strong>useEvent:</strong> Listen for events from the host app. Events
+          can be responses to requests or standalone notifications. The hook
+          handles subscription and cleanup automatically.
+        </p>
+      </div>
+    </div>
+  );
 }
 
-export default App
+export default App;

@@ -12,6 +12,7 @@
   "dependencies": {
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "@alien-id/react": "workspace:*",
     "@alien-id/bridge": "workspace:*"
   },
   "devDependencies": {

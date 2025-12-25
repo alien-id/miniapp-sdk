@@ -66,18 +66,11 @@ jobs:
         working-directory: packages/contract
         run: bun run generate-schemas
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          registry-url: "https://npm.pkg.github.com"
-          scope: "@alien-id"
-
       - name: Publish to GitHub Packages
         working-directory: packages/contract
-        run: npm publish
+        run: bun publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload JSON schema artifacts
         uses: actions/upload-artifact@v4

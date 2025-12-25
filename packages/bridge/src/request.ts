@@ -4,6 +4,7 @@ import type {
   MethodName,
   MethodPayload,
 } from '@alien-id/contract';
+import { BridgeTimeoutError } from './errors';
 import { off, on } from './events';
 import { sendMessage } from './transport';
 
@@ -30,15 +31,15 @@ export async function request<M extends MethodName, E extends EventName>(
   const timeout = options.timeout || DEFAULT_TIMEOUT;
 
   // Add reqId to params
-  const payload: MethodPayload<M> = {
+  const payload = {
     ...params,
     reqId,
-  };
+  } as MethodPayload<M>;
 
   return new Promise<EventPayload<E>>((resolve, reject) => {
     const timeoutId = setTimeout(() => {
       cleanup();
-      reject(new Error(`Request timeout: ${String(method)}`));
+      reject(new BridgeTimeoutError(String(method), timeout));
     }, timeout);
 
     const cleanup = () => {

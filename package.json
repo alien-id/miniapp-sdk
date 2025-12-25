@@ -1,6 +1,9 @@
 {
   "private": true,
   "workspaces": ["packages/*", "examples/*"],
+  "scripts": {
+    "build:packages": "bun run --filter './packages/*' build"
+  },
   "devDependencies": {
     "@biomejs/biome": "2.3.10"
   }

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, expect, test } from 'bun:test';
+import { BridgeUnavailableError } from '../src/errors';
 import type { Message } from '../src/transport';
 import { sendMessage, setupMessageListener } from '../src/transport';
 
@@ -90,7 +91,7 @@ test('sendMessage - should use native bridge if available', () => {
   expect(postMessageCalls.length).toBe(0);
 });
 
-test('sendMessage - should log warning and not throw if bridge not available', () => {
+test('sendMessage - should throw BridgeUnavailableError if bridge not available', () => {
   delete mockWindow.__miniAppsBridge__;
   // Update the global window reference
   (globalThis as { window: typeof mockWindow }).window = mockWindow;
@@ -101,34 +102,15 @@ test('sendMessage - should log warning and not throw if bridge not available', (
     payload: { token: 'test', reqId: '123' },
   };
 
-  // Mock console.warn to verify warning is logged
-  const originalWarn = console.warn;
-  const warnCalls: unknown[] = [];
-  console.warn = (...args: unknown[]) => {
-    warnCalls.push(...args);
-  };
-
-  // Should not throw, just log warning
-  expect(() => sendMessage(message)).not.toThrow();
-
-  // Verify warning was logged
-  expect(warnCalls.length).toBeGreaterThan(0);
-  expect(
-    warnCalls.some(
-      (arg) =>
-        typeof arg === 'string' && arg.includes('bridge is not available'),
-    ),
-  ).toBe(true);
+  // Should throw BridgeUnavailableError if bridge is not available
+  expect(() => sendMessage(message)).toThrow(BridgeUnavailableError);
 
   // Verify message was not sent
   expect(postMessageCalls.length).toBe(0);
   expect(bridgePostMessageCalls.length).toBe(0);
-
-  // Restore console.warn
-  console.warn = originalWarn;
 });
 
-test('sendMessage - should log warning if window is undefined (SSR)', () => {
+test('sendMessage - should throw BridgeUnavailableError if window is undefined (SSR)', () => {
   // Delete window to simulate SSR environment
   delete (globalThis as { window?: unknown }).window;
 
@@ -138,27 +120,13 @@ test('sendMessage - should log warning if window is undefined (SSR)', () => {
     payload: { token: 'test', reqId: '123' },
   };
 
-  // Mock console.warn to verify warning is logged
-  const originalWarn = console.warn;
-  const warnCalls: unknown[] = [];
-  console.warn = (...args: unknown[]) => {
-    warnCalls.push(...args);
-  };
+  // Should throw BridgeUnavailableError when window is undefined (getBridge returns undefined)
+  expect(() => sendMessage(message)).toThrow(BridgeUnavailableError);
 
-  // Should not throw, just log warning
-  expect(() => sendMessage(message)).not.toThrow();
+  // Verify message was not sent
+  expect(postMessageCalls.length).toBe(0);
+  expect(bridgePostMessageCalls.length).toBe(0);
 
-  // Verify warning was logged
-  expect(warnCalls.length).toBeGreaterThan(0);
-  expect(
-    warnCalls.some(
-      (arg) =>
-        typeof arg === 'string' && arg.includes('window is not available'),
-    ),
-  ).toBe(true);
-
-  // Restore console.warn and window
-  console.warn = originalWarn;
   // Restore window for other tests
   (globalThis as { window: typeof mockWindow }).window = mockWindow;
 });

@@ -22,4 +22,25 @@ export interface Events {
       token: string;
     }>
   >;
+  /**
+   * Ping response event for testing communication.
+   * @since 0.0.1
+   * @schema
+   */
+  'ping:response': CreateEventPayload<
+    WithReqId<{
+      /**
+       * Echoed message from the ping request.
+       * @since 0.0.1
+       * @schema
+       */
+      message: string;
+      /**
+       * Timestamp when the ping was processed.
+       * @since 0.0.1
+       * @schema
+       */
+      timestamp: string;
+    }>
+  >;
 }

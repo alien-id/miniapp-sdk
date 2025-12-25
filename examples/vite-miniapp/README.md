@@ -1,18 +1,20 @@
-# Miniapp Example
+# Alien Miniapp SDK - Events Example
 
-This is a miniapp example that demonstrates how to use the `@alien-id/bridge` package in a React + TypeScript + Vite application.
+This example demonstrates how to use the `@alien-id/react` SDK to listen for events from the host app in a React + TypeScript + Vite application.
 
 ## What This Example Shows
 
-- How to **send methods** to the host app using `request()`
-- How to **listen to events** from the host app using `on()`
-- Type-safe communication with the bridge
-- Request-response pattern with timeout handling
+- How to use the `useEvent` hook to listen for events from the host app
+- How to check bridge availability with `useBridgeAvailable`
+- How to access auth token and contract version with `useAuthToken` and `useContractVersion`
+- Clean, modern UI showcasing event reception in real-time
 
-## Communication Pattern
+## Features
 
-- **Miniapp** → **Host App**: Sends methods (e.g., `auth.init:request`)
-- **Host App** → **Miniapp**: Sends events (e.g., `auth.init:response.token`)
+- **Event Listening**: Automatically listens for `auth.init:response.token` events
+- **Bridge Status**: Shows whether the bridge is available
+- **Event Log**: Displays all received events with timestamps and payloads
+- **Type Safety**: Full TypeScript support with type-safe event payloads
 
 ## Running the Example
 
@@ -21,3 +23,12 @@ bun run dev
 ```
 
 The miniapp will run on `http://localhost:5173`
+
+## Development Mode
+
+When running outside of Alien App (e.g., in a regular browser), the SDK will:
+- Warn that the bridge is not available (does not throw)
+- Handle errors gracefully
+- Allow your app to render and function (though bridge communication won't work)
+
+This makes it easy to develop and test your miniapp UI without needing Alien App running.

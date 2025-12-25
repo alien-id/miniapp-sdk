@@ -1,6 +1,6 @@
 {
   "name": "@alien-id/contract",
-  "version": "0.0.8-alpha",
+  "version": "0.0.10-alpha",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -30,6 +30,7 @@
   },
   "scripts": {
     "build": "tsdown",
+    "test": "bun test tests",
     "prepublishOnly": "bun run build",
     "generate-schemas": "bun run scripts/generate-schemas.ts"
   },
