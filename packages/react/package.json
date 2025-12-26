@@ -1,6 +1,6 @@
 {
   "name": "@alien-id/react",
-  "version": "0.0.5-alpha",
+  "version": "0.0.6-alpha",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
