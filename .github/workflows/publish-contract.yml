@@ -67,8 +67,7 @@ jobs:
         run: bun run generate-schemas
 
       - name: Publish to GitHub Packages
-        working-directory: packages/contract
-        run: bun publish
+        run: cd packages/contract && bun publish
         env:
           NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

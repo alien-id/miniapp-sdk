@@ -63,8 +63,7 @@ jobs:
         run: bun run build
 
       - name: Publish to GitHub Packages
-        working-directory: packages/react
-        run: bun publish
+        run: cd packages/react && bun publish
         env:
           NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

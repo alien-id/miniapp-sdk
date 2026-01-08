@@ -63,7 +63,6 @@ jobs:
         run: bun run build
 
       - name: Publish to GitHub Packages
-        working-directory: packages/bridge
-        run: bun publish
+        run: cd packages/bridge && bun publish
         env:
           NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
