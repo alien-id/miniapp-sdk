@@ -1,18 +1,16 @@
-import { importJWK, type JWK, jwtVerify } from 'jose';
-
-import { SSO_JWT_PUBLIC_KEY } from './const';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { SSO_JWKS_URL } from './const';
 import { type TokenInfo, TokenInfoSchema } from './types';
 
 type AuthClientOptions = {
-  publicKey?: JWK;
+  jwksUrl?: string;
 };
 
 class AuthClient {
-  constructor(private readonly publicKey: JWK) {}
+  constructor(private readonly jwks: ReturnType<typeof createRemoteJWKSet>) {}
 
   async verifyToken(accessToken: string): Promise<TokenInfo> {
-    const rs256publicKey = await importJWK(this.publicKey, 'RS256');
-    const { payload } = await jwtVerify(accessToken, rs256publicKey, {
+    const { payload } = await jwtVerify(accessToken, this.jwks, {
       algorithms: ['RS256'],
     });
     return TokenInfoSchema.parse(payload);
@@ -20,8 +18,9 @@ class AuthClient {
 }
 
 export const createAuthClient = ({
-  publicKey,
-}: AuthClientOptions): AuthClient => {
-  return new AuthClient(publicKey || SSO_JWT_PUBLIC_KEY);
+  jwksUrl,
+}: AuthClientOptions = {}): AuthClient => {
+  const jwks = createRemoteJWKSet(new URL(jwksUrl || SSO_JWKS_URL));
+  return new AuthClient(jwks);
 };
 export type { AuthClient, AuthClientOptions };

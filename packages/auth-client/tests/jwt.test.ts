@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import * as jose from 'jose';
 import { type AuthClient, createAuthClient } from '../src/index';
 
@@ -6,6 +6,7 @@ describe('AuthClient tests', () => {
   let publicKeyJwk: jose.JWK;
   let privateKey: jose.CryptoKey;
   let client: AuthClient;
+  let jwksServer: Bun.Server<undefined>;
 
   beforeAll(async () => {
     const { publicKey, privateKey: priv } = await jose.generateKeyPair(
@@ -16,7 +17,29 @@ describe('AuthClient tests', () => {
     );
     privateKey = priv;
     publicKeyJwk = await jose.exportJWK(publicKey);
-    client = createAuthClient({ publicKey: publicKeyJwk });
+    publicKeyJwk.alg = 'RS256';
+    publicKeyJwk.use = 'sig';
+
+    jwksServer = Bun.serve({
+      port: 0,
+      fetch(req) {
+        const url = new URL(req.url);
+        if (url.pathname === '/oauth/jwks') {
+          return Response.json({
+            keys: [publicKeyJwk],
+          });
+        }
+        return new Response('Not Found', { status: 404 });
+      },
+    });
+
+    client = createAuthClient({
+      jwksUrl: `http://localhost:${jwksServer.port}/oauth/jwks`,
+    });
+  });
+
+  afterAll(() => {
+    jwksServer?.stop();
   });
 
   test('should verify a valid token', async () => {
