@@ -1,6 +1,6 @@
 # @alien-id/auth-client
 
-Core authentication utilities for the Alien ID SDK. This package provides tools for verifying access tokens and handling authentication state.
+Core authentication utilities for the Alien Miniapp SDK. This package provides tools for verifying JWT tokens issued by the Alein SSO.
 
 ## Installation
 
