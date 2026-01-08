@@ -1,18 +1,18 @@
-import * as jose from 'jose';
+import { importJWK, type JWK, jwtVerify } from 'jose';
 
 import { SSO_JWT_PUBLIC_KEY } from './const';
 import { type TokenInfo, TokenInfoSchema } from './types';
 
 type AuthClientOptions = {
-  publicKey?: jose.JWK;
+  publicKey?: JWK;
 };
 
 class AuthClient {
-  constructor(private readonly publicKey: jose.JWK) {}
+  constructor(private readonly publicKey: JWK) {}
 
   async verifyToken(accessToken: string): Promise<TokenInfo> {
-    const rs256publicKey = await jose.importJWK(this.publicKey, 'RS256');
-    const { payload } = await jose.jwtVerify(accessToken, rs256publicKey, {
+    const rs256publicKey = await importJWK(this.publicKey, 'RS256');
+    const { payload } = await jwtVerify(accessToken, rs256publicKey, {
       algorithms: ['RS256'],
     });
     return TokenInfoSchema.parse(payload);
