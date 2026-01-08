@@ -1,4 +1,4 @@
-import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { createRemoteJWKSet, type JWTVerifyGetKey, jwtVerify } from 'jose';
 import { SSO_JWKS_URL } from './const';
 import { type TokenInfo, TokenInfoSchema } from './types';
 
@@ -7,7 +7,7 @@ type AuthClientOptions = {
 };
 
 class AuthClient {
-  constructor(private readonly jwks: ReturnType<typeof createRemoteJWKSet>) {}
+  constructor(private readonly jwks: JWTVerifyGetKey) {}
 
   async verifyToken(accessToken: string): Promise<TokenInfo> {
     const { payload } = await jwtVerify(accessToken, this.jwks, {
