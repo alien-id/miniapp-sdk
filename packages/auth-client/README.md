@@ -28,20 +28,16 @@ try {
 }
 ```
 
-### Custom JWK public key
+### Custom JWKS URL
 
-`createAuthClient` accepts an optional publicKey parameter to use custom JWK keys for verification.
+`createAuthClient` accepts an optional jwksUrl parameter to use custom JWKS endpoint for JWT verification.
 
 ```typescript
 import { createAuthClient } from '@alien-id/core';
 
 
 const client = createAuthClient({
-  publicKey: {
-    kty: 'RSA',
-    alg: 'RS256',
-    // ... your JWK
-  }
+  jwksUrl: "https://sso.alien-api.com/.well-known/jwks.json"
 });
 
 try {
