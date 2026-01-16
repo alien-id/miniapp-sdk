@@ -44,7 +44,7 @@ export function off<T extends EventName>(
 
 export async function emit<T extends EventName>(
   name: T,
-  payload: EventPayload<T>,
+  payload: EmitteryEventMap[T],
 ): Promise<void> {
   // Emit locally (await to ensure listeners are called)
   await emitter.emit(name, payload);

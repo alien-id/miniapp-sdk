@@ -1,4 +1,4 @@
-import type { WithReqId } from '../../utils';
+import type { Empty, WithReqId } from '../../utils';
 import type { CreateMethodPayload } from '../types/payload';
 
 /**
@@ -12,7 +12,7 @@ export interface Methods {
    * @since 0.0.1
    * @schema
    */
-  'app:ready': CreateMethodPayload<Record<string, never>>;
+  'app:ready': CreateMethodPayload<Empty>;
   /**
    * Authentication initialization request method.
    * @since 0.0.1
@@ -49,4 +49,12 @@ export interface Methods {
       message: string;
     }>
   >;
+  /**
+   * Miniapp close acknowledgment method.
+   * Sent by the miniapp to notify the host app that it has completed cleanup and is ready to be closed.
+   * Note that if the miniapp takes longer than 10 seconds to close, the host app will force close the miniapp.
+   * @since 0.0.13
+   * @schema
+   */
+  'miniapp:close.ack': CreateMethodPayload<Empty>;
 }

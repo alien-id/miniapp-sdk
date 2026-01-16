@@ -1,4 +1,4 @@
-import type { WithReqId } from '../../utils';
+import type { Empty, WithReqId } from '../../utils';
 import type { CreateEventPayload } from '../types/payload';
 
 /**
@@ -43,4 +43,10 @@ export interface Events {
       timestamp: string;
     }>
   >;
+  /**
+   * Miniapp close event, fired by the host app just before the miniapp is closed.
+   * @since 0.0.13
+   * @schema
+   */
+  'miniapp:close': CreateEventPayload<Empty>;
 }
