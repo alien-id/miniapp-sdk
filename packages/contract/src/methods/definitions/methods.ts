@@ -57,4 +57,17 @@ export interface Methods {
    * @schema
    */
   'miniapp:close.ack': CreateMethodPayload<Empty>;
+  /**
+   * Toggle host app's back button visibility.
+   * @since 0.0.13
+   * @schema
+   */
+  'host.back.button:toggle': CreateMethodPayload<{
+    /**
+     * Whether to show or hide the back button.
+     * @since 0.0.13
+     * @schema
+     */
+    visible: boolean;
+  }>;
 }

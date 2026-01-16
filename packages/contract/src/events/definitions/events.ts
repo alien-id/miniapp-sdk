@@ -49,4 +49,10 @@ export interface Events {
    * @schema
    */
   'miniapp:close': CreateEventPayload<Empty>;
+  /**
+   * Host app's back button clicked event.
+   * @since 0.0.13
+   * @schema
+   */
+  'host.back.button:clicked': CreateEventPayload<Empty>;
 }
