@@ -18,4 +18,5 @@ export const releases: Record<
   '0.0.1': ['auth.init:request'],
   '0.0.8': ['ping:request'],
   '0.0.9': ['app:ready'],
+  '0.0.13': ['miniapp:close.ack'],
 };

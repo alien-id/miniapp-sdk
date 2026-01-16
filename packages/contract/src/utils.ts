@@ -54,3 +54,11 @@ export type Or<A extends boolean, B extends boolean> = A extends true
   : B extends true
     ? true
     : false;
+
+/**
+ * Empty object type.
+ * @example
+ * type Empty = Empty;
+ * // Empty = {}
+ */
+export type Empty = Record<string, never>;
