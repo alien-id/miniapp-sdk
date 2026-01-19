@@ -55,4 +55,43 @@ export interface Events {
    * @schema
    */
   'host.back.button:clicked': CreateEventPayload<Empty>;
+  /**
+   * Payment response event.
+   *
+   * Statuses:
+   * - `paid`: Payment successful, `txHash` included
+   * - `cancelled`: User manually cancelled/rejected the payment
+   * - `failed`: Error occurred (see `errorCode` for details)
+   *
+   * For instant fulfillment, your backend should fulfill on webhook receipt
+   * using the `invoice` from the request.
+   *
+   * @since 0.0.13
+   * @schema
+   */
+  'payment:response': CreateEventPayload<
+    WithReqId<{
+      /**
+       * Payment status.
+       * - `paid`: Success
+       * - `cancelled`: User rejected
+       * - `failed`: Error (check `errorCode`)
+       * @since 0.0.13
+       * @schema
+       */
+      status: 'paid' | 'cancelled' | 'failed';
+      /**
+       * Transaction hash (present when status is 'paid').
+       * @since 0.0.13
+       * @schema
+       */
+      txHash?: string;
+      /**
+       * Error code (present when status is 'failed').
+       * @since 0.0.13
+       * @schema
+       */
+      errorCode?: 'insufficient_balance' | 'network_error' | 'unknown';
+    }>
+  >;
 }

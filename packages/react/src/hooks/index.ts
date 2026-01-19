@@ -9,3 +9,14 @@ export {
   type UseMethodOptions,
   useMethod,
 } from './useMethod';
+export {
+  type PaymentCallbacks,
+  type PaymentErrorCode,
+  type PaymentParams,
+  type PaymentResponseStatus,
+  type PaymentResult,
+  type PaymentStatus,
+  type UsePaymentOptions,
+  type UsePaymentReturn,
+  usePayment,
+} from './usePayment';

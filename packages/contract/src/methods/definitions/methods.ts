@@ -70,4 +70,86 @@ export interface Methods {
      */
     visible: boolean;
   }>;
+  /**
+   * Request a payment from the user.
+   *
+   * The `invoice` field is your order/invoice ID for backend correlation.
+   * Your backend receives a webhook when user pays - fulfill the order
+   * immediately without waiting for chain confirmation.
+   *
+   * Optional display fields (`title`, `caption`, `iconUrl`, `quantity`)
+   * are shown on the payment approval screen.
+   *
+   * Set `test: true` for test mode - no real payment is made, but webhooks
+   * are fired with `test: true` flag. Use for development and testing.
+   *
+   * @since 0.0.13
+   * @schema
+   */
+  'payment:request': CreateMethodPayload<
+    WithReqId<{
+      /**
+       * The recipient's wallet address.
+       * @since 0.0.13
+       * @schema
+       */
+      recipient: string;
+      /**
+       * The amount to pay (in token's smallest unit, as string for precision).
+       * @since 0.0.13
+       * @schema
+       */
+      amount: string;
+      /**
+       * The token identifier (e.g., 'SOL', 'ALIEN', or contract address).
+       * @since 0.0.13
+       * @schema
+       */
+      token: string;
+      /**
+       * The network for the payment ('solana' or 'alien').
+       * @since 0.0.13
+       * @schema
+       */
+      network: string;
+      /**
+       * Your order/invoice ID for backend correlation and instant fulfillment.
+       * @since 0.0.13
+       * @schema
+       */
+      invoice: string;
+      /**
+       * Item title shown on the approval screen.
+       * @since 0.0.13
+       * @schema
+       */
+      title?: string;
+      /**
+       * Item description/caption shown on the approval screen.
+       * @since 0.0.13
+       * @schema
+       */
+      caption?: string;
+      /**
+       * Item icon URL shown on the approval screen.
+       * @since 0.0.13
+       * @schema
+       */
+      iconUrl?: string;
+      /**
+       * Quantity of items being purchased.
+       * @since 0.0.13
+       * @schema
+       */
+      quantity?: number;
+      /**
+       * Test mode flag. When true, no real payment is processed.
+       * The approval screen shows a test indicator, and webhooks
+       * include `test: true`. Use for development and testing.
+       * @since 0.0.13
+       * @schema
+       */
+      test?: boolean;
+    }>
+  >;
 }
