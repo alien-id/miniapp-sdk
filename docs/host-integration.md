@@ -73,7 +73,5 @@ The `__ALIEN_CONTRACT_VERSION__` value must match the latest version from the co
 
 | Version | Methods Added |
 | ------- | ------------- |
-| 0.0.1   | `auth.init:request` |
-| 0.0.8   | `ping:request` |
 | 0.0.9   | `app:ready` |
 | 0.0.14  | `miniapp:close.ack`, `host.back.button:toggle`, `payment:request` |

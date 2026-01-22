@@ -54,9 +54,9 @@ Both methods and events follow: `<domain>:<action>`
 - Domain: Subsystem (e.g., `auth`, `storage.kv`, `ui.modal`)
 - Action: Operation (e.g., `request`, `response.token`)
 
-### Current Protocol (v0.0.1)
-- Methods: `auth.init:request` → `{ appId, challenge, reqId }`
-- Events: `auth.init:response.token` → `{ token, reqId }`
+### Current Protocol (v0.0.14)
+- Methods: `payment:request` → `{ recipient, amount, token, network, invoice, reqId }`
+- Events: `payment:response` → `{ status, txHash?, errorCode?, reqId }`
 
 ### Message Flow
 ```
@@ -112,11 +112,11 @@ Uses Biomejs (config: `biome.json`):
 ```typescript
 import { on, off, emit } from '@alien-id/bridge';
 
-const unsubscribe = on('auth.init:response.token', (payload) => {
-  console.log(payload.token, payload.reqId);
+const unsubscribe = on('payment:response', (payload) => {
+  console.log(payload.status, payload.reqId);
 });
 
-await emit('auth.init:response.token', { token: '...', reqId: '...' });
+await emit('payment:response', { status: 'paid', txHash: '...', reqId: '...' });
 ```
 
 ### Request-Response
@@ -124,9 +124,9 @@ await emit('auth.init:response.token', { token: '...', reqId: '...' });
 import { request } from '@alien-id/bridge';
 
 const response = await request(
-  'auth.init:request',
-  { appId: 'app-1', challenge: 'challenge' },
-  'auth.init:response.token',
+  'payment:request',
+  { recipient: 'wallet-123', amount: '100', token: 'SOL', network: 'solana', invoice: 'inv-123' },
+  'payment:response',
   { timeout: 5000 }
 );
 ```
@@ -134,7 +134,7 @@ const response = await request(
 ## React API
 
 ```tsx
-import { AlienProvider, useAuthToken, useEvent, useRequest, useMethodSupported } from '@alien-id/react';
+import { AlienProvider, useAuthToken, useEvent, useMethod, useIsMethodSupported } from '@alien-id/react';
 
 // Wrap app with provider
 <AlienProvider><App /></AlienProvider>
@@ -143,20 +143,20 @@ import { AlienProvider, useAuthToken, useEvent, useRequest, useMethodSupported }
 const token = useAuthToken();
 
 // Subscribe to events
-useEvent('auth.init:response.token', (payload) => {
-  console.log(payload.token);
+useEvent('payment:response', (payload) => {
+  console.log(payload.status);
 });
 
 // Check method compatibility before using
-const { supported, minVersion } = useMethodSupported('auth.init:request');
+const { supported, minVersion } = useIsMethodSupported('payment:request');
 if (!supported) return <div>Requires v{minVersion}</div>;
 
 // Make requests with state management (auto version check)
-const { execute, data, error, isLoading, supported } = useRequest(
-  'auth.init:request',
-  'auth.init:response.token',
+const { execute, data, error, isLoading, supported } = useMethod(
+  'payment:request',
+  'payment:response',
 );
-await execute({ appId: 'my-app', challenge: 'random' });
+await execute({ recipient: 'wallet-123', amount: '100', token: 'SOL', network: 'solana', invoice: 'inv-123' });
 ```
 
 ## Adding New Methods/Events

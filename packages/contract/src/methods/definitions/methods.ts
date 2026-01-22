@@ -14,42 +14,6 @@ export interface Methods {
    */
   'app:ready': CreateMethodPayload<Empty>;
   /**
-   * Authentication initialization request method.
-   * @since 0.0.1
-   * @schema
-   */
-  'auth.init:request': CreateMethodPayload<
-    WithReqId<{
-      /**
-       * Application identifier.
-       * @since 0.0.1
-       * @schema
-       */
-      appId: string;
-      /**
-       * Challenge string for authentication.
-       * @since 0.0.1
-       * @schema
-       */
-      challenge: string;
-    }>
-  >;
-  /**
-   * Ping request method for testing communication.
-   * @since 0.0.1
-   * @schema
-   */
-  'ping:request': CreateMethodPayload<
-    WithReqId<{
-      /**
-       * Message to send in the ping request.
-       * @since 0.0.1
-       * @schema
-       */
-      message: string;
-    }>
-  >;
-  /**
    * Miniapp close acknowledgment method.
    * Sent by the miniapp to notify the host app that it has completed cleanup and is ready to be closed.
    * Note that if the miniapp takes longer than 10 seconds to close, the host app will force close the miniapp.

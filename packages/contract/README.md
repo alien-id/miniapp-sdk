@@ -1,37 +1,105 @@
 # @alien-id/contract
 
-This package defines the communication schema used by the bridge to enable seamless interaction between the miniapp and the host app. Think of it as the shared language that both sides speak to understand each other.
+Type definitions and version utilities for miniapp-host communication.
 
-## Types of Communication
+## Installation
 
-The contract organizes communication into two main types:
+```bash
+bun add @alien-id/contract
+```
 
-- **Methods**: Requests sent from the miniapp to the native app (with responses)
-- **Events**: Notifications sent from the native app to the miniapp (one-way)
+## Exports
 
-### Methods
+### Types
 
-Methods enable two-way communication between the miniapp and the host app. When the miniapp sends a method request to the host app, it includes a `reqId` to track the request. The host app then responds with an **event** that includes the same `reqId`, allowing the miniapp to match the response to the original request. This allows the miniapp to make requests and wait for specific answers, like asking for user permissions.
+```typescript
+import type {
+  // Method types
+  Methods,                        // Interface of all methods
+  MethodName,                     // Union of method names
+  MethodPayload,                  // Payload type for a method
+  CreateMethodPayload,            // Helper for defining methods
+  MethodNameWithVersionedPayload, // Methods with versioned payloads
+  MethodVersionedPayload,         // Versioned payload for a method
 
-### Events
+  // Event types
+  Events,               // Interface of all events
+  EventName,            // Union of event names
+  EventPayload,         // Payload type for an event
+  CreateEventPayload,   // Helper for defining events
 
-Events serve two purposes in the communication protocol:
+  // Launch parameters
+  LaunchParams,         // Host-injected params (authToken, contractVersion, etc.)
+  Platform,             // 'ios' | 'android'
 
-1. **Callbacks for Methods**: Events act as responses to method requests. When the miniapp sends a method request, the host app responds with an event that includes the same `reqId` to match the request. This enables the request-response pattern where the miniapp can wait for a specific response.
+  // Utilities
+  Version,              // Semantic version string type
+} from '@alien-id/contract';
+```
 
-2. **One-way Notifications**: Events can also be standalone notifications sent from the host app to the miniapp. These are perfect for situations where the host app needs to inform the miniapp about something happening (like a network status change or a user action), but doesn't need a response back. The miniapp simply listens and reacts accordingly.
+### Constants
 
-The presence of a `reqId` in the event payload indicates it's a response to a method request, while events without a `reqId` are standalone notifications.
+```typescript
+import { PLATFORMS, releases } from '@alien-id/contract';
 
-### Versioning
+PLATFORMS  // ['ios', 'android']
+releases   // Record<Version, MethodName[]> - version to methods mapping
+```
 
-The protocol uses semantic versioning to ensure robust and safe communication between the miniapp and the host app.
+### Version Utilities
 
-**Protocol Version**
-Both the miniapp and host app share their current protocol version, allowing each side to understand the other's capabilities from the start.
+```typescript
+import {
+  isMethodSupported,
+  getMethodMinVersion,
+  getReleaseVersion,
+} from '@alien-id/contract';
 
-**Method & Event Versions**
-Each method and event has a minimum version requirement (the protocol version from which it's supported). The miniapp can check availability before use, detect version mismatches, and gracefully handle outdated host apps.
+// Check if method is supported in a version
+isMethodSupported('app:ready', '0.0.9');         // true
+isMethodSupported('payment:request', '0.0.9');   // false
 
-**Safety & UX**
-The versioning system prevents errors by throwing clear notifications on mismatches, allowing the miniapp to adapt its behavior and gracefully degrade functionality when needed.
+// Get minimum version that supports a method
+getMethodMinVersion('app:ready');         // '0.0.9'
+getMethodMinVersion('payment:request');   // '0.0.14'
+
+// Get version where a method was introduced
+getReleaseVersion('app:ready');           // '0.0.9'
+```
+
+## Available Methods
+
+| Method | Since | Description |
+|--------|-------|-------------|
+| `app:ready` | 0.0.9 | Notify host that miniapp is ready |
+| `miniapp:close.ack` | 0.0.14 | Acknowledge close request |
+| `host.back.button:toggle` | 0.0.14 | Show/hide back button |
+| `payment:request` | 0.0.14 | Request payment |
+
+## Available Events
+
+| Event | Since | Description |
+|-------|-------|-------------|
+| `miniapp:close` | 0.0.14 | Host is closing miniapp |
+| `host.back.button:clicked` | 0.0.14 | Back button was clicked |
+| `payment:response` | 0.0.14 | Payment result |
+
+## LaunchParams
+
+Parameters injected by the host app:
+
+```typescript
+interface LaunchParams {
+  authToken: string | undefined;        // JWT auth token
+  contractVersion: Version | undefined; // Host's contract version
+  hostAppVersion: string | undefined;   // Host app version
+  platform: Platform | undefined;       // 'ios' | 'android'
+  startParam: string | undefined;       // Custom param (referrals, etc.)
+}
+```
+
+## Adding New Methods/Events
+
+1. Define in `src/methods/definitions/methods.ts` or `src/events/definitions/events.ts`
+2. Add version mapping in `src/methods/versions/releases.ts`
+3. Build: `bun run build`

@@ -34,20 +34,16 @@ type MethodEventPair = {
 
 const METHOD_EVENT_PAIRS: MethodEventPair[] = [
   {
-    method: 'auth.init:request',
-    event: 'auth.init:response.token',
-    label: 'Auth Init',
+    method: 'payment:request',
+    event: 'payment:response',
+    label: 'Payment',
     getPayload: () => ({
-      appId: 'my-app-id',
-      challenge: `challenge-${Date.now()}`,
-    }),
-  },
-  {
-    method: 'ping:request',
-    event: 'ping:response',
-    label: 'Ping',
-    getPayload: () => ({
-      message: `Hello from miniapp at ${new Date().toLocaleTimeString()}`,
+      recipient: 'wallet-123',
+      amount: '100',
+      token: 'SOL',
+      network: 'solana',
+      invoice: `inv-${Date.now()}`,
+      title: 'Test Payment',
     }),
   },
 ];

@@ -17,8 +17,14 @@ type EventCallback<E extends EventName> = (payload: EventPayload<E>) => void;
  * import { useEvent } from '@alien-id/react';
  *
  * function MyComponent() {
- *   useEvent('auth.init:response.token', (payload) => {
- *     console.log('Received token:', payload.token);
+ *   useEvent('miniapp:close', () => {
+ *     // Cleanup before miniapp closes
+ *     saveState();
+ *   });
+ *
+ *   useEvent('host.back.button:clicked', () => {
+ *     // Handle back button press
+ *     navigateBack();
  *   });
  *
  *   return <div>Listening for events...</div>;

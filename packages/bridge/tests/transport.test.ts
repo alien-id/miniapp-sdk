@@ -80,8 +80,8 @@ test('sendMessage - should use native bridge if available', () => {
 
   const message: Message = {
     type: 'method',
-    name: 'auth.init:request',
-    payload: { appId: 'test', challenge: 'challenge', reqId: '123' },
+    name: 'payment:request',
+    payload: { recipient: 'test', amount: '100', token: 'SOL', network: 'solana', invoice: 'inv-123', reqId: '123' },
   };
 
   sendMessage(message);
@@ -98,8 +98,8 @@ test('sendMessage - should throw BridgeUnavailableError if bridge not available'
 
   const message: Message = {
     type: 'event',
-    name: 'auth.init:response.token',
-    payload: { token: 'test', reqId: '123' },
+    name: 'payment:response',
+    payload: { status: 'paid', txHash: 'tx123', reqId: '123' },
   };
 
   // Should throw BridgeUnavailableError if bridge is not available
@@ -116,8 +116,8 @@ test('sendMessage - should throw BridgeUnavailableError if window is undefined (
 
   const message: Message = {
     type: 'event',
-    name: 'auth.init:response.token',
-    payload: { token: 'test', reqId: '123' },
+    name: 'payment:response',
+    payload: { status: 'paid', txHash: 'tx123', reqId: '123' },
   };
 
   // Should throw BridgeUnavailableError when window is undefined (getBridge returns undefined)
@@ -142,8 +142,8 @@ test('setupMessageListener - should handle object messages', () => {
 
   const testMessage: Message = {
     type: 'event',
-    name: 'auth.init:response.token',
-    payload: { token: 'test', reqId: '123' },
+    name: 'payment:response',
+    payload: { status: 'paid', txHash: 'tx123', reqId: '123' },
   };
 
   // Simulate receiving a message
@@ -170,8 +170,8 @@ test('setupMessageListener - should handle stringified messages', () => {
 
   const testMessage: Message = {
     type: 'method',
-    name: 'auth.init:request',
-    payload: { appId: 'test', challenge: 'challenge', reqId: '123' },
+    name: 'payment:request',
+    payload: { recipient: 'test', amount: '100', token: 'SOL', network: 'solana', invoice: 'inv-123', reqId: '123' },
   };
 
   // Simulate receiving a stringified message

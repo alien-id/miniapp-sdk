@@ -48,11 +48,11 @@ afterEach(() => {
 
 test('on - should register event listener', async () => {
   let received = false;
-  const removeListener = on('auth.init:response.token', () => {
+  const removeListener = on('payment:response', () => {
     received = true;
   });
 
-  await emit('auth.init:response.token', { token: 'test-token', reqId: '123' });
+  await emit('payment:response', { status: 'paid' as const, txHash: 'tx-hash', reqId: '123' });
   expect(received).toBe(true);
 
   removeListener();
@@ -60,15 +60,15 @@ test('on - should register event listener', async () => {
 
 test('on - should remove listener when cleanup function is called', async () => {
   let callCount = 0;
-  const removeListener = on('auth.init:response.token', () => {
+  const removeListener = on('payment:response', () => {
     callCount++;
   });
 
-  await emit('auth.init:response.token', { token: 'test-token', reqId: '123' });
+  await emit('payment:response', { status: 'paid' as const, txHash: 'tx-hash', reqId: '123' });
   expect(callCount).toBe(1);
 
   removeListener();
-  await emit('auth.init:response.token', { token: 'test-token', reqId: '456' });
+  await emit('payment:response', { status: 'paid' as const, txHash: 'tx-hash', reqId: '456' });
   expect(callCount).toBe(1);
 });
 
@@ -83,43 +83,43 @@ test('off - should remove specific listener', async () => {
     callCount2++;
   };
 
-  on('auth.init:response.token', listener1);
-  on('auth.init:response.token', listener2);
+  on('payment:response', listener1);
+  on('payment:response', listener2);
 
-  await emit('auth.init:response.token', { token: 'test-token', reqId: '123' });
+  await emit('payment:response', { status: 'paid' as const, txHash: 'tx-hash', reqId: '123' });
   expect(callCount1).toBe(1);
   expect(callCount2).toBe(1);
 
-  off('auth.init:response.token', listener1);
-  await emit('auth.init:response.token', { token: 'test-token', reqId: '456' });
+  off('payment:response', listener1);
+  await emit('payment:response', { status: 'paid' as const, txHash: 'tx-hash', reqId: '456' });
   expect(callCount1).toBe(1);
   expect(callCount2).toBe(2);
 });
 
 test('emit - should emit to all registered listeners', async () => {
   let callCount = 0;
-  on('auth.init:response.token', () => {
+  on('payment:response', () => {
     callCount++;
   });
-  on('auth.init:response.token', () => {
+  on('payment:response', () => {
     callCount++;
   });
 
-  await emit('auth.init:response.token', { token: 'test-token', reqId: '123' });
+  await emit('payment:response', { status: 'paid' as const, txHash: 'tx-hash', reqId: '123' });
   expect(callCount).toBe(2);
 });
 
 test('emit - should pass correct payload', async () => {
-  let receivedPayload: EventPayload<'auth.init:response.token'> | undefined;
-  on('auth.init:response.token', (payload) => {
+  let receivedPayload: EventPayload<'payment:response'> | undefined;
+  on('payment:response', (payload) => {
     receivedPayload = payload;
   });
 
-  const testPayload: EventPayload<'auth.init:response.token'> = {
-    token: 'test-token',
+  const testPayload: EventPayload<'payment:response'> = {
+    status: 'paid' as const, txHash: 'tx-hash',
     reqId: '123',
   };
-  await emit('auth.init:response.token', testPayload);
+  await emit('payment:response', testPayload);
   expect(receivedPayload).not.toBeNull();
   expect(receivedPayload).toEqual(testPayload);
 });

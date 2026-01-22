@@ -55,19 +55,25 @@ interface UseMethodResult<M extends MethodName, E extends EventName>
  * ```tsx
  * import { useMethod } from '@alien-id/react';
  *
- * function AuthButton() {
+ * function PayButton() {
  *   const { execute, data, error, isLoading, supported } = useMethod(
- *     'auth.init:request',
- *     'auth.init:response.token',
+ *     'payment:request',
+ *     'payment:response',
  *   );
  *
  *   if (!supported) {
  *     return <div>This feature is not available</div>;
  *   }
  *
- *   const handleAuth = async () => {
+ *   const handlePay = async () => {
  *     // Errors are automatically set in the `error` state - no try/catch needed!
- *     const { error, data } = await execute({ appId: 'my-app', challenge: 'random' });
+ *     const { error, data } = await execute({
+ *       recipient: 'wallet-123',
+ *       amount: '100',
+ *       token: 'SOL',
+ *       network: 'solana',
+ *       invoice: 'inv-123',
+ *     });
  *     if (error) {
  *         console.error(error);
  *         return;
@@ -79,9 +85,9 @@ interface UseMethodResult<M extends MethodName, E extends EventName>
  *
  *   if (isLoading) return <button disabled>Loading...</button>;
  *   if (error) return <div>Error: {error.message}</div>;
- *   if (data) return <div>Authenticated!</div>;
+ *   if (data) return <div>Payment complete!</div>;
  *
- *   return <button onClick={handleAuth}>Authenticate</button>;
+ *   return <button onClick={handlePay}>Pay</button>;
  * }
  * ```
  */

@@ -1,148 +1,144 @@
 # @alien-id/bridge
 
-A minimal, type-safe bridge for communication between the miniapp (webview) and the host app.
+Type-safe bridge for miniapp (webview) to host app communication.
 
-## How It Works
-
-**Important**: This bridge is designed to work **only** in the **Alien App** environment. The host app must be Alien App, which provides the required bridge interface.
-
-The bridge uses the native bridge to communicate between the webview and the host app:
-
-- **Miniapp → Host**: Messages are sent via `window.__miniAppsBridge__.postMessage()` (provided by Alien App)
-- **Host → Miniapp**: Messages are received via `window.addEventListener('message')`
-- **Message Format**: `{ type: 'event' | 'method', name: string, payload: object }`
-
-**Strict Behavior**: This package throws errors when the bridge is unavailable. If you're building a React app, use `@alien-id/react` instead, which handles errors gracefully and provides a better developer experience.
+**Strict Mode**: Throws errors when bridge is unavailable. For React apps, use `@alien-id/react` which handles errors gracefully.
 
 ## API
 
-### Subscribe to Events (from host app)
+### Events
 
 ```typescript
-import { on } from '@alien-id/bridge';
+import { on, off, emit } from '@alien-id/bridge';
 
-const unsubscribe = on('auth_data', (payload) => {
-  console.log('Received from host:', payload);
+// Subscribe to events from host app
+const unsubscribe = on('payment:response', (payload) => {
+  console.log(payload.status, payload.reqId);
 });
 
-// Later, unsubscribe
+// Unsubscribe
 unsubscribe();
+// or: off('payment:response', listener);
+
+// Emit event to host app (also triggers local listeners)
+await emit('payment:response', { status: 'paid', txHash: '...', reqId: '...' });
 ```
 
-### Emit Events (to host app)
-
-```typescript
-import { emit } from '@alien-id/bridge';
-
-emit('auth_data', { token: 'test-token', reqId: '123' });
-```
-
-### Send Request and Wait for Response
+### Request-Response
 
 ```typescript
 import { request } from '@alien-id/bridge';
 
-// Auto-generates reqId
-const response = await request('get_auth_data', { token: 'test-token' });
-
-// Or specify reqId
+// Send method and wait for response event
+// Signature: request(method, params, responseEvent, options?)
 const response = await request(
-  'get_auth_data',
-  { token: 'test-token' },
-  { reqId: 'custom-123' }
+  'payment:request',
+  { recipient: 'wallet-123', amount: '100', token: 'SOL', network: 'solana', invoice: 'inv-123' },
+  'payment:response',
+  { timeout: 5000, reqId: 'custom-id' } // optional
 );
-
-// With timeout
-const response = await request(
-  'get_auth_data',
-  { token: 'test-token' },
-  { timeout: 5000 }
-);
+// Default timeout: 30s, reqId auto-generated if not provided
 ```
 
-## Host App Integration
+### Fire-and-Forget Methods
 
-**Note**: Alien App already provides the bridge interface. This section is for reference only.
+```typescript
+import { send } from '@alien-id/bridge';
 
-The host app needs to:
+// Send one-way method without waiting for response
+send('app:ready', {});
+```
 
-1. **Listen for messages from webview**:
+### Bridge Availability
 
-   ```javascript
-   webview.addEventListener('message', (event) => {
-     const { type, name, payload } = event.data;
-     
-     if (type === 'method') {
-       // Handle method request
-       handleMethod(name, payload);
-     } else if (type === 'event') {
-       // Handle event
-       handleEvent(name, payload);
-     }
-   });
-   ```
+```typescript
+import { isBridgeAvailable } from '@alien-id/bridge';
 
-2. **Send events to webview**:
+if (isBridgeAvailable()) {
+  // Bridge is ready
+}
+```
 
-   ```javascript
-   webview.postMessage({
-     type: 'event',
-     name: 'auth_data',
-     payload: { token: '...', reqId: '...' }
-   });
-   ```
+### Launch Params
 
-3. **Respond to method requests**:
+Launch params are injected by the host app into window globals. The bridge provides utilities to retrieve and manage them.
 
-   ```javascript
-   function handleMethod(name, payload) {
-     if (name === 'get_auth_data') {
-       const { reqId } = payload;
-       // Process request...
-       webview.postMessage({
-         type: 'event',
-         name: 'auth_data',
-         payload: { token: 'result', reqId }
-       });
-     }
-   }
-   ```
+```typescript
+import {
+  getLaunchParams,
+  retrieveLaunchParams,
+  parseLaunchParams,
+  mockLaunchParamsForDev,
+  clearMockLaunchParams,
+} from '@alien-id/bridge';
 
-All types are provided by `@alien-id/contract` for full type safety.
+// Get launch params (returns undefined if unavailable)
+const params = getLaunchParams();
+// { authToken, contractVersion?, hostAppVersion?, platform?, startParam? }
+
+// Get launch params (throws LaunchParamsError if unavailable)
+const params = retrieveLaunchParams();
+
+// Parse from JSON string
+const params = parseLaunchParams('{"authToken": "..."}');
+
+// Mock for development (injects into window globals)
+mockLaunchParamsForDev({
+  authToken: 'dev-token',
+  contractVersion: '0.0.1',
+  platform: 'ios',
+});
+
+// Clear mocked params
+clearMockLaunchParams();
+```
 
 ## Error Handling
 
-This package uses strict error handling - it throws errors when the bridge is unavailable. Error classes are organized hierarchically:
-
-- **`BridgeError`**: Base class for all bridge-related errors
-  - **`BridgeUnavailableError`**: Thrown when `window.__miniAppsBridge__` is not available
-  - **`BridgeTimeoutError`**: Thrown when a request times out
-  - **`BridgeWindowUnavailableError`**: Thrown when `window` is undefined
-
-### Example: Handling Errors
+All errors extend `BridgeError` for easy catching:
 
 ```typescript
-import { request, BridgeError, BridgeUnavailableError } from '@alien-id/bridge';
+import {
+  BridgeError,
+  BridgeUnavailableError,
+  BridgeWindowUnavailableError,
+  BridgeTimeoutError,
+  LaunchParamsError,
+} from '@alien-id/bridge';
 
 try {
-  const response = await request('auth.init:request', params, 'auth.init:response.token');
+  const response = await request(
+    'payment:request',
+    { recipient: 'wallet-123', amount: '100', token: 'SOL', network: 'solana', invoice: 'inv-123' },
+    'payment:response'
+  );
 } catch (error) {
-  if (error instanceof BridgeUnavailableError) {
-    console.error('Bridge is not available - are you running in Alien App?');
+  if (error instanceof BridgeTimeoutError) {
+    console.error(`Timeout: ${error.method} after ${error.timeout}ms`);
+  } else if (error instanceof BridgeUnavailableError) {
+    console.error('Not running in Alien App');
+  } else if (error instanceof BridgeWindowUnavailableError) {
+    console.error('Window unavailable (SSR?)');
   } else if (error instanceof BridgeError) {
     console.error('Bridge error:', error.message);
-  } else {
-    console.error('Unexpected error:', error);
   }
 }
 ```
 
-**Note**: For React applications, use `@alien-id/react` which handles these errors gracefully and provides a better developer experience.
+| Error | When |
+|-------|------|
+| `BridgeError` | Base class for all bridge errors |
+| `BridgeUnavailableError` | `window.__miniAppsBridge__` not found |
+| `BridgeWindowUnavailableError` | `window` is undefined (SSR) |
+| `BridgeTimeoutError` | Request timed out (has `method` and `timeout` properties) |
+| `LaunchParamsError` | Launch params unavailable |
+
+## How It Works
+
+- **Miniapp → Host**: `window.__miniAppsBridge__.postMessage()`
+- **Host → Miniapp**: `window.addEventListener('message')`
+- **Message Format**: `{ type: 'event' | 'method', name: string, payload: object }`
 
 ## Examples
 
-See the [`examples/`](../../examples/) directory for a complete miniapp example:
-
-- **Miniapp**: [`examples/vite-miniapp`](../../examples/vite-miniapp/) - React + TypeScript example showing how to use the bridge in your miniapp
-
-For host app integration, see the [Host App Implementation](../../docs/bridge.md#host-app-implementation) section in the bridge documentation.
+See [`examples/vite-miniapp`](../../examples/vite-miniapp/) for a complete React + TypeScript example.

@@ -11,7 +11,7 @@ This example demonstrates how to use the `@alien-id/react` SDK to listen for eve
 
 ## Features
 
-- **Event Listening**: Automatically listens for `auth.init:response.token` events
+- **Event Listening**: Automatically listens for bridge events
 - **Bridge Status**: Shows whether the bridge is available
 - **Event Log**: Displays all received events with timestamps and payloads
 - **Type Safety**: Full TypeScript support with type-safe event payloads

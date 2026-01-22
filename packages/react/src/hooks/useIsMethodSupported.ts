@@ -33,7 +33,7 @@ export interface MethodSupportResult {
  * import { useMethodSupported } from '@alien-id/react';
  *
  * function MyComponent() {
- *   const { supported, minVersion } = useMethodSupported('auth.init:request');
+ *   const { supported, minVersion } = useMethodSupported('payment:request');
  *
  *   if (!supported) {
  *     return <div>This feature requires version {minVersion}</div>;
