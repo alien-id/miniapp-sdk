@@ -1,156 +1,52 @@
 # Host App Integration
 
-This document describes what the Alien App (host) must provide to enable miniapp communication.
+This document describes what the Alien App (host) must inject into the WebView to enable miniapp communication.
 
-## Required Window Globals
+## Window Interface
 
-The host app must inject the following globals into the WebView:
+The host app must inject the following globals into `window` **before the miniapp loads**:
 
-### 1. Message Bridge
-
-```javascript
-window.__miniAppsBridge__ = {
-  postMessage: function(data) {
-    // Handle JSON string message from miniapp
-    // data is a stringified { type, name, payload } object
-  }
-};
+```typescript
+interface Window {
+  __miniAppsBridge__: {
+    postMessage: (data: string) => void;
+  };
+  __ALIEN_AUTH_TOKEN__?: string;
+  __ALIEN_CONTRACT_VERSION__?: string;
+  __ALIEN_HOST_VERSION__?: string;
+  __ALIEN_PLATFORM__?: string;
+  __ALIEN_START_PARAM__?: string;
+}
 ```
 
-**Purpose:** Enables two-way communication between miniapp and host.
+## Field Descriptions
 
-**Message Format:**
+| Field | Required | Description |
+| ----- | -------- | ----------- |
+| `__miniAppsBridge__` | Yes | Communication bridge for method calls from miniapp to host |
+| `__ALIEN_AUTH_TOKEN__` | Yes | JWT authentication token for the current user |
+| `__ALIEN_CONTRACT_VERSION__` | Yes | Semantic version of the supported contract (e.g., `'0.0.14'`). Must match the latest version from the contract JSON schemas |
+| `__ALIEN_HOST_VERSION__` | No | Host app version for telemetry/compatibility (e.g., `'1.2.3'`) |
+| `__ALIEN_PLATFORM__` | No | Platform identifier: `'ios'` or `'android'` |
+| `__ALIEN_START_PARAM__` | No | Custom data passed via deep link (referral codes, campaign tracking, etc.) |
+
+## Message Bridge
+
+The `__miniAppsBridge__.postMessage` receives JSON-stringified messages from the miniapp:
+
 ```typescript
-// Method request (miniapp → host)
+// Method request (miniapp -> host)
 {
   type: 'method',
-  name: 'auth.init:request',
-  payload: { appId: string, challenge: string, reqId: string }
-}
-
-// Event (host → miniapp, via window.postMessage)
-{
-  type: 'event',
-  name: 'auth.init:response.token',
-  payload: { token: string, reqId: string }
-}
-```
-
-### 2. Auth Token
-
-```javascript
-window.__ALIEN_AUTH_TOKEN__ = '<jwt-token>';
-```
-
-**Purpose:** Provides authentication token to the miniapp.
-
-**When to inject:** Before or after page load. The SDK polls for changes.
-
-**Example (Android):**
-```kotlin
-webView.evaluateJavascript(
-    "window.__ALIEN_AUTH_TOKEN__ = '${token}';",
-    null
-)
-```
-
-**Example (iOS):**
-```swift
-webView.evaluateJavaScript(
-    "window.__ALIEN_AUTH_TOKEN__ = '\(token)';"
-)
-```
-
-### 3. Contract Version
-
-```javascript
-window.__ALIEN_CONTRACT_VERSION__ = '0.0.1';
-```
-
-**Purpose:** Declares which contract version the host app supports. Miniapps use this to check method compatibility.
-
-**Format:** Semantic version string (`major.minor.patch`)
-
-**When to inject:** Before page load (recommended) or early during page lifecycle.
-
-**Example (Android):**
-```kotlin
-webView.evaluateJavascript(
-    "window.__ALIEN_CONTRACT_VERSION__ = '0.0.1';",
-    null
-)
-```
-
-**Fallback behavior:** If not provided, the SDK assumes all methods are supported.
-
-## Complete Integration Example
-
-### Android (Kotlin)
-
-```kotlin
-class MiniappWebViewClient : WebViewClient() {
-
-    override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
-        super.onPageStarted(view, url, favicon)
-
-        // Inject contract version early
-        view.evaluateJavascript(
-            "window.__ALIEN_CONTRACT_VERSION__ = '0.0.1';",
-            null
-        )
-    }
-
-    fun injectAuthToken(webView: WebView, token: String) {
-        webView.evaluateJavascript(
-            "window.__ALIEN_AUTH_TOKEN__ = '$token';",
-            null
-        )
-    }
-}
-
-// Setup bridge interface
-class MiniAppBridge(private val context: Context) {
-    @JavascriptInterface
-    fun postMessage(data: String) {
-        // Parse and handle message from miniapp
-        val message = JSONObject(data)
-        when (message.getString("type")) {
-            "method" -> handleMethod(message)
-            "event" -> handleEvent(message)
-        }
-    }
-}
-
-// Add bridge to WebView
-webView.addJavascriptInterface(MiniAppBridge(context), "__miniAppsBridge__")
-```
-
-### iOS (Swift)
-
-```swift
-class MiniappWebView: WKWebView {
-
-    func setupBridge() {
-        let script = """
-            window.__miniAppsBridge__ = {
-                postMessage: function(data) {
-                    window.webkit.messageHandlers.bridge.postMessage(data);
-                }
-            };
-            window.__ALIEN_CONTRACT_VERSION__ = '0.0.1';
-        """
-
-        let userScript = WKUserScript(
-            source: script,
-            injectionTime: .atDocumentStart,
-            forMainFrameOnly: true
-        )
-        configuration.userContentController.addUserScript(userScript)
-    }
-
-    func injectAuthToken(_ token: String) {
-        evaluateJavaScript("window.__ALIEN_AUTH_TOKEN__ = '\(token)';")
-    }
+  name: 'payment:request',
+  payload: {
+    reqId: 'abc123',
+    recipient: '0x...',
+    amount: '1000000',
+    token: 'SOL',
+    network: 'solana',
+    invoice: 'order-456'
+  }
 }
 ```
 
@@ -158,46 +54,26 @@ class MiniappWebView: WKWebView {
 
 To send events from host to miniapp, use `window.postMessage`:
 
-```kotlin
-// Android
-webView.evaluateJavascript("""
-    window.postMessage({
-        type: 'event',
-        name: 'auth.init:response.token',
-        payload: { token: '$token', reqId: '$reqId' }
-    }, '*');
-""".trimIndent(), null)
-```
-
-```swift
-// iOS
-webView.evaluateJavaScript("""
-    window.postMessage({
-        type: 'event',
-        name: 'auth.init:response.token',
-        payload: { token: '\(token)', reqId: '\(reqId)' }
-    }, '*');
-""")
+```javascript
+// Payment response (host -> miniapp)
+window.postMessage({
+  type: 'event',
+  name: 'payment:response',
+  payload: {
+    reqId: 'abc123',
+    status: 'paid',
+    txHash: '5XyZ...'
+  }
+}, '*');
 ```
 
 ## Version Compatibility
 
-The contract version allows miniapps to gracefully handle feature availability:
+The `__ALIEN_CONTRACT_VERSION__` value must match the latest version from the contract package JSON schemas. This is the highest version your host app supports.
 
-| Version | Methods |
-|---------|---------|
+| Version | Methods Added |
+| ------- | ------------- |
 | 0.0.1   | `auth.init:request` |
-
-When adding new methods:
-1. Add them to the contract package
-2. Update `releases.ts` with the version
-3. Increment `__ALIEN_CONTRACT_VERSION__` in host app
-
-Miniapps can check support before calling:
-```tsx
-const { supported, minVersion } = useMethodSupported('auth.init:request');
-
-if (!supported) {
-  return <div>Please update your app (requires v{minVersion})</div>;
-}
-```
+| 0.0.8   | `ping:request` |
+| 0.0.9   | `app:ready` |
+| 0.0.14  | `miniapp:close.ack`, `host.back.button:toggle`, `payment:request` |

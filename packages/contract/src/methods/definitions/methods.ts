@@ -53,21 +53,103 @@ export interface Methods {
    * Miniapp close acknowledgment method.
    * Sent by the miniapp to notify the host app that it has completed cleanup and is ready to be closed.
    * Note that if the miniapp takes longer than 10 seconds to close, the host app will force close the miniapp.
-   * @since 0.0.13
+   * @since 0.0.14
    * @schema
    */
   'miniapp:close.ack': CreateMethodPayload<Empty>;
   /**
    * Toggle host app's back button visibility.
-   * @since 0.0.13
+   * @since 0.0.14
    * @schema
    */
   'host.back.button:toggle': CreateMethodPayload<{
     /**
      * Whether to show or hide the back button.
-     * @since 0.0.13
+     * @since 0.0.14
      * @schema
      */
     visible: boolean;
   }>;
+  /**
+   * Request a payment from the user.
+   *
+   * The `invoice` field is your order/invoice ID for backend correlation.
+   * Your backend receives a webhook when user pays - fulfill the order
+   * immediately without waiting for chain confirmation.
+   *
+   * Optional display fields (`title`, `caption`, `iconUrl`, `quantity`)
+   * are shown on the payment approval screen.
+   *
+   * Set `test: true` for test mode - no real payment is made, but webhooks
+   * are fired with `test: true` flag. Use for development and testing.
+   *
+   * @since 0.0.14
+   * @schema
+   */
+  'payment:request': CreateMethodPayload<
+    WithReqId<{
+      /**
+       * The recipient's wallet address.
+       * @since 0.0.14
+       * @schema
+       */
+      recipient: string;
+      /**
+       * The amount to pay (in token's smallest unit, as string for precision).
+       * @since 0.0.14
+       * @schema
+       */
+      amount: string;
+      /**
+       * The token identifier (e.g., 'SOL', 'ALIEN', or contract address).
+       * @since 0.0.14
+       * @schema
+       */
+      token: string;
+      /**
+       * The network for the payment ('solana' or 'alien').
+       * @since 0.0.14
+       * @schema
+       */
+      network: string;
+      /**
+       * Your order/invoice ID for backend correlation and instant fulfillment.
+       * @since 0.0.14
+       * @schema
+       */
+      invoice: string;
+      /**
+       * Item title shown on the approval screen.
+       * @since 0.0.14
+       * @schema
+       */
+      title?: string;
+      /**
+       * Item description/caption shown on the approval screen.
+       * @since 0.0.14
+       * @schema
+       */
+      caption?: string;
+      /**
+       * Item icon URL shown on the approval screen.
+       * @since 0.0.14
+       * @schema
+       */
+      iconUrl?: string;
+      /**
+       * Quantity of items being purchased.
+       * @since 0.0.14
+       * @schema
+       */
+      quantity?: number;
+      /**
+       * Test mode flag. When true, no real payment is processed.
+       * The approval screen shows a test indicator, and webhooks
+       * include `test: true`. Use for development and testing.
+       * @since 0.0.14
+       * @schema
+       */
+      test?: boolean;
+    }>
+  >;
 }

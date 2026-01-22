@@ -195,3 +195,16 @@ await execute({ appId: 'my-app', challenge: 'random' });
 - Use `bun install` instead of `npm install`
 - Bun automatically loads .env, so don't use dotenv
 - Prefer `Bun.file` over `node:fs`
+
+## Documentation Guidelines
+
+- Use Mermaid for all diagrams, flowcharts, and sequence charts (not ASCII art)
+- Mermaid diagrams render properly in GitHub and most markdown viewers
+- Example:
+  ```mermaid
+  sequenceDiagram
+      participant A as Frontend
+      participant B as Backend
+      A->>B: Request
+      B-->>A: Response
+  ```

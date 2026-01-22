@@ -25,10 +25,20 @@ export {
 // Hooks
 export {
   type MethodSupportResult,
+  type PaymentCallbacks,
+  type PaymentErrorCode,
+  type PaymentParams,
+  type PaymentResponseStatus,
+  type PaymentResult,
+  type PaymentStatus,
   type UseMethodExecuteResult,
   type UseMethodOptions,
+  type UsePaymentOptions,
+  type UsePaymentReturn,
   useAlien,
   useEvent,
   useIsMethodSupported,
+  useLaunchParams,
   useMethod,
+  usePayment,
 } from './hooks';
