@@ -88,10 +88,20 @@ export interface Events {
       txHash?: string;
       /**
        * Error code (present when status is 'failed').
+       * - `insufficient_balance`: User doesn't have enough tokens
+       * - `network_error`: Blockchain network issue
+       * - `pre_checkout_rejected`: Backend rejected the payment in pre-checkout
+       * - `pre_checkout_timeout`: Backend didn't respond to pre-checkout in time
+       * - `unknown`: Unexpected error
        * @since 0.0.14
        * @schema
        */
-      errorCode?: 'insufficient_balance' | 'network_error' | 'unknown';
+      errorCode?:
+        | 'insufficient_balance'
+        | 'network_error'
+        | 'pre_checkout_rejected'
+        | 'pre_checkout_timeout'
+        | 'unknown';
     }>
   >;
 }

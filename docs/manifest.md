@@ -58,6 +58,44 @@ The `scope` array defines what user data your application can access.
 
 > Note: Ensure your icon URL is served over HTTPS to avoid mixed-content security warnings in the browser.
 
+---
+
+## Payments Configuration
+
+If your Mini App accepts payments, configure the payment endpoints in your manifest:
+
+```json
+{
+  "name": "My Shop",
+  "version": "1.0",
+  "payments": {
+    "preCheckoutUrl": "https://api.example.com/payments/pre-checkout",
+    "webhookUrl": "https://api.example.com/webhooks/payment"
+  }
+}
+```
+
+| Field | Type | Required | Description |
+| ----- | ---- | -------- | ----------- |
+| `payments.preCheckoutUrl` | URL | Yes* | Endpoint called before transaction signing (10s timeout) |
+| `payments.webhookUrl` | URL | Yes* | Endpoint for payment status webhooks |
+
+*Required only if your app uses `payment:request`.
+
+### Pre-Checkout Endpoint
+
+Called after user approves but before signing. Validate the order and respond within 10 seconds.
+
+See [Payments Documentation](./payments.md#pre-checkout-endpoint) for request/response format.
+
+### Webhook Endpoint
+
+Receives `pending`, `confirmed`, and `failed` status updates for transactions.
+
+See [Payments Documentation](./payments.md#webhook-handler) for payload format.
+
+---
+
 ## Location
 
 For your mini app to be discoverable, you must host your manifest at this public endpoint:
