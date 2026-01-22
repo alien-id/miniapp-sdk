@@ -50,14 +50,21 @@ test('request - should wait for response with matching reqId', async () => {
   const customReqId = 'test-req-123';
   const promise = request(
     'payment:request',
-    { recipient: 'wallet-123', amount: '100', token: 'SOL', network: 'solana', invoice: 'inv-123' },
+    {
+      recipient: 'wallet-123',
+      amount: '100',
+      token: 'SOL',
+      network: 'solana',
+      invoice: 'inv-123',
+    },
     'payment:response',
     { reqId: customReqId },
   );
 
   setTimeout(() => {
     emit('payment:response', {
-      status: 'paid' as const, txHash: 'tx-hash',
+      status: 'paid' as const,
+      txHash: 'tx-hash',
       reqId: customReqId,
     });
   }, 10);
@@ -71,14 +78,21 @@ test('request - should support custom reqId', async () => {
   const customReqId = 'custom-123';
   const promise = request(
     'payment:request',
-    { recipient: 'wallet-123', amount: '100', token: 'SOL', network: 'solana', invoice: 'inv-123' },
+    {
+      recipient: 'wallet-123',
+      amount: '100',
+      token: 'SOL',
+      network: 'solana',
+      invoice: 'inv-123',
+    },
     'payment:response',
     { reqId: customReqId },
   );
 
   setTimeout(() => {
     emit('payment:response', {
-      status: 'paid' as const, txHash: 'tx-hash',
+      status: 'paid' as const,
+      txHash: 'tx-hash',
       reqId: customReqId,
     });
   }, 10);
@@ -90,7 +104,13 @@ test('request - should support custom reqId', async () => {
 test('request - should timeout if no response', async () => {
   const promise = request(
     'payment:request',
-    { recipient: 'wallet-123', amount: '100', token: 'SOL', network: 'solana', invoice: 'inv-123' },
+    {
+      recipient: 'wallet-123',
+      amount: '100',
+      token: 'SOL',
+      network: 'solana',
+      invoice: 'inv-123',
+    },
     'payment:response',
     { timeout: 50 },
   );
@@ -101,17 +121,31 @@ test('request - should timeout if no response', async () => {
 test('request - should ignore responses with different reqId', async () => {
   const promise = request(
     'payment:request',
-    { recipient: 'wallet-123', amount: '100', token: 'SOL', network: 'solana', invoice: 'inv-123' },
+    {
+      recipient: 'wallet-123',
+      amount: '100',
+      token: 'SOL',
+      network: 'solana',
+      invoice: 'inv-123',
+    },
     'payment:response',
     { reqId: 'req-1' },
   );
 
   setTimeout(() => {
-    emit('payment:response', { status: 'paid' as const, txHash: 'tx-hash', reqId: 'req-2' });
+    emit('payment:response', {
+      status: 'paid' as const,
+      txHash: 'tx-hash',
+      reqId: 'req-2',
+    });
   }, 10);
 
   setTimeout(() => {
-    emit('payment:response', { status: 'paid' as const, txHash: 'tx-hash', reqId: 'req-1' });
+    emit('payment:response', {
+      status: 'paid' as const,
+      txHash: 'tx-hash',
+      reqId: 'req-1',
+    });
   }, 50);
 
   const result = await promise;

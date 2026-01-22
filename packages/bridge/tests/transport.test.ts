@@ -81,7 +81,14 @@ test('sendMessage - should use native bridge if available', () => {
   const message: Message = {
     type: 'method',
     name: 'payment:request',
-    payload: { recipient: 'test', amount: '100', token: 'SOL', network: 'solana', invoice: 'inv-123', reqId: '123' },
+    payload: {
+      recipient: 'test',
+      amount: '100',
+      token: 'SOL',
+      network: 'solana',
+      invoice: 'inv-123',
+      reqId: '123',
+    },
   };
 
   sendMessage(message);
@@ -171,7 +178,14 @@ test('setupMessageListener - should handle stringified messages', () => {
   const testMessage: Message = {
     type: 'method',
     name: 'payment:request',
-    payload: { recipient: 'test', amount: '100', token: 'SOL', network: 'solana', invoice: 'inv-123', reqId: '123' },
+    payload: {
+      recipient: 'test',
+      amount: '100',
+      token: 'SOL',
+      network: 'solana',
+      invoice: 'inv-123',
+      reqId: '123',
+    },
   };
 
   // Simulate receiving a stringified message

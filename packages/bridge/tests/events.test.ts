@@ -52,7 +52,11 @@ test('on - should register event listener', async () => {
     received = true;
   });
 
-  await emit('payment:response', { status: 'paid' as const, txHash: 'tx-hash', reqId: '123' });
+  await emit('payment:response', {
+    status: 'paid' as const,
+    txHash: 'tx-hash',
+    reqId: '123',
+  });
   expect(received).toBe(true);
 
   removeListener();
@@ -64,11 +68,19 @@ test('on - should remove listener when cleanup function is called', async () => 
     callCount++;
   });
 
-  await emit('payment:response', { status: 'paid' as const, txHash: 'tx-hash', reqId: '123' });
+  await emit('payment:response', {
+    status: 'paid' as const,
+    txHash: 'tx-hash',
+    reqId: '123',
+  });
   expect(callCount).toBe(1);
 
   removeListener();
-  await emit('payment:response', { status: 'paid' as const, txHash: 'tx-hash', reqId: '456' });
+  await emit('payment:response', {
+    status: 'paid' as const,
+    txHash: 'tx-hash',
+    reqId: '456',
+  });
   expect(callCount).toBe(1);
 });
 
@@ -86,12 +98,20 @@ test('off - should remove specific listener', async () => {
   on('payment:response', listener1);
   on('payment:response', listener2);
 
-  await emit('payment:response', { status: 'paid' as const, txHash: 'tx-hash', reqId: '123' });
+  await emit('payment:response', {
+    status: 'paid' as const,
+    txHash: 'tx-hash',
+    reqId: '123',
+  });
   expect(callCount1).toBe(1);
   expect(callCount2).toBe(1);
 
   off('payment:response', listener1);
-  await emit('payment:response', { status: 'paid' as const, txHash: 'tx-hash', reqId: '456' });
+  await emit('payment:response', {
+    status: 'paid' as const,
+    txHash: 'tx-hash',
+    reqId: '456',
+  });
   expect(callCount1).toBe(1);
   expect(callCount2).toBe(2);
 });
@@ -105,7 +125,11 @@ test('emit - should emit to all registered listeners', async () => {
     callCount++;
   });
 
-  await emit('payment:response', { status: 'paid' as const, txHash: 'tx-hash', reqId: '123' });
+  await emit('payment:response', {
+    status: 'paid' as const,
+    txHash: 'tx-hash',
+    reqId: '123',
+  });
   expect(callCount).toBe(2);
 });
 
@@ -116,7 +140,8 @@ test('emit - should pass correct payload', async () => {
   });
 
   const testPayload: EventPayload<'payment:response'> = {
-    status: 'paid' as const, txHash: 'tx-hash',
+    status: 'paid' as const,
+    txHash: 'tx-hash',
     reqId: '123',
   };
   await emit('payment:response', testPayload);
