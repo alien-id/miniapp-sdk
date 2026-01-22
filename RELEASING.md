@@ -16,10 +16,10 @@ contract (no deps)      auth-client (no deps)
 
 | Package | Name | Current Version |
 |---------|------|-----------------|
-| contract | @alien-id/contract | 0.0.14 |
-| bridge | @alien-id/bridge | 0.0.11 |
-| react | @alien-id/react | 0.0.8 |
-| auth-client | @alien-id/auth-client | 0.0.4 |
+| contract | @alien-id/contract | 0.0.15-beta |
+| bridge | @alien-id/bridge | 0.0.12-beta |
+| react | @alien-id/react | 0.0.9-beta |
+| auth-client | @alien-id/auth-client | 0.0.5 |
 
 ## Steps
 

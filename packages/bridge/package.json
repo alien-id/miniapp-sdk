@@ -1,6 +1,6 @@
 {
   "name": "@alien-id/bridge",
-  "version": "0.0.11-alpha",
+  "version": "0.0.12-beta",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
