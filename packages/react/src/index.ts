@@ -38,6 +38,7 @@ export {
   useAlien,
   useEvent,
   useIsMethodSupported,
+  useLaunchParams,
   useMethod,
   usePayment,
 } from './hooks';

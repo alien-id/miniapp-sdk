@@ -5,6 +5,9 @@ import { AlienContext, type AlienContextValue } from '../context';
  * Hook to access the Alien context.
  * Must be used within an AlienProvider.
  *
+ * For additional launch params (platform, startParam, hostAppVersion),
+ * use the `useLaunchParams` hook.
+ *
  * @example
  * ```tsx
  * const { authToken, contractVersion, isBridgeAvailable } = useAlien();

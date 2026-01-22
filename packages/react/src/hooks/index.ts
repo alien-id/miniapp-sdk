@@ -4,6 +4,7 @@ export {
   type MethodSupportResult,
   useIsMethodSupported,
 } from './useIsMethodSupported';
+export { useLaunchParams } from './useLaunchParams';
 export {
   type UseMethodExecuteResult,
   type UseMethodOptions,

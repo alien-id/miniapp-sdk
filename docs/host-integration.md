@@ -83,6 +83,50 @@ webView.evaluateJavascript(
 
 **Fallback behavior:** If not provided, the SDK assumes all methods are supported.
 
+### 4. Host App Version (Optional)
+
+```javascript
+window.__ALIEN_HOST_VERSION__ = '1.2.3';
+```
+
+**Purpose:** Provides the host app's version to the miniapp for telemetry or compatibility checks.
+
+**Format:** Version string (e.g., `1.2.3`)
+
+### 5. Platform (Optional)
+
+```javascript
+window.__ALIEN_PLATFORM__ = 'ios'; // or 'android'
+```
+
+**Purpose:** Indicates which platform the miniapp is running on.
+
+**Valid values:** `'ios'` or `'android'`
+
+### 6. Start Parameter (Optional)
+
+```javascript
+window.__ALIEN_START_PARAM__ = 'referral123';
+```
+
+**Purpose:** Pass custom data to the miniapp (referral codes, campaign tracking, etc.).
+
+**How it works:** Host app extracts the start parameter from the deep link and injects it into the window global before loading the miniapp.
+
+**Usage in miniapp:**
+
+```tsx
+import { useLaunchParams } from '@alien-id/react';
+
+function App() {
+  const launchParams = useLaunchParams();
+
+  if (launchParams?.startParam) {
+    trackReferral(launchParams.startParam);
+  }
+}
+```
+
 ## Complete Integration Example
 
 ### Android (Kotlin)
@@ -93,11 +137,12 @@ class MiniappWebViewClient : WebViewClient() {
     override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
         super.onPageStarted(view, url, favicon)
 
-        // Inject contract version early
-        view.evaluateJavascript(
-            "window.__ALIEN_CONTRACT_VERSION__ = '0.0.1';",
-            null
-        )
+        // Inject launch params early
+        view.evaluateJavascript("""
+            window.__ALIEN_CONTRACT_VERSION__ = '0.0.1';
+            window.__ALIEN_HOST_VERSION__ = '${BuildConfig.VERSION_NAME}';
+            window.__ALIEN_PLATFORM__ = 'android';
+        """.trimIndent(), null)
     }
 
     fun injectAuthToken(webView: WebView, token: String) {
@@ -131,6 +176,7 @@ webView.addJavascriptInterface(MiniAppBridge(context), "__miniAppsBridge__")
 class MiniappWebView: WKWebView {
 
     func setupBridge() {
+        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
         let script = """
             window.__miniAppsBridge__ = {
                 postMessage: function(data) {
@@ -138,6 +184,8 @@ class MiniappWebView: WKWebView {
                 }
             };
             window.__ALIEN_CONTRACT_VERSION__ = '0.0.1';
+            window.__ALIEN_HOST_VERSION__ = '\(appVersion)';
+            window.__ALIEN_PLATFORM__ = 'ios';
         """
 
         let userScript = WKUserScript(
