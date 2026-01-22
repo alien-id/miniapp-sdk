@@ -8,7 +8,6 @@ export default defineConfig({
   clean: true,
   outDir: 'dist',
   treeshake: true,
-  bundle: true,
   noExternal: ['jose'],
   target: 'esnext',
 });

@@ -10,7 +10,7 @@
 
 2. **Update lockfile**:
    ```bash
-   bun update @alien-id/bridge @alien-id/contract @alien-id/react
+   rm bun.lock && bun install
    ```
 
 3. **Commit and tag**:
