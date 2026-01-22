@@ -33,7 +33,7 @@
     },
     "packages/auth-client": {
       "name": "@alien-id/auth-client",
-      "version": "0.0.5",
+      "version": "0.0.5-beta",
       "dependencies": {
         "zod": "^4.3.5",
       },

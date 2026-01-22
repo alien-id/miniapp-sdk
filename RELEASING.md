@@ -19,7 +19,7 @@ contract (no deps)      auth-client (no deps)
 | contract | @alien-id/contract | 0.0.15-beta |
 | bridge | @alien-id/bridge | 0.0.12-beta |
 | react | @alien-id/react | 0.0.9-beta |
-| auth-client | @alien-id/auth-client | 0.0.5 |
+| auth-client | @alien-id/auth-client | 0.0.5-beta |
 
 ## Steps
 
