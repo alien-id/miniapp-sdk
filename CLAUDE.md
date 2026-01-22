@@ -208,3 +208,9 @@ await execute({ recipient: 'wallet-123', amount: '100', token: 'SOL', network: '
       A->>B: Request
       B-->>A: Response
   ```
+
+## Skills
+
+Local Claude skills for common workflows:
+
+- `/release` - Release packages to npm in correct dependency order. Handles version bumping, lockfile updates, tagging, and pushing in the correct order.
