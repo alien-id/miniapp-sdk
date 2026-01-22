@@ -45,13 +45,13 @@ export interface Events {
   >;
   /**
    * Miniapp close event, fired by the host app just before the miniapp is closed.
-   * @since 0.0.13
+   * @since 0.0.14
    * @schema
    */
   'miniapp:close': CreateEventPayload<Empty>;
   /**
    * Host app's back button clicked event.
-   * @since 0.0.13
+   * @since 0.0.14
    * @schema
    */
   'host.back.button:clicked': CreateEventPayload<Empty>;
@@ -66,7 +66,7 @@ export interface Events {
    * For instant fulfillment, your backend should fulfill on webhook receipt
    * using the `invoice` from the request.
    *
-   * @since 0.0.13
+   * @since 0.0.14
    * @schema
    */
   'payment:response': CreateEventPayload<
@@ -76,19 +76,19 @@ export interface Events {
        * - `paid`: Success
        * - `cancelled`: User rejected
        * - `failed`: Error (check `errorCode`)
-       * @since 0.0.13
+       * @since 0.0.14
        * @schema
        */
       status: 'paid' | 'cancelled' | 'failed';
       /**
        * Transaction hash (present when status is 'paid').
-       * @since 0.0.13
+       * @since 0.0.14
        * @schema
        */
       txHash?: string;
       /**
        * Error code (present when status is 'failed').
-       * @since 0.0.13
+       * @since 0.0.14
        * @schema
        */
       errorCode?: 'insufficient_balance' | 'network_error' | 'unknown';
