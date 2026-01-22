@@ -52,32 +52,37 @@ sequenceDiagram
 
 ### Basic Payment Request
 
-```typescript
-import { request } from '@alien-id/bridge';
+```tsx
+import { usePayment } from '@alien-id/react';
 
-const response = await request(
-  'payment:request',
-  {
-    recipient: '0x1234...', // Your wallet address
-    amount: '1000000',      // Amount in smallest unit
-    token: 'SOL',           // Token identifier
-    network: 'solana',      // 'solana' or 'alien'
-    invoice: 'order_abc123', // Your order/invoice ID
+function BuyButton({ orderId }: { orderId: string }) {
+  const { pay, isLoading, isPaid, isFailed, txHash, errorCode } = usePayment({
+    onPaid: (txHash) => console.log('Payment successful:', txHash),
+    onCancelled: () => console.log('User cancelled'),
+    onFailed: (code) => console.log('Failed:', code),
+  });
+
+  const handleBuy = () => pay({
+    recipient: '0x1234...',       // Your wallet address
+    amount: '1000000',            // Amount in smallest unit
+    token: 'SOL',                 // Token identifier
+    network: 'solana',            // 'solana' or 'alien'
+    invoice: orderId,             // Your order/invoice ID
 
     // Optional display fields
     title: 'Premium Subscription',
     caption: '1 month of premium features',
     iconUrl: 'https://yourapp.com/icon.png',
-  },
-  'payment:response'
-);
+  });
 
-if (response.status === 'paid') {
-  console.log('Payment successful:', response.txHash);
-} else if (response.status === 'cancelled') {
-  console.log('User cancelled');
-} else if (response.status === 'failed') {
-  console.log('Failed:', response.errorCode);
+  if (isPaid) return <div>Thank you! TX: {txHash}</div>;
+  if (isFailed) return <div>Payment failed: {errorCode}</div>;
+
+  return (
+    <button onClick={handleBuy} disabled={isLoading}>
+      {isLoading ? 'Processing...' : 'Buy Now'}
+    </button>
+  );
 }
 ```
 
@@ -215,11 +220,17 @@ Pass `test: true` in your payment request to simulate payments without real tran
 - No tokens are transferred
 - Pre-checkout and webhooks are called with `test: true`
 
-```typescript
-await request('payment:request', {
-  // ... payment params
-  test: true,
-}, 'payment:response');
+```tsx
+const { pay } = usePayment();
+
+await pay({
+  recipient: '0x1234...',
+  amount: '1000000',
+  token: 'SOL',
+  network: 'solana',
+  invoice: 'order_123',
+  test: true, // Enable test mode
+});
 ```
 
 ## Best Practices
