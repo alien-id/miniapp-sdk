@@ -53,7 +53,7 @@ sequenceDiagram
 ### Basic Payment Request
 
 ```tsx
-import { usePayment } from '@alien-id/react';
+import { usePayment } from '@alien_org/react';
 
 function BuyButton({ orderId }: { orderId: string }) {
   const { pay, isLoading, isPaid, isFailed, txHash, errorCode } = usePayment({

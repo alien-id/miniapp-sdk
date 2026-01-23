@@ -1,10 +1,10 @@
-import { request } from '@alien-id/bridge';
+import { request } from '@alien_org/bridge';
 import {
   type EventPayload,
   getMethodMinVersion,
   isMethodSupported,
   type MethodPayload,
-} from '@alien-id/contract';
+} from '@alien_org/contract';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { BridgeError, MethodNotSupportedError } from '../errors';
 import { useAlien } from './useAlien';
@@ -107,7 +107,7 @@ interface PaymentState {
  *
  * @example
  * ```tsx
- * import { usePayment } from '@alien-id/react';
+ * import { usePayment } from '@alien_org/react';
  *
  * function BuyButton({ orderId }: { orderId: string }) {
  *   const {
@@ -177,7 +177,7 @@ export function usePayment(options: UsePaymentOptions = {}): UsePaymentReturn {
         const error = new Error(
           'Bridge is not available. Running in dev mode?',
         );
-        console.warn('[@alien-id/react]', error.message);
+        console.warn('[@alien_org/react]', error.message);
         const result = {
           status: 'failed' as const,
           errorCode: 'unknown' as const,
@@ -242,7 +242,7 @@ export function usePayment(options: UsePaymentOptions = {}): UsePaymentReturn {
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
         if (err instanceof BridgeError) {
-          console.warn('[@alien-id/react] Bridge error:', err.message);
+          console.warn('[@alien_org/react] Bridge error:', err.message);
         }
         const result = {
           status: 'failed' as const,

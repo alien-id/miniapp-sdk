@@ -1,5 +1,5 @@
-import { getLaunchParams } from '@alien-id/bridge';
-import type { LaunchParams } from '@alien-id/contract';
+import { getLaunchParams } from '@alien_org/bridge';
+import type { LaunchParams } from '@alien_org/contract';
 import { useMemo } from 'react';
 
 /**
@@ -8,7 +8,7 @@ import { useMemo } from 'react';
  *
  * @example
  * ```tsx
- * import { useLaunchParams } from '@alien-id/react';
+ * import { useLaunchParams } from '@alien_org/react';
  *
  * function MyComponent() {
  *   const launchParams = useLaunchParams();

@@ -1,5 +1,5 @@
-import { on } from '@alien-id/bridge';
-import type { EventName, EventPayload } from '@alien-id/contract';
+import { on } from '@alien_org/bridge';
+import type { EventName, EventPayload } from '@alien_org/contract';
 import { useEffect, useRef } from 'react';
 import { useAlien } from './useAlien';
 
@@ -14,7 +14,7 @@ type EventCallback<E extends EventName> = (payload: EventPayload<E>) => void;
  *
  * @example
  * ```tsx
- * import { useEvent } from '@alien-id/react';
+ * import { useEvent } from '@alien_org/react';
  *
  * function MyComponent() {
  *   useEvent('miniapp:close', () => {
@@ -43,7 +43,7 @@ export function useEvent<E extends EventName>(
     // Return early if bridge is not available
     if (!isBridgeAvailable) {
       console.warn(
-        '[@alien-id/react] Bridge is not available. Event listener will not be set up. Running in dev mode?',
+        '[@alien_org/react] Bridge is not available. Event listener will not be set up. Running in dev mode?',
       );
       return;
     }
@@ -58,7 +58,7 @@ export function useEvent<E extends EventName>(
     } catch (error) {
       // Handle any errors gracefully (shouldn't happen with on(), but just in case)
       console.warn(
-        '[@alien-id/react] Failed to set up event listener:',
+        '[@alien_org/react] Failed to set up event listener:',
         error instanceof Error ? error.message : String(error),
       );
       return;

@@ -1,4 +1,4 @@
-import type { MethodName, MethodPayload } from '@alien-id/contract';
+import type { MethodName, MethodPayload } from '@alien_org/contract';
 import { sendMessage } from './transport';
 
 /**
@@ -10,7 +10,7 @@ import { sendMessage } from './transport';
  *
  * @example
  * ```ts
- * import { send } from '@alien-id/bridge';
+ * import { send } from '@alien_org/bridge';
  *
  * send('app:ready', {});
  * ```

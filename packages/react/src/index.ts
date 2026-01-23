@@ -1,6 +1,6 @@
 // Re-export request options type
-export type { RequestOptions } from '@alien-id/bridge';
-export { send } from '@alien-id/bridge';
+export type { RequestOptions } from '@alien_org/bridge';
+export { send } from '@alien_org/bridge';
 // Re-export types from contract for convenience
 export type {
   EventName,
@@ -8,9 +8,9 @@ export type {
   MethodName,
   MethodPayload,
   Version,
-} from '@alien-id/contract';
+} from '@alien_org/contract';
 // Re-export version utilities from contract
-export { getMethodMinVersion, isMethodSupported } from '@alien-id/contract';
+export { getMethodMinVersion, isMethodSupported } from '@alien_org/contract';
 // Provider
 export { AlienProvider, type AlienProviderProps } from './context';
 // Errors

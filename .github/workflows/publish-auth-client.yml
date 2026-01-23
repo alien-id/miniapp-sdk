@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      packages: write
+      id-token: write
 
     steps:
       - name: Checkout code
@@ -62,12 +62,21 @@ jobs:
         working-directory: packages/auth-client
         run: bun run build
 
-      - name: Publish to GitHub Packages
-        run: cd packages/auth-client && bun publish
-        env:
-          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Configure npm for trusted publishing
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Publish to npm
+        working-directory: packages/auth-client
+        run: npm publish --access public --provenance
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
+          append_body: true
+          body: |
+            ## npm
+            https://www.npmjs.com/package/@alien_org/auth-client

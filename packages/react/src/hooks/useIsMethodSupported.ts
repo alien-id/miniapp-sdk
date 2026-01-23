@@ -3,7 +3,7 @@ import {
   isMethodSupported,
   type MethodName,
   type Version,
-} from '@alien-id/contract';
+} from '@alien_org/contract';
 import { useAlien } from '.';
 
 export interface MethodSupportResult {
@@ -30,7 +30,7 @@ export interface MethodSupportResult {
  *
  * @example
  * ```tsx
- * import { useMethodSupported } from '@alien-id/react';
+ * import { useMethodSupported } from '@alien_org/react';
  *
  * function MyComponent() {
  *   const { supported, minVersion } = useMethodSupported('payment:request');

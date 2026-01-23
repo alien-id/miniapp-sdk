@@ -1,5 +1,5 @@
-import { getLaunchParams, isBridgeAvailable, send } from '@alien-id/bridge';
-import type { Version } from '@alien-id/contract';
+import { getLaunchParams, isBridgeAvailable, send } from '@alien_org/bridge';
+import type { Version } from '@alien_org/contract';
 
 import { createContext, type ReactNode, useEffect, useMemo } from 'react';
 
@@ -32,7 +32,7 @@ export interface AlienProviderProps {
  *
  * @example
  * ```tsx
- * import { AlienProvider } from '@alien-id/react';
+ * import { AlienProvider } from '@alien_org/react';
  *
  * function App() {
  *   return (
@@ -57,7 +57,7 @@ export function AlienProvider({ children }: AlienProviderProps): ReactNode {
   useEffect(() => {
     if (!value.isBridgeAvailable) {
       console.warn(
-        '[@alien-id/react] Bridge is not available. Running in dev mode? The SDK will handle errors gracefully, but bridge communication will not work.',
+        '[@alien_org/react] Bridge is not available. Running in dev mode? The SDK will handle errors gracefully, but bridge communication will not work.',
       );
     }
   }, [value.isBridgeAvailable]);

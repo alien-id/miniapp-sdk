@@ -3,8 +3,8 @@ import {
   BridgeTimeoutError,
   BridgeUnavailableError,
   BridgeWindowUnavailableError,
-} from '@alien-id/bridge';
-import type { MethodName, Version } from '@alien-id/contract';
+} from '@alien_org/bridge';
+import type { MethodName, Version } from '@alien_org/contract';
 
 /**
  * Base class for all React SDK errors.

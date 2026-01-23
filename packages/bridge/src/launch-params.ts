@@ -1,5 +1,5 @@
-import type { LaunchParams, Platform, Version } from '@alien-id/contract';
-import { PLATFORMS } from '@alien-id/contract';
+import type { LaunchParams, Platform, Version } from '@alien_org/contract';
+import { PLATFORMS } from '@alien_org/contract';
 
 declare global {
   interface Window {
@@ -95,7 +95,7 @@ export function mockLaunchParamsForDev(params: Partial<LaunchParams>): void {
     );
   }
 
-  console.warn('[@alien-id/bridge] Using mock launch params - dev mode');
+  console.warn('[@alien_org/bridge] Using mock launch params - dev mode');
 
   // Inject directly into window globals (same as host app)
   if (params.authToken !== undefined) {

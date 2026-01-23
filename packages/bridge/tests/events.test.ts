@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test } from 'bun:test';
-import type { EventPayload } from '@alien-id/contract';
+import type { EventPayload } from '@alien_org/contract';
 import { emit, off, on } from '../src/events';
 
 // Mock window for tests - only mock what's actually needed

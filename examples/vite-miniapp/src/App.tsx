@@ -4,7 +4,7 @@ import {
   useAlien,
   useEvent,
   useMethod,
-} from '@alien-id/react';
+} from '@alien_org/react';
 import { useState } from 'react';
 import './App.css';
 

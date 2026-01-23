@@ -9,9 +9,9 @@ Monorepo using Bun workspaces:
 ```
 miniapp-sdk/
 ├── packages/
-│   ├── bridge/       # Communication bridge (@alien-id/bridge)
-│   ├── contract/     # Type definitions & protocol (@alien-id/contract)
-│   └── react/        # React bindings (@alien-id/react)
+│   ├── bridge/       # Communication bridge (@alien_org/bridge)
+│   ├── contract/     # Type definitions & protocol (@alien_org/contract)
+│   └── react/        # React bindings (@alien_org/react)
 ├── examples/
 │   ├── vite-miniapp/ # React + TypeScript example
 │   └── miniapp-bridge/
@@ -23,13 +23,13 @@ miniapp-sdk/
 
 ## Packages
 
-### @alien-id/bridge
+### @alien_org/bridge
 Minimal, type-safe bridge for WebView ↔ Host App communication.
 - API: `on()`, `off()`, `emit()`, `request()`
 - Uses `window.__miniAppsBridge__` for native communication
 - Graceful dev-mode fallback (logs warnings when bridge unavailable)
 
-### @alien-id/contract
+### @alien_org/contract
 Defines the communication schema and type-safe contracts.
 - Defines all Methods (request-response) and Events (one-way)
 - Protocol versioning support via `releases.ts`
@@ -37,7 +37,7 @@ Defines the communication schema and type-safe contracts.
 - `getMethodMinVersion(method)` - Get minimum required version
 - TypeScript types for type-safe communication
 
-### @alien-id/react
+### @alien_org/react
 React bindings for the bridge (TMA-style patterns).
 - `AlienProvider` - Context provider, wrap your app
 - `useAuthToken()` - Get auth token from `window.__ALIEN_AUTH_TOKEN__`
@@ -110,7 +110,7 @@ Uses Biomejs (config: `biome.json`):
 
 ### Events
 ```typescript
-import { on, off, emit } from '@alien-id/bridge';
+import { on, off, emit } from '@alien_org/bridge';
 
 const unsubscribe = on('payment:response', (payload) => {
   console.log(payload.status, payload.reqId);
@@ -121,7 +121,7 @@ await emit('payment:response', { status: 'paid', txHash: '...', reqId: '...' });
 
 ### Request-Response
 ```typescript
-import { request } from '@alien-id/bridge';
+import { request } from '@alien_org/bridge';
 
 const response = await request(
   'payment:request',
@@ -134,7 +134,7 @@ const response = await request(
 ## React API
 
 ```tsx
-import { AlienProvider, useAuthToken, useEvent, useMethod, useIsMethodSupported } from '@alien-id/react';
+import { AlienProvider, useAuthToken, useEvent, useMethod, useIsMethodSupported } from '@alien_org/react';
 
 // Wrap app with provider
 <AlienProvider><App /></AlienProvider>

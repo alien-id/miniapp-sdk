@@ -4,7 +4,7 @@ export type {
   EventPayload,
   MethodName,
   MethodPayload,
-} from '@alien-id/contract';
+} from '@alien_org/contract';
 // Errors
 export {
   BridgeError,

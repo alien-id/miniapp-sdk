@@ -1,4 +1,6 @@
-# @alien-id/auth-client
+# @alien_org/auth-client
+
+[![npm](https://img.shields.io/npm/v/@alien_org/auth-client.svg)](https://www.npmjs.com/package/@alien_org/auth-client)
 
 Core authentication utilities for the Alien Miniapp SDK. This package provides tools for verifying JWT tokens issued by the Alien SSO.
 
@@ -7,7 +9,7 @@ Use it in your miniapp backend to verify tokens sent by miniapp.
 ## Installation
 
 ```bash
-bun add @alien-id/auth-client
+bun add @alien_org/auth-client
 ```
 
 ## Usage
@@ -17,7 +19,7 @@ bun add @alien-id/auth-client
 Use `createAuthClient` to verify JWT access tokens from Alien SSO.
 
 ```typescript
-import { createAuthClient } from '@alien-id/auth-client';
+import { createAuthClient } from '@alien_org/auth-client';
 
 
 const client = createAuthClient();
@@ -35,7 +37,7 @@ try {
 `createAuthClient` accepts an optional jwksUrl parameter to use custom JWKS endpoint for JWT verification.
 
 ```typescript
-import { createAuthClient } from '@alien-id/core';
+import { createAuthClient } from '@alien_org/core';
 
 
 const client = createAuthClient({

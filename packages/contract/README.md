@@ -1,11 +1,13 @@
-# @alien-id/contract
+# @alien_org/contract
+
+[![npm](https://img.shields.io/npm/v/@alien_org/contract.svg)](https://www.npmjs.com/package/@alien_org/contract)
 
 Type definitions and version utilities for miniapp-host communication.
 
 ## Installation
 
 ```bash
-bun add @alien-id/contract
+bun add @alien_org/contract
 ```
 
 ## Exports
@@ -34,13 +36,13 @@ import type {
 
   // Utilities
   Version,              // Semantic version string type
-} from '@alien-id/contract';
+} from '@alien_org/contract';
 ```
 
 ### Constants
 
 ```typescript
-import { PLATFORMS, releases } from '@alien-id/contract';
+import { PLATFORMS, releases } from '@alien_org/contract';
 
 PLATFORMS  // ['ios', 'android']
 releases   // Record<Version, MethodName[]> - version to methods mapping
@@ -53,7 +55,7 @@ import {
   isMethodSupported,
   getMethodMinVersion,
   getReleaseVersion,
-} from '@alien-id/contract';
+} from '@alien_org/contract';
 
 // Check if method is supported in a version
 isMethodSupported('app:ready', '0.0.9');         // true

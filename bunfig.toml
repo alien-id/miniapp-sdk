@@ -1,2 +1,2 @@
 [install.scopes]
-"@alien-id" = { url = "https://npm.pkg.github.com", token = "$NPM_TOKEN" }
+"@alien_org" = { url = "https://registry.npmjs.org" }

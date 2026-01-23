@@ -3,7 +3,7 @@ import type {
   EventPayload,
   MethodName,
   MethodPayload,
-} from '@alien-id/contract';
+} from '@alien_org/contract';
 import { BridgeUnavailableError } from './errors';
 
 // Bridge interface for mobile/desktop clients

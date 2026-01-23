@@ -14,10 +14,10 @@
 
     "baseUrl": ".",
     "paths": {
-      "@alien-id/bridge": ["../bridge/src"],
-      "@alien-id/bridge/*": ["../bridge/src/*"],
-      "@alien-id/contract": ["../contract/src"],
-      "@alien-id/contract/*": ["../contract/src/*"]
+      "@alien_org/bridge": ["../bridge/src"],
+      "@alien_org/bridge/*": ["../bridge/src/*"],
+      "@alien_org/contract": ["../contract/src"],
+      "@alien_org/contract/*": ["../contract/src/*"]
     },
 
     "strict": true,

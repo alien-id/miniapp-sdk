@@ -1,4 +1,4 @@
-import type { EventName, EventPayload, Events } from '@alien-id/contract';
+import type { EventName, EventPayload, Events } from '@alien_org/contract';
 import Emittery from 'emittery';
 import { sendMessage, setupMessageListener } from './transport';
 

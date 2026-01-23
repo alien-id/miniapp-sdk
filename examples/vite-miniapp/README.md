@@ -1,6 +1,6 @@
 # Alien Miniapp SDK - Events Example
 
-This example demonstrates how to use the `@alien-id/react` SDK to listen for events from the host app in a React + TypeScript + Vite application.
+This example demonstrates how to use the `@alien_org/react` SDK to listen for events from the host app in a React + TypeScript + Vite application.
 
 ## What This Example Shows
 

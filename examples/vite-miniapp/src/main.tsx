@@ -1,4 +1,4 @@
-import { AlienProvider } from '@alien-id/react';
+import { AlienProvider } from '@alien_org/react';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';

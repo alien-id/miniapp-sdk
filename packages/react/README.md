@@ -1,11 +1,13 @@
-# @alien-id/react
+# @alien_org/react
+
+[![npm](https://img.shields.io/npm/v/@alien_org/react.svg)](https://www.npmjs.com/package/@alien_org/react)
 
 React bindings for the Alien miniapp SDK. This is the primary interface for developers.
 
 ## Installation
 
 ```bash
-bun add @alien-id/react
+bun add @alien_org/react
 ```
 
 ## Quick Start
@@ -13,7 +15,7 @@ bun add @alien-id/react
 Wrap your app with `AlienProvider`:
 
 ```tsx
-import { AlienProvider } from '@alien-id/react';
+import { AlienProvider } from '@alien_org/react';
 
 function App() {
   return (
@@ -31,7 +33,7 @@ function App() {
 Access the Alien context (auth token, contract version, bridge availability):
 
 ```tsx
-import { useAlien } from '@alien-id/react';
+import { useAlien } from '@alien_org/react';
 
 function MyComponent() {
   const { authToken, contractVersion, isBridgeAvailable } = useAlien();
@@ -49,7 +51,7 @@ function MyComponent() {
 Get all launch parameters injected by the host app:
 
 ```tsx
-import { useLaunchParams } from '@alien-id/react';
+import { useLaunchParams } from '@alien_org/react';
 
 function MyComponent() {
   const launchParams = useLaunchParams();
@@ -67,7 +69,7 @@ function MyComponent() {
 Check if a method is supported by the host:
 
 ```tsx
-import { useIsMethodSupported } from '@alien-id/react';
+import { useIsMethodSupported } from '@alien_org/react';
 
 function MyComponent() {
   const { supported, minVersion } = useIsMethodSupported('payment:request');
@@ -85,7 +87,7 @@ function MyComponent() {
 Subscribe to bridge events:
 
 ```tsx
-import { useEvent } from '@alien-id/react';
+import { useEvent } from '@alien_org/react';
 
 function MyComponent() {
   // Handle miniapp close (cleanup before close)
@@ -107,7 +109,7 @@ function MyComponent() {
 Make bridge requests with state management and version checking:
 
 ```tsx
-import { useMethod } from '@alien-id/react';
+import { useMethod } from '@alien_org/react';
 
 function PayButton() {
   const { execute, data, error, isLoading, supported, reset } = useMethod(
@@ -153,7 +155,7 @@ const { execute } = useMethod('payment:request', 'payment:response', { checkVers
 Handle payments with full state management:
 
 ```tsx
-import { usePayment } from '@alien-id/react';
+import { usePayment } from '@alien_org/react';
 
 function BuyButton({ orderId }: { orderId: string }) {
   const {
@@ -196,15 +198,15 @@ function BuyButton({ orderId }: { orderId: string }) {
 
 ## Re-exports
 
-The package re-exports utilities from `@alien-id/contract` and `@alien-id/bridge`:
+The package re-exports utilities from `@alien_org/contract` and `@alien_org/bridge`:
 
 ```tsx
 import {
-  // From @alien-id/bridge
+  // From @alien_org/bridge
   send,
   type RequestOptions,
 
-  // From @alien-id/contract
+  // From @alien_org/contract
   isMethodSupported,
   getMethodMinVersion,
   type MethodName,
@@ -212,7 +214,7 @@ import {
   type EventName,
   type EventPayload,
   type Version,
-} from '@alien-id/react';
+} from '@alien_org/react';
 ```
 
 ## Error Handling
@@ -227,12 +229,12 @@ import {
   ReactSDKError,           // Base class for React SDK errors
   MethodNotSupportedError, // Method not supported by contract version
 
-  // Bridge errors (re-exported from @alien-id/bridge)
+  // Bridge errors (re-exported from @alien_org/bridge)
   BridgeError,                  // Base class for bridge errors
   BridgeUnavailableError,       // Bridge not available
   BridgeTimeoutError,           // Request timed out
   BridgeWindowUnavailableError, // Window undefined (SSR)
-} from '@alien-id/react';
+} from '@alien_org/react';
 ```
 
 ## Development Mode

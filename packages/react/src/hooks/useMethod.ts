@@ -1,4 +1,4 @@
-import { type RequestOptions, request } from '@alien-id/bridge';
+import { type RequestOptions, request } from '@alien_org/bridge';
 import {
   type EventName,
   type EventPayload,
@@ -6,7 +6,7 @@ import {
   isMethodSupported,
   type MethodName,
   type MethodPayload,
-} from '@alien-id/contract';
+} from '@alien_org/contract';
 import { useCallback, useMemo, useState } from 'react';
 import { BridgeError, MethodNotSupportedError } from '../errors';
 import { useAlien } from './useAlien';
@@ -53,7 +53,7 @@ interface UseMethodResult<M extends MethodName, E extends EventName>
  *
  * @example
  * ```tsx
- * import { useMethod } from '@alien-id/react';
+ * import { useMethod } from '@alien_org/react';
  *
  * function PayButton() {
  *   const { execute, data, error, isLoading, supported } = useMethod(
@@ -120,7 +120,7 @@ export function useMethod<M extends MethodName, E extends EventName>(
         const error = new Error(
           'Bridge is not available. Running in dev mode? Bridge communication will not work.',
         );
-        console.warn('[@alien-id/react]', error.message);
+        console.warn('[@alien_org/react]', error.message);
         setState({ data: undefined, error, isLoading: false });
         return { data: undefined, error };
       }
@@ -152,7 +152,7 @@ export function useMethod<M extends MethodName, E extends EventName>(
       } catch (err) {
         // Handle bridge errors gracefully
         if (err instanceof BridgeError) {
-          console.warn('[@alien-id/react] Bridge error:', err.message);
+          console.warn('[@alien_org/react] Bridge error:', err.message);
           setState({ data: undefined, error: err, isLoading: false });
           return { data: undefined, error: err };
         }

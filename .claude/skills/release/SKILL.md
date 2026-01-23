@@ -1,7 +1,7 @@
 ---
 name: release
 description: Release packages to npm in correct dependency order. Use when publishing new versions, bumping versions, or deploying packages to the registry.
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 ---
 
