@@ -1,6 +1,6 @@
 {
   "name": "@alien-id/auth-client",
-  "version": "0.0.6-beta",
+  "version": "0.0.7-beta",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
