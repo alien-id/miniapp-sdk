@@ -16,10 +16,10 @@ contract (no deps)      auth-client (no deps)
 
 | Package | Name | Current Version |
 |---------|------|-----------------|
-| contract | @alien-id/contract | 0.0.17-beta |
-| bridge | @alien-id/bridge | 0.0.14-beta |
-| react | @alien-id/react | 0.0.11-beta |
-| auth-client | @alien-id/auth-client | 0.0.7-beta |
+| contract | @alien_org/contract | 0.1.0 |
+| bridge | @alien_org/bridge | 0.1.0 |
+| react | @alien_org/react | 0.1.0 |
+| auth-client | @alien_org/auth-client | 0.1.0 |
 
 ## Steps
 
@@ -117,7 +117,7 @@ git push origin develop react@x.x.x
 
 ### "Package has a dependency loop" error
 
-This happens when running `bun update @alien-id/*`. Don't use `bun update` for workspace packages. Instead:
+This happens when running `bun update @alien_org/*`. Don't use `bun update` for workspace packages. Instead:
 ```bash
 rm bun.lock && bun install
 ```

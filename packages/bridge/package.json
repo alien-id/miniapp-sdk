@@ -1,6 +1,6 @@
 {
-  "name": "@alien-id/bridge",
-  "version": "0.0.14-beta",
+  "name": "@alien_org/bridge",
+  "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -26,7 +26,8 @@
     "directory": "packages/bridge"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   },
   "scripts": {
     "build": "tsdown",
@@ -34,7 +35,7 @@
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
-    "@alien-id/contract": "workspace:*",
+    "@alien_org/contract": "workspace:*",
     "emittery": "^1.2.0"
   },
   "devDependencies": {

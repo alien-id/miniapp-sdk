@@ -1,6 +1,6 @@
 {
-  "name": "@alien-id/auth-client",
-  "version": "0.0.7-beta",
+  "name": "@alien_org/auth-client",
+  "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -26,7 +26,8 @@
     "directory": "packages/auth-client"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   },
   "scripts": {
     "build": "tsdown",

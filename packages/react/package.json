@@ -1,6 +1,6 @@
 {
-  "name": "@alien-id/react",
-  "version": "0.0.11-beta",
+  "name": "@alien_org/react",
+  "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -26,15 +26,16 @@
     "directory": "packages/react"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   },
   "scripts": {
     "build": "tsdown",
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
-    "@alien-id/bridge": "workspace:*",
-    "@alien-id/contract": "workspace:*"
+    "@alien_org/bridge": "workspace:*",
+    "@alien_org/contract": "workspace:*"
   },
   "peerDependencies": {
     "react": "^18 || ^19",

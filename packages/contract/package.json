@@ -1,6 +1,6 @@
 {
-  "name": "@alien-id/contract",
-  "version": "0.0.17-beta",
+  "name": "@alien_org/contract",
+  "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -26,7 +26,8 @@
     "directory": "packages/contract"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   },
   "scripts": {
     "build": "tsdown",
