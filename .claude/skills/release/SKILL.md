@@ -1,14 +1,15 @@
 ---
 name: release
-description: Release packages to npm in correct dependency order
-disable-model-invocation: false
+description: Release packages to npm in correct dependency order. Use when publishing new versions, bumping versions, or deploying packages to the registry.
+disable-model-invocation: true
+user-invocable: true
 ---
 
-# Release Skill
+# Release Packages
 
-Release packages to npm in the correct dependency order.
+Release monorepo packages to npm in the correct dependency order.
 
-## Package Dependency Order
+## Package Dependencies
 
 ```
 contract (no deps)      auth-client (no deps)
@@ -18,102 +19,106 @@ contract (no deps)      auth-client (no deps)
   react → depends on bridge + contract
 ```
 
+## Supporting Files
+
+- `scripts/detect-changes.sh` - Detects which packages have changes since last release
+
 ## Execution Steps
 
-Execute these steps in exact order. Do not skip steps or change the order.
+Execute steps in order. Each step has clear success criteria.
 
-### Step 1: Detect Changes Since Last Release
+### Step 1: Detect Changes
 
-For each package, find the latest tag and check for changes:
+Run the change detection script:
 
 ```bash
-# Get latest tag for each package
-git tag -l "contract@*" --sort=-v:refname | head -1
-git tag -l "auth-client@*" --sort=-v:refname | head -1
-git tag -l "bridge@*" --sort=-v:refname | head -1
-git tag -l "react@*" --sort=-v:refname | head -1
-
-# Check for changes since last tag (for each package)
-git diff <latest-tag>..HEAD --name-only -- packages/<package>/
+bash .claude/skills/release/scripts/detect-changes.sh
 ```
 
-Display results in a table showing:
+Display the results table to the user showing:
 - Package name
 - Current version (from package.json)
 - Latest release tag
 - Whether there are changes (Yes/No)
 - Number of changed files
 
-If a package has no changes, it will be skipped from the release.
+**Success**: Table displayed with accurate change detection.
 
-### Step 2: Confirm Packages to Release
+### Step 2: Select Packages
 
-Show the user which packages have changes and will be released.
-Ask for confirmation to proceed. User can also manually exclude packages if needed.
+Ask the user which packages to release using a **multi-select** prompt:
+- Show packages with changes pre-selected
+- Allow user to add/remove packages (force release without changes)
+- Options: contract, auth-client, bridge, react
+
+If no packages selected, abort the release.
+
+**Success**: User has confirmed which packages to release.
 
 ### Step 3: Select Version Bump Per Package
 
-For each package with changes, ask the user to select the version bump using individual prompts:
+For each selected package, ask the user to choose the version bump:
+- **Patch** (0.0.x → 0.0.x+1)
+- **Minor** (0.x.0 → 0.x+1.0)
+- **Major** (x.0.0 → x+1.0.0)
 
-For **contract** (if changed):
-- Patch (0.0.15 → 0.0.16)
-- Minor (0.0.15 → 0.1.0)
-- Major (0.0.15 → 1.0.0)
+Use a single multi-question prompt to collect all bumps at once.
 
-For **auth-client** (if changed):
-- Patch / Minor / Major
-
-For **bridge** (if changed):
-- Patch / Minor / Major
-
-For **react** (if changed):
-- Patch / Minor / Major
+**Success**: Version bump selected for each package.
 
 ### Step 4: Select Release Type
 
-Ask user to select the release type (applies to all packages):
-- **Stable** - No suffix (e.g., 0.0.16)
-- **Beta** - Add -beta suffix (e.g., 0.0.16-beta)
-- **Alpha** - Add -alpha suffix (e.g., 0.0.16-alpha)
+Ask the user for the release type (applies to all packages):
+- **Stable** - No suffix (1.0.0)
+- **Beta** - Add -beta suffix (1.0.0-beta)
+- **Alpha** - Add -alpha suffix (1.0.0-alpha)
 
-### Step 5: Confirm New Versions
+**Success**: Release type selected.
 
-Display a summary table with:
-- Package name
-- Current version
-- New version (with bump + suffix applied)
+### Step 5: Confirm Versions
 
-Ask user to confirm before proceeding.
+Display a summary table:
+
+| Package | Current | New |
+|---------|---------|-----|
+| ... | ... | ... |
+
+Ask user to confirm with a simple Yes/No prompt.
+
+**Success**: User confirmed the version changes.
 
 ### Step 6: Update package.json Files
 
-Edit the `version` field in each changed package's package.json with the new versions.
+Edit the `version` field in each selected package's package.json.
+
+**Success**: All package.json files updated with new versions.
 
 ### Step 7: Regenerate Lockfile
 
-Run:
 ```bash
 rm bun.lock && bun install
 ```
 
-This is required because bun uses lockfile versions when publishing.
+**Success**: Lockfile regenerated without errors.
 
-### Step 8: Verify Lockfile Versions
+### Step 8: Verify Lockfile
 
-Run grep for each changed package to verify versions match:
+For each selected package, verify the lockfile has correct versions:
+
 ```bash
 grep -A2 '"packages/<package>"' bun.lock
 ```
 
-Confirm all versions are correct.
+**Success**: All versions in lockfile match expected new versions.
 
 ### Step 9: Update RELEASING.md
 
-Update the "Current Versions" table in RELEASING.md with the new versions for changed packages.
+Update the "Current Versions" table in RELEASING.md with new versions.
+
+**Success**: RELEASING.md updated.
 
 ### Step 10: Commit Changes
 
-Stage and commit:
 ```bash
 git add packages/*/package.json bun.lock RELEASING.md
 git commit -m "chore: :bookmark: bump packages for release
@@ -122,35 +127,54 @@ git commit -m "chore: :bookmark: bump packages for release
 ..."
 ```
 
-Only list the changed packages in the commit message.
+**Success**: Changes committed.
 
 ### Step 11: Create Tags
 
-Create tags only for changed packages:
+Create a git tag for each selected package:
+
 ```bash
 git tag <package>@<version>
 ```
 
+**Success**: All tags created locally.
+
 ### Step 12: Push in Dependency Order
 
-**CRITICAL**: Push only changed packages in this exact order, waiting for user confirmation between each step.
+Push tags in dependency order, waiting for CI between each group.
 
-**Push 1** - Independent packages (if changed):
-Push `contract` and/or `auth-client` tags along with develop branch.
-Tell user: "Wait for workflows to complete at https://github.com/alien-id/miniapp-sdk/actions"
-Wait for user to confirm "ready" before continuing.
+**Push 1** - Independent packages:
+```bash
+git push origin develop contract@<version> auth-client@<version>
+```
+Show message: "Pushing contract and auth-client. Click **Continue** when workflows complete."
+Provide link: https://github.com/alien-id/miniapp-sdk/actions
+Wait for user to click Continue.
 
-**Push 2** - Bridge (if changed):
-Push `bridge` tag.
-Tell user: "Wait for bridge workflow to complete"
-Wait for user to confirm "ready" before continuing.
+**Push 2** - Bridge (if selected):
+```bash
+git push origin bridge@<version>
+```
+Show message: "Pushing bridge. Click **Continue** when workflow completes."
+Wait for user to click Continue.
 
-**Push 3** - React (if changed):
-Push `react` tag.
+**Push 3** - React (if selected):
+```bash
+git push origin react@<version>
+```
 
-Skip any push steps that have no changed packages.
+Skip any push step if no packages in that group were selected.
+
+**Success**: All tags pushed, workflows triggered.
 
 ### Step 13: Summary
 
-Display final summary table with all released packages and their versions.
-Provide link to monitor workflows: https://github.com/alien-id/miniapp-sdk/actions
+Display final summary:
+
+| Package | Version | Status |
+|---------|---------|--------|
+| ... | ... | ✅ Released |
+
+Provide link: https://github.com/alien-id/miniapp-sdk/actions
+
+**Success**: All selected packages released.
