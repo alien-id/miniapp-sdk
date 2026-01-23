@@ -74,7 +74,7 @@ jobs:
 
       - name: Publish to npm
         working-directory: packages/contract
-        run: npm publish --access public --provenance
+        run: bun publish --access public --provenance
 
       - name: Upload JSON schema artifacts
         uses: actions/upload-artifact@v4
