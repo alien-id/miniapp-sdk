@@ -27,7 +27,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/contract@')
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
@@ -79,3 +79,10 @@ jobs:
             packages/contract/artifacts/events.schema.json
             packages/contract/artifacts/methods.schema.json
           retention-days: 90
+
+      - name: Upload schemas to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            packages/contract/artifacts/events.schema.json
+            packages/contract/artifacts/methods.schema.json
