@@ -11,7 +11,7 @@ class AuthClient {
 
   async verifyToken(accessToken: string): Promise<TokenInfo> {
     const { payload } = await jwtVerify(accessToken, this.jwks, {
-      algorithms: ['RS256'],
+      algorithms: ['RS256', 'EdDSA'],
     });
     return TokenInfoSchema.parse(payload);
   }
