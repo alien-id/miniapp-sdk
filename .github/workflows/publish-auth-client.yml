@@ -62,6 +62,10 @@ jobs:
         working-directory: packages/auth-client
         run: bun run build
 
+      - name: Pack with Bun
+        working-directory: packages/auth-client
+        run: bun pm pack
+
       - name: Configure npm for trusted publishing
         uses: actions/setup-node@v4
         with:
@@ -70,7 +74,7 @@ jobs:
 
       - name: Publish to npm
         working-directory: packages/auth-client
-        run: npm publish --access public --provenance
+        run: npm publish ./alien_org-auth-client-*.tgz --access public --provenance
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

@@ -66,6 +66,10 @@ jobs:
         working-directory: packages/contract
         run: bun run generate-schemas
 
+      - name: Pack with Bun
+        working-directory: packages/contract
+        run: bun pm pack
+
       - name: Configure npm for trusted publishing
         uses: actions/setup-node@v4
         with:
@@ -74,7 +78,7 @@ jobs:
 
       - name: Publish to npm
         working-directory: packages/contract
-        run: npm publish --access public --provenance
+        run: npm publish ./alien_org-contract-*.tgz --access public --provenance
 
       - name: Upload JSON schema artifacts
         uses: actions/upload-artifact@v4
