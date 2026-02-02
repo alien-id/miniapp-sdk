@@ -1,4 +1,10 @@
 export { useAlien } from './useAlien';
+export {
+  type ClipboardErrorCode,
+  type UseClipboardOptions,
+  type UseClipboardReturn,
+  useClipboard,
+} from './useClipboard';
 export { useEvent } from './useEvent';
 export {
   type MethodSupportResult,
