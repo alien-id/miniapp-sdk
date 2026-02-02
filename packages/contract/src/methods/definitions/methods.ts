@@ -47,62 +47,62 @@ export interface Methods {
    * Set `test: true` for test mode - no real payment is made, but webhooks
    * are fired with `test: true` flag. Use for development and testing.
    *
-   * @since 0.0.14
+   * @since 0.1.1
    * @schema
    */
   'payment:request': CreateMethodPayload<
     WithReqId<{
       /**
        * The recipient's wallet address.
-       * @since 0.0.14
+       * @since 0.1.1
        * @schema
        */
       recipient: string;
       /**
        * The amount to pay (in token's smallest unit, as string for precision).
-       * @since 0.0.14
+       * @since 0.1.1
        * @schema
        */
       amount: string;
       /**
        * The token identifier (e.g., 'SOL', 'ALIEN', or contract address).
-       * @since 0.0.14
+       * @since 0.1.1
        * @schema
        */
       token: string;
       /**
        * The network for the payment ('solana' or 'alien').
-       * @since 0.0.14
+       * @since 0.1.1
        * @schema
        */
       network: string;
       /**
        * Your order/invoice ID for backend correlation and instant fulfillment.
-       * @since 0.0.14
+       * @since 0.1.1
        * @schema
        */
       invoice: string;
       /**
        * Item title shown on the approval screen.
-       * @since 0.0.14
+       * @since 0.1.1
        * @schema
        */
       title?: string;
       /**
        * Item description/caption shown on the approval screen.
-       * @since 0.0.14
+       * @since 0.1.1
        * @schema
        */
       caption?: string;
       /**
        * Item icon URL shown on the approval screen.
-       * @since 0.0.14
+       * @since 0.1.1
        * @schema
        */
       iconUrl?: string;
       /**
        * Quantity of items being purchased.
-       * @since 0.0.14
+       * @since 0.1.1
        * @schema
        */
       quantity?: number;
@@ -110,10 +110,29 @@ export interface Methods {
        * Test mode flag. When true, no real payment is processed.
        * The approval screen shows a test indicator, and webhooks
        * include `test: true`. Use for development and testing.
-       * @since 0.0.14
+       * @since 0.1.1
        * @schema
        */
       test?: boolean;
     }>
   >;
+  /**
+   * Write text to the system clipboard.
+   * @since 0.1.1
+   * @schema
+   */
+  'clipboard:write': CreateMethodPayload<{
+    /**
+     * Text to copy to clipboard.
+     * @since 0.1.1
+     * @schema
+     */
+    text: string;
+  }>;
+  /**
+   * Read text from the system clipboard.
+   * @since 0.1.1
+   * @schema
+   */
+  'clipboard:read': CreateMethodPayload<WithReqId<Empty>>;
 }

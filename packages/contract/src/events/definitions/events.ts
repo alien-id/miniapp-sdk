@@ -30,7 +30,7 @@ export interface Events {
    * For instant fulfillment, your backend should fulfill on webhook receipt
    * using the `invoice` from the request.
    *
-   * @since 0.0.14
+   * @since 0.1.1
    * @schema
    */
   'payment:response': CreateEventPayload<
@@ -40,13 +40,13 @@ export interface Events {
        * - `paid`: Success
        * - `cancelled`: User rejected
        * - `failed`: Error (check `errorCode`)
-       * @since 0.0.14
+       * @since 0.1.1
        * @schema
        */
       status: 'paid' | 'cancelled' | 'failed';
       /**
        * Transaction hash (present when status is 'paid').
-       * @since 0.0.14
+       * @since 0.1.1
        * @schema
        */
       txHash?: string;
@@ -57,7 +57,7 @@ export interface Events {
        * - `pre_checkout_rejected`: Backend rejected the payment in pre-checkout
        * - `pre_checkout_timeout`: Backend didn't respond to pre-checkout in time
        * - `unknown`: Unexpected error
-       * @since 0.0.14
+       * @since 0.1.1
        * @schema
        */
       errorCode?:
@@ -66,6 +66,33 @@ export interface Events {
         | 'pre_checkout_rejected'
         | 'pre_checkout_timeout'
         | 'unknown';
+    }>
+  >;
+  /**
+   * Clipboard read response.
+   *
+   * On success: `text` contains the clipboard content (may be empty string).
+   * On failure: `text` is null and `errorCode` indicates the reason.
+   *
+   * @since 0.1.1
+   * @schema
+   */
+  'clipboard:response': CreateEventPayload<
+    WithReqId<{
+      /**
+       * Text from clipboard. Null if read failed.
+       * @since 0.1.1
+       * @schema
+       */
+      text: string | null;
+      /**
+       * Error code if clipboard read failed.
+       * - `permission_denied`: User denied clipboard access
+       * - `unavailable`: Clipboard is not available
+       * @since 0.1.1
+       * @schema
+       */
+      errorCode?: 'permission_denied' | 'unavailable';
     }>
   >;
 }
