@@ -1,4 +1,4 @@
-import type { Empty, WithReqId } from '../../utils';
+import type { Empty, PaymentTestScenario, WithReqId } from '../../utils';
 import type { CreateMethodPayload } from '../types/payload';
 
 /**
@@ -83,37 +83,62 @@ export interface Methods {
        */
       invoice: string;
       /**
-       * Item title shown on the approval screen.
+       * Optional item details shown on the approval screen.
        * @since 0.1.1
        * @schema
        */
-      title?: string;
+      item?: {
+        /**
+         * Item title shown on the approval screen.
+         * @since 0.1.1
+         * @schema
+         */
+        title: string;
+        /**
+         * Item icon URL shown on the approval screen.
+         * @since 0.1.1
+         * @schema
+         */
+        iconUrl: string;
+        /**
+         * Quantity of items being purchased.
+         * @since 0.1.1
+         * @schema
+         */
+        quantity: number;
+      };
       /**
-       * Item description/caption shown on the approval screen.
+       * Test mode. Simulates payment outcomes without real transactions.
+       *
+       * | Scenario | Client | Webhook |
+       * |----------|--------|---------|
+       * | `true` / `'paid'` | `paid` | `finalized` |
+       * | `'paid:failed'` | `paid` | `failed` |
+       * | `'cancelled'` | `cancelled` | none |
+       * | `'error:*'` | `failed` | none |
+       *
+       * **Pre-broadcast errors** (no webhook):
+       * `'error:insufficient_balance'`, `'error:network_error'`,
+       * `'error:pre_checkout_rejected'`, `'error:pre_checkout_timeout'`,
+       * `'error:unknown'`
+       *
+       * @example
+       * // Happy path
+       * test: 'paid'
+       *
+       * // Client shows success, but tx failed on-chain
+       * test: 'paid:failed'
+       *
+       * // User cancelled
+       * test: 'cancelled'
+       *
+       * // Pre-broadcast failure
+       * test: 'error:insufficient_balance'
+       *
        * @since 0.1.1
        * @schema
        */
-      caption?: string;
-      /**
-       * Item icon URL shown on the approval screen.
-       * @since 0.1.1
-       * @schema
-       */
-      iconUrl?: string;
-      /**
-       * Quantity of items being purchased.
-       * @since 0.1.1
-       * @schema
-       */
-      quantity?: number;
-      /**
-       * Test mode flag. When true, no real payment is processed.
-       * The approval screen shows a test indicator, and webhooks
-       * include `test: true`. Use for development and testing.
-       * @since 0.1.1
-       * @schema
-       */
-      test?: boolean;
+      test?: boolean | PaymentTestScenario;
     }>
   >;
   /**

@@ -1,4 +1,4 @@
-import type { Empty, WithReqId } from '../../utils';
+import type { Empty, PaymentErrorCode, WithReqId } from '../../utils';
 import type { CreateEventPayload } from '../types/payload';
 
 /**
@@ -39,11 +39,11 @@ export interface Events {
        * Payment status.
        * - `paid`: Success
        * - `cancelled`: User rejected
-       * - `failed`: Error (check `errorCode`)
+       * - `error`: Error (check `errorCode`)
        * @since 0.1.1
        * @schema
        */
-      status: 'paid' | 'cancelled' | 'failed';
+      status: 'paid' | 'cancelled' | 'error';
       /**
        * Transaction hash (present when status is 'paid').
        * @since 0.1.1
@@ -60,12 +60,7 @@ export interface Events {
        * @since 0.1.1
        * @schema
        */
-      errorCode?:
-        | 'insufficient_balance'
-        | 'network_error'
-        | 'pre_checkout_rejected'
-        | 'pre_checkout_timeout'
-        | 'unknown';
+      errorCode?: PaymentErrorCode;
     }>
   >;
   /**

@@ -62,3 +62,58 @@ export type Or<A extends boolean, B extends boolean> = A extends true
  * // Empty = {}
  */
 export type Empty = Record<string, never>;
+
+/**
+ * Client-side payment error codes (pre-broadcast failures).
+ * Returned when `status` is `'failed'` in `payment:response`.
+ * These errors occur before transaction broadcast, so no webhook is sent.
+ * @since 0.1.1
+ * @schema
+ */
+export type PaymentErrorCode =
+  | 'insufficient_balance'
+  | 'network_error'
+  | 'pre_checkout_rejected'
+  | 'pre_checkout_timeout'
+  | 'unknown';
+
+/**
+ * Webhook status for payment results (on-chain truth).
+ * - `'finalized'`: Transaction confirmed on-chain
+ * - `'failed'`: Transaction failed on-chain
+ * @since 0.1.2
+ * @schema
+ */
+export type PaymentWebhookStatus = 'finalized' | 'failed';
+
+/**
+ * Payment test scenarios for simulating different payment outcomes.
+ *
+ * | Scenario | Client sees | Webhook |
+ * |----------|-------------|---------|
+ * | `'paid'` | `paid` | `{ status: 'finalized' }` |
+ * | `'paid:failed'` | `paid` | `{ status: 'failed' }` |
+ * | `'cancelled'` | `cancelled` | none |
+ * | `'error:*'` | `failed` | none (pre-broadcast) |
+ *
+ * @example
+ * // Happy path: client paid, tx finalized
+ * test: 'paid'
+ *
+ * // On-chain failure: client paid, tx failed
+ * test: 'paid:failed'
+ *
+ * // User cancelled before confirming
+ * test: 'cancelled'
+ *
+ * // Pre-broadcast error (no tx, no webhook)
+ * test: 'error:insufficient_balance'
+ *
+ * @since 0.1.2
+ * @schema
+ */
+export type PaymentTestScenario =
+  | 'paid'
+  | 'paid:failed'
+  | 'cancelled'
+  | `error:${PaymentErrorCode}`;
