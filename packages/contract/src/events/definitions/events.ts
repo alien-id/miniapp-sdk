@@ -39,11 +39,11 @@ export interface Events {
        * Payment status.
        * - `paid`: Success
        * - `cancelled`: User rejected
-       * - `error`: Error (check `errorCode`)
+       * - `failed`: Sending transaction failed (check `errorCode`)
        * @since 0.1.1
        * @schema
        */
-      status: 'paid' | 'cancelled' | 'error';
+      status: 'paid' | 'cancelled' | 'failed';
       /**
        * Transaction hash (present when status is 'paid').
        * @since 0.1.1
