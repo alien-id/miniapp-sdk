@@ -23,4 +23,9 @@ export {
   isMethodSupported,
   releases,
 } from './methods/versions';
-export type { Version } from './utils';
+export type {
+  PaymentErrorCode,
+  PaymentTestScenario,
+  PaymentWebhookStatus,
+  Version,
+} from './utils';
