@@ -18,4 +18,5 @@ export const releases: Record<
   '0.0.9': ['app:ready'],
   '0.0.14': ['miniapp:close.ack', 'host.back.button:toggle'],
   '0.1.1': ['payment:request', 'clipboard:write', 'clipboard:read'],
+  '0.1.3': ['link:open'],
 };

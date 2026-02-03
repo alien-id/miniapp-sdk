@@ -160,4 +160,42 @@ export interface Methods {
    * @schema
    */
   'clipboard:read': CreateMethodPayload<WithReqId<Empty>>;
+  /**
+   * Open a URL.
+   *
+   * The host app acts as middleware: parses the URL, checks permissions/auth,
+   * and routes to the appropriate handler based on URL and `openMode`.
+   *
+   * **`external`** (default) - Open outside the host app:
+   * - Custom schemes (`solana:`, `mailto:`) → system handler
+   * - HTTPS → system browser
+   *
+   * **`internal`** - Open within the host app:
+   * - Miniapp links → open miniapp (handles auth if required)
+   * - Other links → in-app webview
+   *
+   * @example
+   * emit('link:open', { url: 'solana:...' });
+   * emit('link:open', { url: 'mailto:hi@example.com' });
+   * emit('link:open', { url: 'https://example.com', openMode: 'internal' });
+   *
+   * @since 0.1.3
+   * @schema
+   */
+  'link:open': CreateMethodPayload<{
+    /**
+     * The URL to open.
+     * @since 0.1.3
+     * @schema
+     */
+    url: string;
+    /**
+     * Where to open the URL.
+     * - `external` (default): System browser or app handler
+     * - `internal`: Within the host app (miniapps, webviews)
+     * @since 0.1.3
+     * @schema
+     */
+    openMode?: 'external' | 'internal';
+  }>;
 }
