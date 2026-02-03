@@ -24,6 +24,7 @@ export {
 } from './errors';
 // Hooks
 export {
+  type ClipboardErrorCode,
   type MethodSupportResult,
   type PaymentCallbacks,
   type PaymentErrorCode,
@@ -31,11 +32,14 @@ export {
   type PaymentResponseStatus,
   type PaymentResult,
   type PaymentStatus,
+  type UseClipboardOptions,
+  type UseClipboardReturn,
   type UseMethodExecuteResult,
   type UseMethodOptions,
   type UsePaymentOptions,
   type UsePaymentReturn,
   useAlien,
+  useClipboard,
   useEvent,
   useIsMethodSupported,
   useLaunchParams,
