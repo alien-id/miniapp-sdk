@@ -196,22 +196,22 @@ describe('isMethodSupported', () => {
   });
 
   describe('unknown versions', () => {
-    test('returns false for non-existent version', () => {
+    test('returns true for future version (semver: version >= minVersion)', () => {
       expect(
         isMethodSupported('auth:request' as unknown as MethodName, '99.99.99'),
-      ).toBe(false);
+      ).toBe(true);
     });
 
-    test('returns false for version 0.0.0', () => {
+    test('returns false for version before method was added', () => {
       expect(
         isMethodSupported('auth:request' as unknown as MethodName, '0.0.0'),
       ).toBe(false);
     });
 
-    test('returns false for version between releases', () => {
+    test('returns true for version between releases (semver: 0.0.5 >= 0.0.1)', () => {
       expect(
         isMethodSupported('auth:request' as unknown as MethodName, '0.0.5'),
-      ).toBe(false);
+      ).toBe(true);
     });
   });
 });
