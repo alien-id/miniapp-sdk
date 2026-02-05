@@ -5,6 +5,8 @@
     "build:packages": "bun run --filter './packages/*' build"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.3.10"
+    "@alien_org/bridge": "workspace:*",
+    "@biomejs/biome": "2.3.10",
+    "happy-dom": "^20.5.0"
   }
 }

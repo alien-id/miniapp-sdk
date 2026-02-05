@@ -1,4 +1,9 @@
-import { getLaunchParams, isBridgeAvailable, send } from '@alien_org/bridge';
+import {
+  enableLinkInterceptor,
+  getLaunchParams,
+  isBridgeAvailable,
+  send,
+} from '@alien_org/bridge';
 import type { Version } from '@alien_org/contract';
 
 import {
@@ -71,6 +76,12 @@ export interface AlienProviderProps {
    * ```
    */
   autoReady?: boolean;
+  /**
+   * Whether to intercept external link clicks and route them through the
+   * bridge's `link:open` method. Same-origin links are unaffected.
+   * @default true
+   */
+  interceptLinks?: boolean;
 }
 
 /**
@@ -93,6 +104,7 @@ export interface AlienProviderProps {
 export function AlienProvider({
   children,
   autoReady = true,
+  interceptLinks = true,
 }: AlienProviderProps): ReactNode {
   const readySent = useRef(false);
 
@@ -133,6 +145,13 @@ export function AlienProvider({
       ready();
     }
   }, [autoReady, ready]);
+
+  // Intercept external link clicks by default
+  useEffect(() => {
+    if (interceptLinks) {
+      return enableLinkInterceptor();
+    }
+  }, [interceptLinks]);
 
   return (
     <AlienContext.Provider value={value}>{children}</AlienContext.Provider>

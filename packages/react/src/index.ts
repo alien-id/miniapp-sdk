@@ -1,5 +1,5 @@
 // Re-export request options type
-export type { RequestOptions } from '@alien_org/bridge';
+export type { LinkInterceptorOptions, RequestOptions } from '@alien_org/bridge';
 export { send } from '@alien_org/bridge';
 // Re-export types from contract for convenience
 export type {
@@ -43,6 +43,7 @@ export {
   useEvent,
   useIsMethodSupported,
   useLaunchParams,
+  useLinkInterceptor,
   useMethod,
   usePayment,
 } from './hooks';

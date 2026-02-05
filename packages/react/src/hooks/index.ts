@@ -11,6 +11,7 @@ export {
   useIsMethodSupported,
 } from './useIsMethodSupported';
 export { useLaunchParams } from './useLaunchParams';
+export { useLinkInterceptor } from './useLinkInterceptor';
 export {
   type UseMethodExecuteResult,
   type UseMethodOptions,

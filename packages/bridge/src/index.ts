@@ -24,6 +24,9 @@ export {
   parseLaunchParams,
   retrieveLaunchParams,
 } from './launch-params';
+// Link interceptor
+export type { LinkInterceptorOptions } from './link-interceptor';
+export { enableLinkInterceptor } from './link-interceptor';
 export type { RequestOptions } from './request';
 // Request - send request and wait for response
 export { request } from './request';
