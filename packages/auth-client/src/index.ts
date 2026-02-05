@@ -24,3 +24,4 @@ export const createAuthClient = ({
   return new AuthClient(jwks);
 };
 export type { AuthClient, AuthClientOptions };
+export { errors as JwtErrors } from 'jose';
