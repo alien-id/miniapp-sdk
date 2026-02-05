@@ -44,8 +44,9 @@ export interface Methods {
    * Optional display fields (`title`, `caption`, `iconUrl`, `quantity`)
    * are shown on the payment approval screen.
    *
-   * Set `test: true` for test mode - no real payment is made, but webhooks
-   * are fired with `test: true` flag. Use for development and testing.
+   * Set `test` to a scenario string (e.g. `'paid'`, `'error:insufficient_balance'`)
+   * for test mode - no real payment is made, but the specified scenario is
+   * simulated. Use for development and testing.
    *
    * @since 0.1.1
    * @schema
@@ -112,7 +113,7 @@ export interface Methods {
        *
        * | Scenario | Client | Webhook |
        * |----------|--------|---------|
-       * | `true` / `'paid'` | `paid` | `finalized` |
+       * | `'paid'` | `paid` | `finalized` |
        * | `'paid:failed'` | `paid` | `failed` |
        * | `'cancelled'` | `cancelled` | none |
        * | `'error:*'` | `failed` | none |
@@ -138,7 +139,7 @@ export interface Methods {
        * @since 0.1.1
        * @schema
        */
-      test?: boolean | PaymentTestScenario;
+      test?: PaymentTestScenario;
     }>
   >;
   /**

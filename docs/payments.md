@@ -98,7 +98,7 @@ function BuyButton({ orderId }: { orderId: string }) {
 | `title` | `string` | No | Item title for approval screen |
 | `caption` | `string` | No | Item description for approval screen |
 | `iconUrl` | `string` | No | Item icon URL for approval screen |
-| `test` | `boolean` | No | Test mode (no real payment) |
+| `test` | `PaymentTestScenario` | No | Test scenario to simulate (e.g. `'paid'`, `'cancelled'`, `'error:insufficient_balance'`) |
 
 ### Error Codes
 
@@ -129,7 +129,7 @@ Content-Type: application/json
   token: string,      // Token from payment:request
   network: string,    // Network from payment:request
   recipient: string,  // Recipient from payment:request
-  test: boolean       // Test mode flag
+  test: PaymentTestScenario  // Test scenario (e.g. 'paid', 'error:insufficient_balance')
 }
 ```
 
@@ -210,27 +210,46 @@ app.post('/webhooks/payment', async (req, res) => {
 | `amount` | `string` | Amount paid |
 | `token` | `string` | Token used |
 | `network` | `string` | Network used |
-| `test` | `boolean` | Test mode flag |
+| `test` | `PaymentTestScenario` | Test scenario string (e.g. `'paid'`, `'error:insufficient_balance'`) |
 
 ## Test Mode
 
-Pass `test: true` in your payment request to simulate payments without real transactions:
+Pass a `test` scenario string in your payment request to simulate payments without real transactions:
 
 - Approval screen shows "TEST" indicator
 - No tokens are transferred
-- Pre-checkout and webhooks are called with `test: true`
+- The specified scenario determines the simulated outcome
+
+| Scenario | Client sees | Webhook |
+|----------|-------------|---------|
+| `'paid'` | `paid` | `{ status: 'finalized' }` |
+| `'paid:failed'` | `paid` | `{ status: 'failed' }` |
+| `'cancelled'` | `cancelled` | none |
+| `'error:*'` | `failed` | none (pre-broadcast) |
+
+Pre-broadcast error scenarios: `'error:insufficient_balance'`, `'error:network_error'`, `'error:pre_checkout_rejected'`, `'error:pre_checkout_timeout'`, `'error:unknown'`
 
 ```tsx
 const { pay } = usePayment();
 
+// Happy path: client paid, tx finalized
 await pay({
   recipient: '0x1234...',
   amount: '1000000',
   token: 'SOL',
   network: 'solana',
   invoice: 'order_123',
-  test: true, // Enable test mode
+  test: 'paid',
 });
+
+// On-chain failure: client paid, tx failed
+await pay({ ...params, test: 'paid:failed' });
+
+// User cancelled
+await pay({ ...params, test: 'cancelled' });
+
+// Pre-broadcast error
+await pay({ ...params, test: 'error:insufficient_balance' });
 ```
 
 ## Best Practices

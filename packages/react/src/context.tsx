@@ -1,7 +1,14 @@
 import { getLaunchParams, isBridgeAvailable, send } from '@alien_org/bridge';
 import type { Version } from '@alien_org/contract';
 
-import { createContext, type ReactNode, useEffect, useMemo } from 'react';
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react';
 
 export interface AlienContextValue {
   /**
@@ -18,12 +25,48 @@ export interface AlienContextValue {
    * Whether the bridge is available (running inside Alien App).
    */
   isBridgeAvailable: boolean;
+  /**
+   * Manually signal to the host app that the miniapp is ready.
+   * Only needed when `autoReady` is set to `false`.
+   * Safe to call multiple times — only the first call sends the signal.
+   */
+  ready: () => void;
 }
 
 export const AlienContext = createContext<AlienContextValue | null>(null);
 
 export interface AlienProviderProps {
   children: ReactNode;
+  /**
+   * Whether to automatically send `app:ready` when the provider mounts.
+   * Defaults to `true`.
+   *
+   * Set to `false` if you need to defer the ready signal (e.g., after
+   * fetching initial data), then call `ready()` from `useAlien()` when done.
+   *
+   * @default true
+   *
+   * @example
+   * ```tsx
+   * // Auto (default) — fires immediately on mount
+   * <AlienProvider>
+   *   <App />
+   * </AlienProvider>
+   *
+   * // Manual — fire when you're ready
+   * <AlienProvider autoReady={false}>
+   *   <App />
+   * </AlienProvider>
+   *
+   * function App() {
+   *   const { ready } = useAlien();
+   *   useEffect(() => {
+   *     fetchData().then(() => ready());
+   *   }, []);
+   * }
+   * ```
+   */
+  autoReady?: boolean;
 }
 
 /**
@@ -43,15 +86,29 @@ export interface AlienProviderProps {
  * }
  * ```
  */
-export function AlienProvider({ children }: AlienProviderProps): ReactNode {
+export function AlienProvider({
+  children,
+  autoReady = true,
+}: AlienProviderProps): ReactNode {
+  const readySent = useRef(false);
+
+  const ready = useCallback(() => {
+    if (readySent.current) return;
+    readySent.current = true;
+    if (isBridgeAvailable()) {
+      send('app:ready', {});
+    }
+  }, []);
+
   const value = useMemo<AlienContextValue>(() => {
     const launchParams = getLaunchParams();
     return {
       authToken: launchParams?.authToken,
       contractVersion: launchParams?.contractVersion,
       isBridgeAvailable: isBridgeAvailable(),
+      ready,
     };
-  }, []);
+  }, [ready]);
 
   // Warn if bridge is not available on mount
   useEffect(() => {
@@ -62,12 +119,12 @@ export function AlienProvider({ children }: AlienProviderProps): ReactNode {
     }
   }, [value.isBridgeAvailable]);
 
-  // Signal ready to host app when miniapp is loaded
+  // Auto-send app:ready on mount when autoReady is enabled
   useEffect(() => {
-    if (value.isBridgeAvailable) {
-      send('app:ready', {});
+    if (autoReady) {
+      ready();
     }
-  }, [value.isBridgeAvailable]);
+  }, [autoReady, ready]);
 
   return (
     <AlienContext.Provider value={value}>{children}</AlienContext.Provider>
