@@ -6,9 +6,13 @@ import {
   type ReactNode,
   useCallback,
   useEffect,
-  useMemo,
+  useLayoutEffect,
   useRef,
+  useState,
 } from 'react';
+
+const useIsomorphicLayoutEffect =
+  typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 export interface AlienContextValue {
   /**
@@ -100,24 +104,28 @@ export function AlienProvider({
     }
   }, []);
 
-  const value = useMemo<AlienContextValue>(() => {
+  const [value, setValue] = useState<AlienContextValue>(() => ({
+    authToken: undefined,
+    contractVersion: undefined,
+    isBridgeAvailable: false,
+    ready,
+  }));
+
+  useIsomorphicLayoutEffect(() => {
     const launchParams = getLaunchParams();
-    return {
+    const bridgeAvailable = isBridgeAvailable();
+    setValue({
       authToken: launchParams?.authToken,
       contractVersion: launchParams?.contractVersion,
-      isBridgeAvailable: isBridgeAvailable(),
+      isBridgeAvailable: bridgeAvailable,
       ready,
-    };
-  }, [ready]);
-
-  // Warn if bridge is not available on mount
-  useEffect(() => {
-    if (!value.isBridgeAvailable) {
+    });
+    if (!bridgeAvailable) {
       console.warn(
         '[@alien_org/react] Bridge is not available. Running in dev mode? The SDK will handle errors gracefully, but bridge communication will not work.',
       );
     }
-  }, [value.isBridgeAvailable]);
+  }, [ready]);
 
   // Auto-send app:ready on mount when autoReady is enabled
   useEffect(() => {
