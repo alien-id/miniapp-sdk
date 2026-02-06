@@ -151,11 +151,9 @@ export function AlienProvider({
         '[@alien_org/react] Bridge is not available. Running in dev mode? The SDK will handle errors gracefully, but bridge communication will not work.',
       );
     }
-  }, [ready]);
 
-  // Auto-send app:ready on mount when autoReady is enabled
-  useEffect(() => {
-    if (autoReady) {
+    // Auto-send app:ready after successful data injection
+    if (autoReady && launchParams) {
       ready();
     }
   }, [autoReady, ready]);
