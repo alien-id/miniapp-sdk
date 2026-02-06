@@ -15,6 +15,7 @@ interface Window {
   __ALIEN_CONTRACT_VERSION__?: string;
   __ALIEN_HOST_VERSION__?: string;
   __ALIEN_PLATFORM__?: string;
+  __ALIEN_SAFE_AREA_INSETS__?: { top: number; right: number; bottom: number; left: number };
   __ALIEN_START_PARAM__?: string;
 }
 ```
@@ -28,6 +29,7 @@ interface Window {
 | `__ALIEN_CONTRACT_VERSION__` | Yes | Semantic version of the supported contract (e.g., `'0.0.14'`). Must match the latest version from the contract JSON schemas |
 | `__ALIEN_HOST_VERSION__` | No | Host app version for telemetry/compatibility (e.g., `'1.2.3'`) |
 | `__ALIEN_PLATFORM__` | No | Platform identifier: `'ios'` or `'android'` |
+| `__ALIEN_SAFE_AREA_INSETS__` | Yes | Device safe area insets in CSS pixels: `{ top, right, bottom, left }`. Get from `UIView.safeAreaInsets` (iOS) or `WindowInsetsCompat.Type.systemBars()` (Android). On Android, divide by `displayMetrics.density` to convert to CSS pixels. |
 | `__ALIEN_START_PARAM__` | No | Custom data passed via deep link (referral codes, campaign tracking, etc.) |
 
 ## Message Bridge

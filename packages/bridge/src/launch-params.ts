@@ -1,4 +1,9 @@
-import type { LaunchParams, Platform, Version } from '@alien_org/contract';
+import type {
+  LaunchParams,
+  Platform,
+  SafeAreaInsets,
+  Version,
+} from '@alien_org/contract';
 import { PLATFORMS } from '@alien_org/contract';
 
 declare global {
@@ -7,6 +12,7 @@ declare global {
     __ALIEN_CONTRACT_VERSION__?: string;
     __ALIEN_HOST_VERSION__?: string;
     __ALIEN_PLATFORM__?: string;
+    __ALIEN_SAFE_AREA_INSETS__?: SafeAreaInsets;
     __ALIEN_START_PARAM__?: string;
   }
 }
@@ -35,6 +41,21 @@ function validatePlatform(value: string | undefined): Platform | undefined {
     : undefined;
 }
 
+function validateSafeAreaInsets(
+  value: unknown,
+): SafeAreaInsets | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const v = value as Record<string, unknown>;
+  if (
+    typeof v.top !== 'number' ||
+    typeof v.right !== 'number' ||
+    typeof v.bottom !== 'number' ||
+    typeof v.left !== 'number'
+  )
+    return undefined;
+  return { top: v.top, right: v.right, bottom: v.bottom, left: v.left };
+}
+
 function retrieveFromWindow(): LaunchParams | null {
   if (typeof window === 'undefined') return null;
 
@@ -46,6 +67,7 @@ function retrieveFromWindow(): LaunchParams | null {
     contractVersion: validateVersion(window.__ALIEN_CONTRACT_VERSION__),
     hostAppVersion: window.__ALIEN_HOST_VERSION__,
     platform: validatePlatform(window.__ALIEN_PLATFORM__),
+    safeAreaInsets: validateSafeAreaInsets(window.__ALIEN_SAFE_AREA_INSETS__),
     startParam: window.__ALIEN_START_PARAM__,
   };
 }
@@ -79,6 +101,7 @@ export function parseLaunchParams(raw: string): LaunchParams {
     contractVersion: validateVersion(parsed.contractVersion),
     hostAppVersion: parsed.hostAppVersion,
     platform: validatePlatform(parsed.platform),
+    safeAreaInsets: validateSafeAreaInsets(parsed.safeAreaInsets),
     startParam: parsed.startParam,
   };
 }
@@ -110,6 +133,9 @@ export function mockLaunchParamsForDev(params: Partial<LaunchParams>): void {
   if (params.platform !== undefined) {
     window.__ALIEN_PLATFORM__ = params.platform;
   }
+  if (params.safeAreaInsets !== undefined) {
+    window.__ALIEN_SAFE_AREA_INSETS__ = params.safeAreaInsets;
+  }
   if (params.startParam !== undefined) {
     window.__ALIEN_START_PARAM__ = params.startParam;
   }
@@ -124,6 +150,7 @@ export function clearMockLaunchParams(): void {
     delete window.__ALIEN_CONTRACT_VERSION__;
     delete window.__ALIEN_HOST_VERSION__;
     delete window.__ALIEN_PLATFORM__;
+    delete window.__ALIEN_SAFE_AREA_INSETS__;
     delete window.__ALIEN_START_PARAM__;
     try {
       sessionStorage.removeItem(SESSION_STORAGE_KEY);

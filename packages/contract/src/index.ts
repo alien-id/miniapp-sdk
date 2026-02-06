@@ -7,7 +7,7 @@ export type {
   EventName,
   EventPayload,
 } from './events/types';
-export type { LaunchParams, Platform } from './launch-params';
+export type { LaunchParams, Platform, SafeAreaInsets } from './launch-params';
 export { PLATFORMS } from './launch-params';
 export type { Methods } from './methods/methods';
 export type {

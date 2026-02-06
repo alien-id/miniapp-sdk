@@ -4,7 +4,7 @@ import {
   isBridgeAvailable,
   send,
 } from '@alien_org/bridge';
-import type { Version } from '@alien_org/contract';
+import type { SafeAreaInsets, Version } from '@alien_org/contract';
 
 import {
   createContext,
@@ -84,6 +84,19 @@ export interface AlienProviderProps {
   interceptLinks?: boolean;
 }
 
+const SAFE_AREA_EDGES = ['top', 'right', 'bottom', 'left'] as const;
+
+function setSafeAreaCssVars(insets: SafeAreaInsets | undefined): void {
+  if (typeof document === 'undefined') return;
+  const root = document.documentElement;
+  for (const edge of SAFE_AREA_EDGES) {
+    root.style.setProperty(
+      `--alien-safe-area-inset-${edge}`,
+      `${insets?.[edge] ?? 0}px`,
+    );
+  }
+}
+
 /**
  * Provider component that initializes the Alien miniapp context.
  * Must wrap your app to use Alien hooks.
@@ -132,6 +145,7 @@ export function AlienProvider({
       isBridgeAvailable: bridgeAvailable,
       ready,
     });
+    setSafeAreaCssVars(launchParams?.safeAreaInsets);
     if (!bridgeAvailable) {
       console.warn(
         '[@alien_org/react] Bridge is not available. Running in dev mode? The SDK will handle errors gracefully, but bridge communication will not work.',
