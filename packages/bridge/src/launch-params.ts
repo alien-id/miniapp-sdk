@@ -41,9 +41,7 @@ function validatePlatform(value: string | undefined): Platform | undefined {
     : undefined;
 }
 
-function validateSafeAreaInsets(
-  value: unknown,
-): SafeAreaInsets | undefined {
+function validateSafeAreaInsets(value: unknown): SafeAreaInsets | undefined {
   if (!value || typeof value !== 'object') return undefined;
   const v = value as Record<string, unknown>;
   if (
