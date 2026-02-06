@@ -18,7 +18,7 @@ contract (no deps)      auth-client (no deps)
 |---------|------|-----------------|
 | contract | @alien_org/contract | 0.2.2 |
 | bridge | @alien_org/bridge | 0.2.3 |
-| react | @alien_org/react | 0.2.5 |
+| react | @alien_org/react | 0.2.6 |
 | auth-client | @alien_org/auth-client | 0.2.3 |
 
 ## Steps
