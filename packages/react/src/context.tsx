@@ -120,6 +120,7 @@ export function AlienProvider({
   interceptLinks = true,
 }: AlienProviderProps): ReactNode {
   const readySent = useRef(false);
+  const launchParamsLoaded = useRef(false);
 
   const ready = useCallback(() => {
     if (readySent.current) return;
@@ -139,6 +140,7 @@ export function AlienProvider({
   useIsomorphicLayoutEffect(() => {
     const launchParams = getLaunchParams();
     const bridgeAvailable = isBridgeAvailable();
+    launchParamsLoaded.current = !!launchParams;
     setValue({
       authToken: launchParams?.authToken,
       contractVersion: launchParams?.contractVersion,
@@ -151,9 +153,11 @@ export function AlienProvider({
         '[@alien_org/react] Bridge is not available. Running in dev mode? The SDK will handle errors gracefully, but bridge communication will not work.',
       );
     }
+  }, [ready]);
 
-    // Auto-send app:ready after successful data injection
-    if (autoReady && launchParams) {
+  // Auto-send app:ready after render when data injection succeeded
+  useEffect(() => {
+    if (autoReady && launchParamsLoaded.current) {
       ready();
     }
   }, [autoReady, ready]);
