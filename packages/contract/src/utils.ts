@@ -73,8 +73,6 @@ export type Empty = Record<string, never>;
 export type PaymentErrorCode =
   | 'insufficient_balance'
   | 'network_error'
-  | 'pre_checkout_rejected'
-  | 'pre_checkout_timeout'
   | 'unknown';
 
 /**

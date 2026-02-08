@@ -54,8 +54,6 @@ export interface Events {
        * Error code (present when status is 'failed').
        * - `insufficient_balance`: User doesn't have enough tokens
        * - `network_error`: Blockchain network issue
-       * - `pre_checkout_rejected`: Backend rejected the payment in pre-checkout
-       * - `pre_checkout_timeout`: Backend didn't respond to pre-checkout in time
        * - `unknown`: Unexpected error
        * @since 0.1.1
        * @schema

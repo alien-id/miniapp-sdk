@@ -120,7 +120,6 @@ export interface Methods {
        *
        * **Pre-broadcast errors** (no webhook):
        * `'error:insufficient_balance'`, `'error:network_error'`,
-       * `'error:pre_checkout_rejected'`, `'error:pre_checkout_timeout'`,
        * `'error:unknown'`
        *
        * @example
