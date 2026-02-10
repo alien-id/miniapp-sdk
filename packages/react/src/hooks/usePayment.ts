@@ -208,6 +208,21 @@ export function usePayment(options: UsePaymentOptions = {}): UsePaymentReturn {
         return result;
       }
 
+      // Validate required recipient field
+      if (!params.recipient) {
+        const error = new Error(
+          'Payment recipient is required and must be a non-empty string.',
+        );
+        const result = {
+          status: 'failed' as const,
+          errorCode: 'unknown' as const,
+          error,
+        };
+        updateState(result);
+        callbacksRef.current.onFailed?.('unknown', error);
+        return result;
+      }
+
       updateState({ status: 'loading' });
 
       try {
