@@ -87,7 +87,12 @@ export function useHaptic(): UseHapticReturn {
   }, [isBridgeAvailable, contractVersion]);
 
   return useMemo(
-    () => ({ impactOccurred, notificationOccurred, selectionChanged, supported }),
+    () => ({
+      impactOccurred,
+      notificationOccurred,
+      selectionChanged,
+      supported,
+    }),
     [impactOccurred, notificationOccurred, selectionChanged, supported],
   );
 }

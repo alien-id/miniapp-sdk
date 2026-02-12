@@ -28,7 +28,6 @@ export {
 export {
   type ClipboardErrorCode,
   type MethodSupportResult,
-  type UseHapticReturn,
   type PaymentCallbacks,
   type PaymentErrorCode,
   type PaymentParams,
@@ -37,6 +36,7 @@ export {
   type PaymentStatus,
   type UseClipboardOptions,
   type UseClipboardReturn,
+  type UseHapticReturn,
   type UseMethodExecuteResult,
   type UseMethodOptions,
   type UsePaymentOptions,
