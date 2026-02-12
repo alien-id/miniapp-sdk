@@ -6,6 +6,7 @@ export {
   useClipboard,
 } from './useClipboard';
 export { useEvent } from './useEvent';
+export { type UseHapticReturn, useHaptic } from './useHaptic';
 export {
   type MethodSupportResult,
   useIsMethodSupported,

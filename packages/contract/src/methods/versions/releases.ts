@@ -19,4 +19,5 @@ export const releases: Record<
   '0.0.14': ['miniapp:close.ack', 'host.back.button:toggle'],
   '0.1.1': ['payment:request', 'clipboard:write', 'clipboard:read'],
   '0.1.3': ['link:open'],
+  '0.2.4': ['haptic:impact', 'haptic:notification', 'haptic:selection'],
 };

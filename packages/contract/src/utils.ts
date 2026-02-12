@@ -115,3 +115,20 @@ export type PaymentTestScenario =
   | 'paid:failed'
   | 'cancelled'
   | `error:${PaymentErrorCode}`;
+
+/**
+ * Haptic impact feedback styles.
+ * Maps to UIImpactFeedbackGenerator styles on iOS
+ * and VibrationEffect on Android.
+ * @since 0.2.4
+ * @schema
+ */
+export type HapticImpactStyle = 'light' | 'medium' | 'heavy' | 'soft' | 'rigid';
+
+/**
+ * Haptic notification feedback types.
+ * Maps to UINotificationFeedbackGenerator types on iOS.
+ * @since 0.2.4
+ * @schema
+ */
+export type HapticNotificationType = 'success' | 'warning' | 'error';

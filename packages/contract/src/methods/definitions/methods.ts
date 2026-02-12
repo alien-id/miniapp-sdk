@@ -1,4 +1,10 @@
-import type { Empty, PaymentTestScenario, WithReqId } from '../../utils';
+import type {
+  Empty,
+  HapticImpactStyle,
+  HapticNotificationType,
+  PaymentTestScenario,
+  WithReqId,
+} from '../../utils';
 import type { CreateMethodPayload } from '../types/payload';
 
 /**
@@ -198,4 +204,39 @@ export interface Methods {
      */
     openMode?: 'external' | 'internal';
   }>;
+  /**
+   * Trigger haptic impact feedback.
+   * Fire-and-forget — no response expected.
+   * @since 0.2.4
+   * @schema
+   */
+  'haptic:impact': CreateMethodPayload<{
+    /**
+     * The impact feedback style.
+     * @since 0.2.4
+     * @schema
+     */
+    style: HapticImpactStyle;
+  }>;
+  /**
+   * Trigger haptic notification feedback.
+   * Fire-and-forget — no response expected.
+   * @since 0.2.4
+   * @schema
+   */
+  'haptic:notification': CreateMethodPayload<{
+    /**
+     * The notification feedback type.
+     * @since 0.2.4
+     * @schema
+     */
+    type: HapticNotificationType;
+  }>;
+  /**
+   * Trigger haptic selection change feedback.
+   * Fire-and-forget — no response expected.
+   * @since 0.2.4
+   * @schema
+   */
+  'haptic:selection': CreateMethodPayload<Empty>;
 }

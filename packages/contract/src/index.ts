@@ -24,6 +24,8 @@ export {
   releases,
 } from './methods/versions';
 export type {
+  HapticImpactStyle,
+  HapticNotificationType,
   PaymentErrorCode,
   PaymentTestScenario,
   PaymentWebhookStatus,
