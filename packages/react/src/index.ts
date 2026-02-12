@@ -5,6 +5,8 @@ export { send } from '@alien_org/bridge';
 export type {
   EventName,
   EventPayload,
+  HapticImpactStyle,
+  HapticNotificationType,
   MethodName,
   MethodPayload,
   Version,
@@ -26,6 +28,7 @@ export {
 export {
   type ClipboardErrorCode,
   type MethodSupportResult,
+  type UseHapticReturn,
   type PaymentCallbacks,
   type PaymentErrorCode,
   type PaymentParams,
@@ -41,6 +44,7 @@ export {
   useAlien,
   useClipboard,
   useEvent,
+  useHaptic,
   useIsMethodSupported,
   useLaunchParams,
   useLinkInterceptor,
