@@ -1,4 +1,9 @@
-import type { Empty, PaymentErrorCode, WithReqId } from '../../utils';
+import type {
+  Empty,
+  PaymentErrorCode,
+  WalletSolanaErrorCode,
+  WithReqId,
+} from '../../utils';
 import type { CreateEventPayload } from '../types/payload';
 
 /**
@@ -86,6 +91,68 @@ export interface Events {
        * @schema
        */
       errorCode?: 'permission_denied' | 'unavailable';
+    }>
+  >;
+  /**
+   * Solana wallet connection response.
+   * @since 0.3.0
+   * @schema
+   */
+  'wallet.solana:connect.response': CreateEventPayload<
+    WithReqId<{
+      /** Base58-encoded public key of the connected wallet */
+      publicKey?: string;
+      /** Numeric error code (WalletConnect-compatible). See {@link WalletSolanaErrorCode}. */
+      errorCode?: WalletSolanaErrorCode;
+      /** Human-readable error description */
+      errorMessage?: string;
+    }>
+  >;
+  /**
+   * Solana transaction signing response.
+   * @since 0.3.0
+   * @schema
+   */
+  'wallet.solana:sign.transaction.response': CreateEventPayload<
+    WithReqId<{
+      /** Base64-encoded signed transaction */
+      signedTransaction?: string;
+      /** Numeric error code (WalletConnect-compatible). See {@link WalletSolanaErrorCode}. */
+      errorCode?: WalletSolanaErrorCode;
+      /** Human-readable error description */
+      errorMessage?: string;
+    }>
+  >;
+  /**
+   * Solana message signing response.
+   * @since 0.3.0
+   * @schema
+   */
+  'wallet.solana:sign.message.response': CreateEventPayload<
+    WithReqId<{
+      /** Base58-encoded Ed25519 signature (64 bytes) */
+      signature?: string;
+      /** Base58-encoded public key that signed the message */
+      publicKey?: string;
+      /** Numeric error code (WalletConnect-compatible). See {@link WalletSolanaErrorCode}. */
+      errorCode?: WalletSolanaErrorCode;
+      /** Human-readable error description */
+      errorMessage?: string;
+    }>
+  >;
+  /**
+   * Solana sign-and-send transaction response.
+   * @since 0.3.0
+   * @schema
+   */
+  'wallet.solana:sign.send.response': CreateEventPayload<
+    WithReqId<{
+      /** Base58-encoded transaction signature */
+      signature?: string;
+      /** Numeric error code (WalletConnect-compatible). See {@link WalletSolanaErrorCode}. */
+      errorCode?: WalletSolanaErrorCode;
+      /** Human-readable error description */
+      errorMessage?: string;
     }>
   >;
 }

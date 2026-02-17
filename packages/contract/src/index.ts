@@ -29,5 +29,9 @@ export type {
   PaymentErrorCode,
   PaymentTestScenario,
   PaymentWebhookStatus,
+  SolanaChain,
+  SolanaCommitment,
   Version,
+  WalletSolanaErrorCode,
 } from './utils';
+export { WALLET_ERROR } from './utils';

@@ -3,6 +3,8 @@ import type {
   HapticImpactStyle,
   HapticNotificationType,
   PaymentTestScenario,
+  SolanaChain,
+  SolanaCommitment,
   WithReqId,
 } from '../../utils';
 import type { CreateMethodPayload } from '../types/payload';
@@ -239,4 +241,77 @@ export interface Methods {
    * @schema
    */
   'haptic:selection': CreateMethodPayload<Empty>;
+  /**
+   * Request Solana wallet connection.
+   * Returns the wallet's public key on success.
+   * @since 0.3.0
+   * @schema
+   */
+  'wallet.solana:connect': CreateMethodPayload<WithReqId<Empty>>;
+  /**
+   * Disconnect from Solana wallet.
+   * Fire-and-forget — no response expected.
+   * @since 0.3.0
+   * @schema
+   */
+  'wallet.solana:disconnect': CreateMethodPayload<Empty>;
+  /**
+   * Request Solana transaction signing.
+   * Returns the signed transaction bytes.
+   * @since 0.3.0
+   * @schema
+   */
+  'wallet.solana:sign.transaction': CreateMethodPayload<
+    WithReqId<{
+      /** Base64-encoded serialized transaction (legacy or versioned) */
+      transaction: string;
+    }>
+  >;
+  /**
+   * Request Solana message signing.
+   * Returns the Ed25519 signature.
+   * @since 0.3.0
+   * @schema
+   */
+  'wallet.solana:sign.message': CreateMethodPayload<
+    WithReqId<{
+      /** Base58-encoded message bytes */
+      message: string;
+    }>
+  >;
+  /**
+   * Request Solana transaction signing and sending.
+   * The host app signs and broadcasts the transaction.
+   * Returns the transaction signature.
+   * @since 0.3.0
+   * @schema
+   */
+  'wallet.solana:sign.send': CreateMethodPayload<
+    WithReqId<{
+      /** Base64-encoded serialized transaction (legacy or versioned) */
+      transaction: string;
+      /**
+       * Target Solana cluster for broadcasting.
+       * In bridge mode the host app can infer this from miniapp config,
+       * but in relay mode (QR/WebSocket) this is required so the host
+       * app knows which RPC to broadcast to.
+       * @since 0.3.0
+       * @schema
+       */
+      chain?: SolanaChain;
+      /** Optional send options */
+      options?: {
+        skipPreflight?: boolean;
+        preflightCommitment?: SolanaCommitment;
+        /** Desired commitment level for transaction confirmation. */
+        commitment?: SolanaCommitment;
+        /**
+         * The minimum slot that the request can be evaluated at.
+         * Ensures the read is not served by a node lagging behind.
+         */
+        minContextSlot?: number;
+        maxRetries?: number;
+      };
+    }>
+  >;
 }
