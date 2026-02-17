@@ -95,6 +95,8 @@ jobs:
         with:
           generate_release_notes: true
           append_body: true
+          prerelease: ${{ steps.npm-tag.outputs.tag != 'latest' }}
+          make_latest: ${{ steps.npm-tag.outputs.tag == 'latest' }}
           body: |
             ## npm
             https://www.npmjs.com/package/@alien_org/react
