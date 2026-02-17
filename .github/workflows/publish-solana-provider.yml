@@ -1,4 +1,4 @@
-name: Contract Package
+name: Solana Provider Package
 
 on:
   push:
@@ -6,25 +6,23 @@ on:
       - main
       - develop
     paths:
-      - "packages/contract/src/**"
-      - "packages/contract/scripts/**"
+      - "packages/solana-provider/src/**"
     tags:
-      - "contract@*"
+      - "solana-provider@*"
   pull_request:
     branches:
       - main
       - develop
     paths:
-      - "packages/contract/src/**"
-      - "packages/contract/scripts/**"
+      - "packages/solana-provider/src/**"
   release:
     types: [published]
   workflow_dispatch:
 
 jobs:
   publish:
-    name: Build and Publish Contract Package
-    if: startsWith(github.ref, 'refs/tags/contract@')
+    name: Build and Publish Solana Provider Package
+    if: startsWith(github.ref, 'refs/tags/solana-provider@')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -47,11 +45,11 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Validate tag matches package.json version
-        working-directory: packages/contract
+        working-directory: packages/solana-provider
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
           PACKAGE_VERSION=$(bun -e "const pkg = await Bun.file('package.json').json(); console.log(pkg.version);")
-          EXPECTED_TAG="contract@${PACKAGE_VERSION}"
+          EXPECTED_TAG="solana-provider@${PACKAGE_VERSION}"
           if [ "$TAG_NAME" != "$EXPECTED_TAG" ]; then
             echo "Error: Tag $TAG_NAME does not match package.json version $PACKAGE_VERSION"
             exit 1
@@ -59,15 +57,11 @@ jobs:
           echo "✓ Tag matches package.json version"
 
       - name: Build package
-        working-directory: packages/contract
+        working-directory: packages/solana-provider
         run: bun run build
 
-      - name: Generate JSON schemas
-        working-directory: packages/contract
-        run: bun run generate-schemas
-
       - name: Pack with Bun
-        working-directory: packages/contract
+        working-directory: packages/solana-provider
         run: bun pm pack
 
       - name: Configure npm for trusted publishing
@@ -78,7 +72,7 @@ jobs:
 
       - name: Determine npm tag
         id: npm-tag
-        working-directory: packages/contract
+        working-directory: packages/solana-provider
         run: |
           VERSION=$(bun -e "const pkg = await Bun.file('package.json').json(); console.log(pkg.version);")
           if echo "$VERSION" | grep -q "-alpha"; then
@@ -91,17 +85,8 @@ jobs:
           echo "Publishing with tag: $(grep tag= "$GITHUB_OUTPUT" | cut -d= -f2)"
 
       - name: Publish to npm
-        working-directory: packages/contract
-        run: npm publish ./alien_org-contract-*.tgz --access public --provenance --tag ${{ steps.npm-tag.outputs.tag }}
-
-      - name: Upload JSON schema artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: contract-schemas
-          path: |
-            packages/contract/artifacts/events.schema.json
-            packages/contract/artifacts/methods.schema.json
-          retention-days: 90
+        working-directory: packages/solana-provider
+        run: npm publish ./alien_org-solana-provider-*.tgz --access public --provenance --tag ${{ steps.npm-tag.outputs.tag }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -110,7 +95,4 @@ jobs:
           append_body: true
           body: |
             ## npm
-            https://www.npmjs.com/package/@alien_org/contract
-          files: |
-            packages/contract/artifacts/events.schema.json
-            packages/contract/artifacts/methods.schema.json
+            https://www.npmjs.com/package/@alien_org/solana-provider
