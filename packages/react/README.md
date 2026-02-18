@@ -206,7 +206,7 @@ function BuyButton({ orderId }: { orderId: string }) {
     token: 'SOL',
     network: 'solana',
     invoice: orderId,
-    title: 'Premium Plan',
+    item: { title: 'Premium Plan', iconUrl: 'https://example.com/icon.png', quantity: 1 },
   });
 
   if (isPaid) return <div>Thank you! TX: {txHash}</div>;

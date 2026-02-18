@@ -20,9 +20,8 @@ TypeScript SDK for building miniapps that run inside the Alien mobile app. Provi
 - [React Hooks](./packages/react/README.md)
 - [Bridge API](./packages/bridge/README.md)
 - [Contract Types](./packages/contract/README.md)
-- [Host Integration](./docs/host-integration.md)
+- [Auth Client](./packages/auth-client/README.md)
 - [Solana Provider](./packages/solana-provider/README.md)
-- [Payments](./docs/payments.md)
 
 ## License
 

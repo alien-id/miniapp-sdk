@@ -76,7 +76,7 @@ import {
 
 // Get launch params (returns undefined if unavailable)
 const params = getLaunchParams();
-// { authToken, contractVersion?, hostAppVersion?, platform?, startParam? }
+// { authToken, contractVersion?, hostAppVersion?, platform?, safeAreaInsets?, startParam?, isFullscreen? }
 
 // Get launch params (throws LaunchParamsError if unavailable)
 const params = retrieveLaunchParams();

@@ -9,6 +9,7 @@ Monorepo using Bun workspaces:
 ```
 miniapp-sdk/
 ├── packages/
+│   ├── auth-client/      # JWT verification (@alien_org/auth-client)
 │   ├── bridge/           # Communication bridge (@alien_org/bridge)
 │   ├── contract/         # Type definitions & protocol (@alien_org/contract)
 │   ├── react/            # React bindings (@alien_org/react)
@@ -17,16 +18,13 @@ miniapp-sdk/
 │   ├── vite-miniapp/     # React + TypeScript example
 │   ├── solana-wallet/    # Solana wallet operations example
 │   └── reown-appkit/     # WalletConnect relay mode example
-├── docs/
-│   ├── wallet-bridge-integration.md  # Wallet bridge mode guide (mobile team)
-│   └── wallet-relay-guide.md         # Wallet relay mode guide (mobile team)
 ```
 
 ## Packages
 
 ### @alien_org/bridge
 Minimal, type-safe bridge for WebView ↔ Host App communication.
-- API: `on()`, `off()`, `emit()`, `request()`
+- API: `on()`, `off()`, `emit()`, `request()`, `send()`
 - Uses `window.__miniAppsBridge__` for native communication
 - Graceful dev-mode fallback (logs warnings when bridge unavailable)
 
@@ -48,12 +46,16 @@ Solana wallet-standard provider for the Alien bridge.
 ### @alien_org/react
 React bindings for the bridge (TMA-style patterns).
 - `AlienProvider` - Context provider, wrap your app
-- `useAuthToken()` - Get auth token from `window.__ALIEN_AUTH_TOKEN__`
-- `useContractVersion()` - Get version from `window.__ALIEN_CONTRACT_VERSION__`
-- `useMethodSupported(method)` - Check if method is supported
+- `useAlien()` - Access context (authToken, contractVersion, isBridgeAvailable)
+- `useLaunchParams()` - Get all launch parameters
+- `useIsMethodSupported(method)` - Check if method is supported
 - `useEvent(name, callback)` - Subscribe to events
-- `useRequest(method, responseEvent)` - Request with version checking & state
-- `useAlien()` - Access full context (authToken, contractVersion, isInAlienApp)
+- `useMethod(method, responseEvent)` - Request with version checking & state
+- `useBackButton(onPress)` - Control native back button
+- `usePayment(options)` - Payment flow with state management
+- `useClipboard()` - Clipboard read/write
+- `useHaptic()` - Haptic feedback
+- `useLinkInterceptor(options)` - Intercept link opens
 
 ## Communication Protocol
 
@@ -63,8 +65,8 @@ Both methods and events follow: `<domain>:<action>`
 - Action: Operation (e.g., `request`, `response.token`)
 
 ### Current Protocol (v1.0.0)
-- Methods: `payment:request`, `wallet.solana:connect`, `wallet.solana:sign.transaction`, `wallet.solana:sign.message`, `wallet.solana:sign.send`, `wallet.solana:disconnect`
-- Events: `payment:response`, `wallet.solana:connect.response`, `wallet.solana:sign.transaction.response`, `wallet.solana:sign.message.response`, `wallet.solana:sign.send.response`
+- Methods: `app:ready`, `app:close`, `payment:request`, `clipboard:write`, `clipboard:read`, `link:open`, `haptic:impact`, `haptic:notification`, `haptic:selection`, `host.back.button:toggle`, `wallet.solana:connect`, `wallet.solana:disconnect`, `wallet.solana:sign.transaction`, `wallet.solana:sign.message`, `wallet.solana:sign.send`
+- Events: `miniapp:close`, `host.back.button:clicked`, `payment:response`, `clipboard:response`, `wallet.solana:connect.response`, `wallet.solana:sign.transaction.response`, `wallet.solana:sign.message.response`, `wallet.solana:sign.send.response`
 
 ### Message Flow
 ```
@@ -142,13 +144,16 @@ const response = await request(
 ## React API
 
 ```tsx
-import { AlienProvider, useAuthToken, useEvent, useMethod, useIsMethodSupported } from '@alien_org/react';
+import { AlienProvider, useAlien, useLaunchParams, useEvent, useMethod, useIsMethodSupported } from '@alien_org/react';
 
 // Wrap app with provider
 <AlienProvider><App /></AlienProvider>
 
-// Get injected auth token
-const token = useAuthToken();
+// Access context
+const { authToken, contractVersion, isBridgeAvailable } = useAlien();
+
+// Get launch parameters
+const { authToken, contractVersion, platform, safeAreaInsets, startParam } = useLaunchParams();
 
 // Subscribe to events
 useEvent('payment:response', (payload) => {
@@ -190,11 +195,16 @@ await execute({ recipient: 'wallet-123', amount: '100', token: 'SOL', network: '
 
 ### React Package
 - `src/context.tsx` - AlienProvider and useAlien hook
-- `src/hooks/useAuthToken.ts` - Auth token from window.__ALIEN_AUTH_TOKEN__
-- `src/hooks/useContractVersion.ts` - Contract version from window.__ALIEN_CONTRACT_VERSION__
-- `src/hooks/useMethodSupported.ts` - Check method compatibility
+- `src/hooks/useAlien.ts` - Access context values
+- `src/hooks/useLaunchParams.ts` - Launch parameters from window globals
+- `src/hooks/useIsMethodSupported.ts` - Check method compatibility
 - `src/hooks/useEvent.ts` - Event subscription hook
-- `src/hooks/useRequest.ts` - Request with version checking & state
+- `src/hooks/useMethod.ts` - Request with version checking & state
+- `src/hooks/useBackButton.ts` - Native back button control
+- `src/hooks/usePayment.ts` - Payment flow with state management
+- `src/hooks/useClipboard.ts` - Clipboard read/write
+- `src/hooks/useHaptic.ts` - Haptic feedback
+- `src/hooks/useLinkInterceptor.ts` - Link open interception
 
 ### Solana Provider Package
 - `src/wallet.ts` - AlienSolanaWallet (wallet-standard implementation)

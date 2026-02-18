@@ -37,7 +37,7 @@ try {
 `createAuthClient` accepts an optional jwksUrl parameter to use custom JWKS endpoint for JWT verification.
 
 ```typescript
-import { createAuthClient } from '@alien_org/core';
+import { createAuthClient } from '@alien_org/auth-client';
 
 
 const client = createAuthClient({
