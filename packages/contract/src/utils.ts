@@ -117,15 +117,6 @@ export type PaymentTestScenario =
   | `error:${PaymentErrorCode}`;
 
 /**
- * Fullscreen error codes.
- * Returned in `fullscreen:failed` event when fullscreen request fails.
- * - `ALREADY_FULLSCREEN`: Miniapp is already in fullscreen mode
- * @since 1.1.0
- * @schema
- */
-export type FullscreenErrorCode = 'ALREADY_FULLSCREEN';
-
-/**
  * Haptic impact feedback styles.
  * Maps to UIImpactFeedbackGenerator styles on iOS
  * and VibrationEffect on Android.

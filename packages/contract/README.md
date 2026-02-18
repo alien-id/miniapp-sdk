@@ -63,7 +63,7 @@ isMethodSupported('payment:request', '0.0.9');   // false
 
 // Get minimum version that supports a method
 getMethodMinVersion('app:ready');         // '0.0.9'
-getMethodMinVersion('payment:request');   // '0.0.14'
+getMethodMinVersion('payment:request');   // '0.1.1'
 
 // Get version where a method was introduced
 getReleaseVersion('app:ready');           // '0.0.9'
@@ -74,17 +74,33 @@ getReleaseVersion('app:ready');           // '0.0.9'
 | Method | Since | Description |
 |--------|-------|-------------|
 | `app:ready` | 0.0.9 | Notify host that miniapp is ready |
-| `miniapp:close.ack` | 0.0.14 | Acknowledge close request |
-| `host.back.button:toggle` | 0.0.14 | Show/hide back button |
-| `payment:request` | 0.0.14 | Request payment |
+| `payment:request` | 0.1.1 | Request payment |
+| `clipboard:write` | 0.1.1 | Write text to clipboard |
+| `clipboard:read` | 0.1.1 | Read text from clipboard |
+| `link:open` | 0.1.3 | Open a URL |
+| `haptic:impact` | 0.2.4 | Trigger haptic impact feedback |
+| `haptic:notification` | 0.2.4 | Trigger haptic notification feedback |
+| `haptic:selection` | 0.2.4 | Trigger haptic selection feedback |
+| `wallet.solana:connect` | 1.0.0 | Request Solana wallet connection |
+| `wallet.solana:disconnect` | 1.0.0 | Disconnect from Solana wallet |
+| `wallet.solana:sign.transaction` | 1.0.0 | Sign a Solana transaction |
+| `wallet.solana:sign.message` | 1.0.0 | Sign a Solana message |
+| `wallet.solana:sign.send` | 1.0.0 | Sign and send a Solana transaction |
+| `app:close` | 1.0.0 | Request host to close the miniapp |
+| `host.back.button:toggle` | 1.0.0 | Show/hide back button |
 
 ## Available Events
 
 | Event | Since | Description |
 |-------|-------|-------------|
 | `miniapp:close` | 0.0.14 | Host is closing miniapp |
-| `host.back.button:clicked` | 0.0.14 | Back button was clicked |
-| `payment:response` | 0.0.14 | Payment result |
+| `host.back.button:clicked` | 1.0.0 | Back button was clicked |
+| `payment:response` | 0.1.1 | Payment result |
+| `clipboard:response` | 0.1.1 | Clipboard read result |
+| `wallet.solana:connect.response` | 1.0.0 | Wallet connection result |
+| `wallet.solana:sign.transaction.response` | 1.0.0 | Transaction signing result |
+| `wallet.solana:sign.message.response` | 1.0.0 | Message signing result |
+| `wallet.solana:sign.send.response` | 1.0.0 | Sign and send result |
 
 ## LaunchParams
 
@@ -92,11 +108,13 @@ Parameters injected by the host app:
 
 ```typescript
 interface LaunchParams {
-  authToken: string | undefined;        // JWT auth token
-  contractVersion: Version | undefined; // Host's contract version
-  hostAppVersion: string | undefined;   // Host app version
-  platform: Platform | undefined;       // 'ios' | 'android'
-  startParam: string | undefined;       // Custom param (referrals, etc.)
+  authToken: string | undefined;           // JWT auth token
+  contractVersion: Version | undefined;    // Host's contract version
+  hostAppVersion: string | undefined;      // Host app version
+  platform: Platform | undefined;          // 'ios' | 'android'
+  safeAreaInsets: SafeAreaInsets | undefined; // System UI insets (CSS px)
+  startParam: string | undefined;          // Custom param (referrals, etc.)
+  isFullscreen: boolean | undefined;       // Launched in fullscreen mode
 }
 ```
 

@@ -1,6 +1,5 @@
 import type {
   Empty,
-  FullscreenErrorCode,
   PaymentErrorCode,
   WalletSolanaErrorCode,
   WithReqId,
@@ -21,7 +20,7 @@ export interface Events {
   'miniapp:close': CreateEventPayload<Empty>;
   /**
    * Host app's back button clicked event.
-   * @since 0.0.14
+   * @since 1.0.0
    * @schema
    */
   'host.back.button:clicked': CreateEventPayload<Empty>;
@@ -94,35 +93,6 @@ export interface Events {
       errorCode?: 'permission_denied' | 'unavailable';
     }>
   >;
-  /**
-   * Fullscreen state changed, fired by the host app
-   * after `fullscreen:request` or `fullscreen:exit`.
-   * @since 1.1.0
-   * @schema
-   */
-  'fullscreen:changed': CreateEventPayload<{
-    /**
-     * Whether the miniapp is currently in fullscreen mode.
-     * @since 1.1.0
-     * @schema
-     */
-    isFullscreen: boolean;
-  }>;
-  /**
-   * Fullscreen request failed.
-   * Fired by the host app when `fullscreen:request` cannot be fulfilled
-   * (e.g., the miniapp is already in fullscreen mode).
-   * @since 1.1.0
-   * @schema
-   */
-  'fullscreen:failed': CreateEventPayload<{
-    /**
-     * Error code indicating why the fullscreen request failed.
-     * @since 1.1.0
-     * @schema
-     */
-    error: FullscreenErrorCode;
-  }>;
   /**
    * Solana wallet connection response.
    * @since 1.0.0

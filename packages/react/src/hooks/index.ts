@@ -7,10 +7,6 @@ export {
   useClipboard,
 } from './useClipboard';
 export { useEvent } from './useEvent';
-export {
-  type UseFullscreenReturn,
-  useFullscreen,
-} from './useFullscreen';
 export { type UseHapticReturn, useHaptic } from './useHaptic';
 export {
   type MethodSupportResult,

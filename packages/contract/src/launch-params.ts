@@ -42,7 +42,7 @@ export interface LaunchParams {
   startParam: string | undefined;
   /**
    * Whether the miniapp was launched in fullscreen mode.
-   * @since 1.1.0
+   * @since 1.0.0
    */
   isFullscreen: boolean | undefined;
 }
