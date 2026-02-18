@@ -14,7 +14,12 @@ let mockWindow: {
   __ALIEN_CONTRACT_VERSION__?: string;
   __ALIEN_HOST_VERSION__?: string;
   __ALIEN_PLATFORM__?: string;
-  __ALIEN_SAFE_AREA_INSETS__?: { top: number; right: number; bottom: number; left: number };
+  __ALIEN_SAFE_AREA_INSETS__?: {
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+  };
   __ALIEN_START_PARAM__?: string;
   __ALIEN_FULLSCREEN__?: boolean;
 };
