@@ -5,6 +5,7 @@ export { send } from '@alien_org/bridge';
 export type {
   EventName,
   EventPayload,
+  FullscreenErrorCode,
   HapticImpactStyle,
   HapticNotificationType,
   MethodName,
@@ -36,6 +37,7 @@ export {
   type PaymentStatus,
   type UseClipboardOptions,
   type UseClipboardReturn,
+  type UseFullscreenReturn,
   type UseHapticReturn,
   type UseMethodExecuteResult,
   type UseMethodOptions,
@@ -44,6 +46,7 @@ export {
   useAlien,
   useClipboard,
   useEvent,
+  useFullscreen,
   useHaptic,
   useIsMethodSupported,
   useLaunchParams,

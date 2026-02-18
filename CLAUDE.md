@@ -62,7 +62,7 @@ Both methods and events follow: `<domain>:<action>`
 - Domain: Subsystem (e.g., `auth`, `storage.kv`, `ui.modal`)
 - Action: Operation (e.g., `request`, `response.token`)
 
-### Current Protocol (v0.3.0)
+### Current Protocol (v1.0.0)
 - Methods: `payment:request`, `wallet.solana:connect`, `wallet.solana:sign.transaction`, `wallet.solana:sign.message`, `wallet.solana:sign.send`, `wallet.solana:disconnect`
 - Events: `payment:response`, `wallet.solana:connect.response`, `wallet.solana:sign.transaction.response`, `wallet.solana:sign.message.response`, `wallet.solana:sign.send.response`
 

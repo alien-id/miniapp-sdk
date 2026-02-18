@@ -114,7 +114,7 @@ window.postMessage({
 
 ## 3. Wallet Methods & Events
 
-All wallet methods use the `wallet.solana:` prefix. Contract version: `0.3.0`.
+All wallet methods use the `wallet.solana:` prefix. Contract version: `1.0.0`.
 
 ### 3.1 Connect
 
@@ -453,10 +453,10 @@ This is the existing bridge — no changes needed if you already support other m
 
 ```javascript
 window.__ALIEN_AUTH_TOKEN__ = "jwt-token-here";
-window.__ALIEN_CONTRACT_VERSION__ = "0.3.0";  // bump to 0.3.0 for wallet support
+window.__ALIEN_CONTRACT_VERSION__ = "1.0.0";  // bump to 1.0.0 for wallet support
 ```
 
-The contract version tells the miniapp SDK which methods are available. Setting it to `0.3.0` or higher enables wallet methods.
+The contract version tells the miniapp SDK which methods are available. Setting it to `1.0.0` or higher enables wallet methods.
 
 ### 6.3 Message Listener
 
@@ -633,7 +633,7 @@ Ed25519.verify(signature, message, publicKey) → true
 
 ### Bridge Infrastructure
 - [ ] `window.__miniAppsBridge__.postMessage` sends JSON to native code
-- [ ] `window.__ALIEN_CONTRACT_VERSION__` set to `"0.3.0"` or higher
+- [ ] `window.__ALIEN_CONTRACT_VERSION__` set to `"1.0.0"` or higher
 - [ ] Native code listens for `postMessage` from WebView
 - [ ] Native code can inject JavaScript back to WebView (`evaluateJavaScript`)
 

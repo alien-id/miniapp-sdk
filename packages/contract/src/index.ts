@@ -24,6 +24,7 @@ export {
   releases,
 } from './methods/versions';
 export type {
+  FullscreenErrorCode,
   HapticImpactStyle,
   HapticNotificationType,
   PaymentErrorCode,

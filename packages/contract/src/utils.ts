@@ -117,6 +117,15 @@ export type PaymentTestScenario =
   | `error:${PaymentErrorCode}`;
 
 /**
+ * Fullscreen error codes.
+ * Returned in `fullscreen:failed` event when fullscreen request fails.
+ * - `ALREADY_FULLSCREEN`: Miniapp is already in fullscreen mode
+ * @since 1.1.0
+ * @schema
+ */
+export type FullscreenErrorCode = 'ALREADY_FULLSCREEN';
+
+/**
  * Haptic impact feedback styles.
  * Maps to UIImpactFeedbackGenerator styles on iOS
  * and VibrationEffect on Android.
@@ -147,7 +156,7 @@ export type HapticNotificationType = 'success' | 'warning' | 'error';
  * | `-32603` | Internal error (send failed, unexpected error) | JSON-RPC standard |
  * | `8000` | Request expired / timed out | `sessionRequestExpired` |
  *
- * @since 0.3.0
+ * @since 1.0.0
  * @schema
  */
 export type WalletSolanaErrorCode = 5000 | -32602 | -32603 | 8000;
@@ -164,7 +173,7 @@ export type WalletSolanaErrorCode = 5000 | -32602 | -32603 | 8000;
  * }
  * ```
  *
- * @since 0.3.0
+ * @since 1.0.0
  */
 export const WALLET_ERROR = {
   /** User rejected the request (cancelled approval screen). */
@@ -179,7 +188,7 @@ export const WALLET_ERROR = {
 
 /**
  * Solana commitment levels for send options.
- * @since 0.3.0
+ * @since 1.0.0
  * @schema
  */
 export type SolanaCommitment = 'processed' | 'confirmed' | 'finalized';
@@ -188,7 +197,7 @@ export type SolanaCommitment = 'processed' | 'confirmed' | 'finalized';
  * Solana chain identifiers (wallet-standard format).
  * Used by `wallet.solana:sign.send` to tell the host app
  * which cluster to broadcast to.
- * @since 0.3.0
+ * @since 1.0.0
  * @schema
  */
 export type SolanaChain = 'solana:mainnet' | 'solana:devnet' | 'solana:testnet';

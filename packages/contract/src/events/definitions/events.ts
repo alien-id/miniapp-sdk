@@ -1,5 +1,6 @@
 import type {
   Empty,
+  FullscreenErrorCode,
   PaymentErrorCode,
   WalletSolanaErrorCode,
   WithReqId,
@@ -94,8 +95,37 @@ export interface Events {
     }>
   >;
   /**
+   * Fullscreen state changed, fired by the host app
+   * after `fullscreen:request` or `fullscreen:exit`.
+   * @since 1.1.0
+   * @schema
+   */
+  'fullscreen:changed': CreateEventPayload<{
+    /**
+     * Whether the miniapp is currently in fullscreen mode.
+     * @since 1.1.0
+     * @schema
+     */
+    isFullscreen: boolean;
+  }>;
+  /**
+   * Fullscreen request failed.
+   * Fired by the host app when `fullscreen:request` cannot be fulfilled
+   * (e.g., the miniapp is already in fullscreen mode).
+   * @since 1.1.0
+   * @schema
+   */
+  'fullscreen:failed': CreateEventPayload<{
+    /**
+     * Error code indicating why the fullscreen request failed.
+     * @since 1.1.0
+     * @schema
+     */
+    error: FullscreenErrorCode;
+  }>;
+  /**
    * Solana wallet connection response.
-   * @since 0.3.0
+   * @since 1.0.0
    * @schema
    */
   'wallet.solana:connect.response': CreateEventPayload<
@@ -110,7 +140,7 @@ export interface Events {
   >;
   /**
    * Solana transaction signing response.
-   * @since 0.3.0
+   * @since 1.0.0
    * @schema
    */
   'wallet.solana:sign.transaction.response': CreateEventPayload<
@@ -125,7 +155,7 @@ export interface Events {
   >;
   /**
    * Solana message signing response.
-   * @since 0.3.0
+   * @since 1.0.0
    * @schema
    */
   'wallet.solana:sign.message.response': CreateEventPayload<
@@ -142,7 +172,7 @@ export interface Events {
   >;
   /**
    * Solana sign-and-send transaction response.
-   * @since 0.3.0
+   * @since 1.0.0
    * @schema
    */
   'wallet.solana:sign.send.response': CreateEventPayload<

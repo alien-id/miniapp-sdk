@@ -244,21 +244,21 @@ export interface Methods {
   /**
    * Request Solana wallet connection.
    * Returns the wallet's public key on success.
-   * @since 0.3.0
+   * @since 1.0.0
    * @schema
    */
   'wallet.solana:connect': CreateMethodPayload<WithReqId<Empty>>;
   /**
    * Disconnect from Solana wallet.
    * Fire-and-forget — no response expected.
-   * @since 0.3.0
+   * @since 1.0.0
    * @schema
    */
   'wallet.solana:disconnect': CreateMethodPayload<Empty>;
   /**
    * Request Solana transaction signing.
    * Returns the signed transaction bytes.
-   * @since 0.3.0
+   * @since 1.0.0
    * @schema
    */
   'wallet.solana:sign.transaction': CreateMethodPayload<
@@ -270,7 +270,7 @@ export interface Methods {
   /**
    * Request Solana message signing.
    * Returns the Ed25519 signature.
-   * @since 0.3.0
+   * @since 1.0.0
    * @schema
    */
   'wallet.solana:sign.message': CreateMethodPayload<
@@ -283,7 +283,7 @@ export interface Methods {
    * Request Solana transaction signing and sending.
    * The host app signs and broadcasts the transaction.
    * Returns the transaction signature.
-   * @since 0.3.0
+   * @since 1.0.0
    * @schema
    */
   'wallet.solana:sign.send': CreateMethodPayload<
@@ -295,7 +295,7 @@ export interface Methods {
        * In bridge mode the host app can infer this from miniapp config,
        * but in relay mode (QR/WebSocket) this is required so the host
        * app knows which RPC to broadcast to.
-       * @since 0.3.0
+       * @since 1.0.0
        * @schema
        */
       chain?: SolanaChain;
@@ -314,4 +314,26 @@ export interface Methods {
       };
     }>
   >;
+  /**
+   * Request fullscreen mode.
+   * Fire-and-forget — host app responds with `fullscreen:changed` or `fullscreen:failed` event.
+   *
+   * @example
+   * send('fullscreen:request', {});
+   *
+   * @since 1.1.0
+   * @schema
+   */
+  'fullscreen:request': CreateMethodPayload<Empty>;
+  /**
+   * Exit fullscreen mode.
+   * Fire-and-forget — host app responds with `fullscreen:changed` event.
+   *
+   * @example
+   * send('fullscreen:exit', {});
+   *
+   * @since 1.1.0
+   * @schema
+   */
+  'fullscreen:exit': CreateMethodPayload<Empty>;
 }

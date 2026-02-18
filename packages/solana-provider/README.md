@@ -196,7 +196,7 @@ The provider encodes all data (transactions, messages) as **base64** for the bri
 
 ## Contract Version
 
-The wallet methods require contract version **0.3.0** or higher. Use `useMethodSupported` from `@alien_org/react` to check compatibility before using wallet features:
+The wallet methods require contract version **1.0.0** or higher. Use `useMethodSupported` from `@alien_org/react` to check compatibility before using wallet features:
 
 ```tsx
 import { useMethodSupported } from '@alien_org/react';
