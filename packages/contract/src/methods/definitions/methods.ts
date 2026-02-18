@@ -49,8 +49,8 @@ export interface Methods {
    * Your backend receives a webhook when user pays - fulfill the order
    * immediately without waiting for chain confirmation.
    *
-   * Optional display fields (`title`, `caption`, `iconUrl`, `quantity`)
-   * are shown on the payment approval screen.
+   * Optional `item` object (`title`, `iconUrl`, `quantity`)
+   * is shown on the payment approval screen.
    *
    * Set `test` to a scenario string (e.g. `'paid'`, `'error:insufficient_balance'`)
    * for test mode - no real payment is made, but the specified scenario is
