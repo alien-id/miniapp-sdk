@@ -75,9 +75,9 @@ jobs:
         working-directory: packages/solana-provider
         run: |
           VERSION=$(bun -e "const pkg = await Bun.file('package.json').json(); console.log(pkg.version);")
-          if echo "$VERSION" | grep -q "-alpha"; then
+          if [[ "$VERSION" == *"-alpha"* ]]; then
             echo "tag=alpha" >> "$GITHUB_OUTPUT"
-          elif echo "$VERSION" | grep -q "-beta"; then
+          elif [[ "$VERSION" == *"-beta"* ]]; then
             echo "tag=beta" >> "$GITHUB_OUTPUT"
           else
             echo "tag=latest" >> "$GITHUB_OUTPUT"
