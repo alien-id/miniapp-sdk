@@ -76,9 +76,23 @@ jobs:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Determine npm tag
+        id: npm-tag
+        working-directory: packages/contract
+        run: |
+          VERSION=$(bun -e "const pkg = await Bun.file('package.json').json(); console.log(pkg.version);")
+          if echo "$VERSION" | grep -q "-alpha"; then
+            echo "tag=alpha" >> "$GITHUB_OUTPUT"
+          elif echo "$VERSION" | grep -q "-beta"; then
+            echo "tag=beta" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
+          fi
+          echo "Publishing with tag: $(grep tag= "$GITHUB_OUTPUT" | cut -d= -f2)"
+
       - name: Publish to npm
         working-directory: packages/contract
-        run: npm publish ./alien_org-contract-*.tgz --access public --provenance
+        run: npm publish ./alien_org-contract-*.tgz --access public --provenance --tag ${{ steps.npm-tag.outputs.tag }}
 
       - name: Upload JSON schema artifacts
         uses: actions/upload-artifact@v4
@@ -94,6 +108,8 @@ jobs:
         with:
           generate_release_notes: true
           append_body: true
+          prerelease: ${{ steps.npm-tag.outputs.tag != 'latest' }}
+          make_latest: ${{ steps.npm-tag.outputs.tag == 'latest' }}
           body: |
             ## npm
             https://www.npmjs.com/package/@alien_org/contract

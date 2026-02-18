@@ -1,4 +1,4 @@
-name: React Package
+name: Solana Provider Package
 
 on:
   push:
@@ -6,25 +6,23 @@ on:
       - main
       - develop
     paths:
-      - "packages/react/src/**"
-      - "packages/react/scripts/**"
+      - "packages/solana-provider/src/**"
     tags:
-      - "react@*"
+      - "solana-provider@*"
   pull_request:
     branches:
       - main
       - develop
     paths:
-      - "packages/react/src/**"
-      - "packages/react/scripts/**"
+      - "packages/solana-provider/src/**"
   release:
     types: [published]
   workflow_dispatch:
 
 jobs:
   publish:
-    name: Build and Publish React Package
-    if: startsWith(github.ref, 'refs/tags/react@')
+    name: Build and Publish Solana Provider Package
+    if: startsWith(github.ref, 'refs/tags/solana-provider@')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -47,11 +45,11 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Validate tag matches package.json version
-        working-directory: packages/react
+        working-directory: packages/solana-provider
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
           PACKAGE_VERSION=$(bun -e "const pkg = await Bun.file('package.json').json(); console.log(pkg.version);")
-          EXPECTED_TAG="react@${PACKAGE_VERSION}"
+          EXPECTED_TAG="solana-provider@${PACKAGE_VERSION}"
           if [ "$TAG_NAME" != "$EXPECTED_TAG" ]; then
             echo "Error: Tag $TAG_NAME does not match package.json version $PACKAGE_VERSION"
             exit 1
@@ -59,11 +57,11 @@ jobs:
           echo "✓ Tag matches package.json version"
 
       - name: Build package
-        working-directory: packages/react
+        working-directory: packages/solana-provider
         run: bun run build
 
       - name: Pack with Bun
-        working-directory: packages/react
+        working-directory: packages/solana-provider
         run: bun pm pack
 
       - name: Configure npm for trusted publishing
@@ -74,7 +72,7 @@ jobs:
 
       - name: Determine npm tag
         id: npm-tag
-        working-directory: packages/react
+        working-directory: packages/solana-provider
         run: |
           VERSION=$(bun -e "const pkg = await Bun.file('package.json').json(); console.log(pkg.version);")
           if echo "$VERSION" | grep -q "-alpha"; then
@@ -87,8 +85,8 @@ jobs:
           echo "Publishing with tag: $(grep tag= "$GITHUB_OUTPUT" | cut -d= -f2)"
 
       - name: Publish to npm
-        working-directory: packages/react
-        run: npm publish ./alien_org-react-*.tgz --access public --provenance --tag ${{ steps.npm-tag.outputs.tag }}
+        working-directory: packages/solana-provider
+        run: npm publish ./alien_org-solana-provider-*.tgz --access public --provenance --tag ${{ steps.npm-tag.outputs.tag }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -99,6 +97,4 @@ jobs:
           make_latest: ${{ steps.npm-tag.outputs.tag == 'latest' }}
           body: |
             ## npm
-            https://www.npmjs.com/package/@alien_org/react
-
-
+            https://www.npmjs.com/package/@alien_org/solana-provider

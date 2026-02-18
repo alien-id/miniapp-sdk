@@ -1,5 +1,5 @@
 {
-  "name": "@alien_org/auth-client",
+  "name": "@alien_org/solana-provider",
   "version": "1.0.0-alpha",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -17,13 +17,14 @@
       }
     }
   },
+  "sideEffects": false,
   "files": [
     "dist"
   ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/alien-id/miniapp-sdk.git",
-    "directory": "packages/auth-client"
+    "directory": "packages/solana-provider"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
@@ -31,19 +32,23 @@
   },
   "scripts": {
     "build": "tsdown",
-    "test": "bun test tests",
+    "typecheck": "tsc --noEmit",
     "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "@alien_org/bridge": "workspace:*",
+    "@alien_org/contract": "workspace:*",
+    "@solana/wallet-standard-features": "^1.3.0",
+    "@wallet-standard/base": "^1.1.0",
+    "@wallet-standard/features": "^1.1.0",
+    "@wallet-standard/wallet": "^1.1.0",
+    "bs58": "^6.0.0"
   },
   "devDependencies": {
     "@types/bun": "^1.3.5",
-    "@types/node": "^25.0.3",
-    "tsdown": "^0.18.1",
-    "jose": "^6.1.3"
+    "tsdown": "^0.18.1"
   },
   "peerDependencies": {
     "typescript": "^5"
-  },
-  "dependencies": {
-    "zod": "^4.3.5"
   }
 }

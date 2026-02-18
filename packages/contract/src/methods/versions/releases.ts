@@ -20,4 +20,11 @@ export const releases: Record<
   '0.1.1': ['payment:request', 'clipboard:write', 'clipboard:read'],
   '0.1.3': ['link:open'],
   '0.2.4': ['haptic:impact', 'haptic:notification', 'haptic:selection'],
+  '0.3.0': [
+    'wallet.solana:connect',
+    'wallet.solana:disconnect',
+    'wallet.solana:sign.transaction',
+    'wallet.solana:sign.message',
+    'wallet.solana:sign.send',
+  ],
 };
