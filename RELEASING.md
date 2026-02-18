@@ -27,11 +27,11 @@ contract (no deps)      auth-client (no deps)
 
 | Package | Name | Current Version |
 |---------|------|-----------------|
-| contract | @alien_org/contract | 1.1.0-alpha |
-| bridge | @alien_org/bridge | 1.1.0-alpha |
-| react | @alien_org/react | 1.1.0-alpha |
+| contract | @alien_org/contract | 1.1.1-alpha |
+| bridge | @alien_org/bridge | 1.1.1-alpha |
+| react | @alien_org/react | 1.1.1-alpha |
 | auth-client | @alien_org/auth-client | 1.0.0-alpha |
-| solana-provider | @alien_org/solana-provider | 1.1.0-alpha |
+| solana-provider | @alien_org/solana-provider | 1.1.1-alpha |
 
 ## Steps
 
