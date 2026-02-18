@@ -14,7 +14,14 @@ let mockWindow: {
   __ALIEN_CONTRACT_VERSION__?: string;
   __ALIEN_HOST_VERSION__?: string;
   __ALIEN_PLATFORM__?: string;
+  __ALIEN_SAFE_AREA_INSETS__?: {
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+  };
   __ALIEN_START_PARAM__?: string;
+  __ALIEN_FULLSCREEN__?: boolean;
 };
 
 let mockSessionStorage: Map<string, string>;
@@ -334,6 +341,97 @@ describe('startParam', () => {
     const params = retrieveLaunchParams();
 
     expect(params.startParam).toBe('restored_param');
+  });
+});
+
+describe('isFullscreen', () => {
+  test('retrieves isFullscreen true from window global', () => {
+    mockWindow.__ALIEN_AUTH_TOKEN__ = 'test-token';
+    mockWindow.__ALIEN_FULLSCREEN__ = true;
+
+    const params = retrieveLaunchParams();
+
+    expect(params.isFullscreen).toBe(true);
+  });
+
+  test('retrieves isFullscreen false from window global', () => {
+    mockWindow.__ALIEN_AUTH_TOKEN__ = 'test-token';
+    mockWindow.__ALIEN_FULLSCREEN__ = false;
+
+    const params = retrieveLaunchParams();
+
+    expect(params.isFullscreen).toBe(false);
+  });
+
+  test('returns undefined when not set', () => {
+    mockWindow.__ALIEN_AUTH_TOKEN__ = 'test-token';
+
+    const params = retrieveLaunchParams();
+
+    expect(params.isFullscreen).toBeUndefined();
+  });
+
+  test('ignores non-boolean values', () => {
+    mockWindow.__ALIEN_AUTH_TOKEN__ = 'test-token';
+    (mockWindow as Record<string, unknown>).__ALIEN_FULLSCREEN__ = 'true';
+
+    const params = retrieveLaunchParams();
+
+    expect(params.isFullscreen).toBeUndefined();
+  });
+
+  test('parseLaunchParams handles isFullscreen', () => {
+    const params = parseLaunchParams(
+      JSON.stringify({ authToken: 'test', isFullscreen: true }),
+    );
+    expect(params.isFullscreen).toBe(true);
+  });
+
+  test('parseLaunchParams ignores non-boolean isFullscreen', () => {
+    const params = parseLaunchParams(
+      JSON.stringify({ authToken: 'test', isFullscreen: 'yes' }),
+    );
+    expect(params.isFullscreen).toBeUndefined();
+  });
+
+  test('mockLaunchParamsForDev injects isFullscreen', () => {
+    mockLaunchParamsForDev({
+      authToken: 'mock-token',
+      isFullscreen: true,
+    });
+
+    expect(mockWindow.__ALIEN_FULLSCREEN__).toBe(true);
+  });
+
+  test('clearMockLaunchParams removes isFullscreen', () => {
+    mockWindow.__ALIEN_FULLSCREEN__ = true;
+
+    clearMockLaunchParams();
+
+    expect(mockWindow.__ALIEN_FULLSCREEN__).toBeUndefined();
+  });
+
+  test('isFullscreen persists to sessionStorage', () => {
+    mockWindow.__ALIEN_AUTH_TOKEN__ = 'test-token';
+    mockWindow.__ALIEN_FULLSCREEN__ = true;
+
+    retrieveLaunchParams();
+
+    const stored = mockSessionStorage.get('alien/launchParams');
+    expect(stored).toBeDefined();
+    const parsed = JSON.parse(stored as string);
+    expect(parsed.isFullscreen).toBe(true);
+  });
+
+  test('isFullscreen restores from sessionStorage', () => {
+    mockSessionStorage.set(
+      'alien/launchParams',
+      JSON.stringify({ authToken: 'test', isFullscreen: true }),
+    );
+
+    const params = retrieveLaunchParams();
+
+    expect(params.isFullscreen).toBe(true);
   });
 });
 

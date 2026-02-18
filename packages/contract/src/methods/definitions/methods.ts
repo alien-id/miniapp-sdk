@@ -3,6 +3,8 @@ import type {
   HapticImpactStyle,
   HapticNotificationType,
   PaymentTestScenario,
+  SolanaChain,
+  SolanaCommitment,
   WithReqId,
 } from '../../utils';
 import type { CreateMethodPayload } from '../types/payload';
@@ -47,8 +49,8 @@ export interface Methods {
    * Your backend receives a webhook when user pays - fulfill the order
    * immediately without waiting for chain confirmation.
    *
-   * Optional display fields (`title`, `caption`, `iconUrl`, `quantity`)
-   * are shown on the payment approval screen.
+   * Optional `item` object (`title`, `iconUrl`, `quantity`)
+   * is shown on the payment approval screen.
    *
    * Set `test` to a scenario string (e.g. `'paid'`, `'error:insufficient_balance'`)
    * for test mode - no real payment is made, but the specified scenario is
@@ -239,4 +241,99 @@ export interface Methods {
    * @schema
    */
   'haptic:selection': CreateMethodPayload<Empty>;
+  /**
+   * Request Solana wallet connection.
+   * Returns the wallet's public key on success.
+   * @since 1.0.0
+   * @schema
+   */
+  'wallet.solana:connect': CreateMethodPayload<WithReqId<Empty>>;
+  /**
+   * Disconnect from Solana wallet.
+   * Fire-and-forget — no response expected.
+   * @since 1.0.0
+   * @schema
+   */
+  'wallet.solana:disconnect': CreateMethodPayload<Empty>;
+  /**
+   * Request Solana transaction signing.
+   * Returns the signed transaction bytes.
+   * @since 1.0.0
+   * @schema
+   */
+  'wallet.solana:sign.transaction': CreateMethodPayload<
+    WithReqId<{
+      /** Base64-encoded serialized transaction (legacy or versioned) */
+      transaction: string;
+    }>
+  >;
+  /**
+   * Request Solana message signing.
+   * Returns the Ed25519 signature.
+   * @since 1.0.0
+   * @schema
+   */
+  'wallet.solana:sign.message': CreateMethodPayload<
+    WithReqId<{
+      /** Base58-encoded message bytes */
+      message: string;
+    }>
+  >;
+  /**
+   * Request Solana transaction signing and sending.
+   * The host app signs and broadcasts the transaction.
+   * Returns the transaction signature.
+   * @since 1.0.0
+   * @schema
+   */
+  'wallet.solana:sign.send': CreateMethodPayload<
+    WithReqId<{
+      /** Base64-encoded serialized transaction (legacy or versioned) */
+      transaction: string;
+      /**
+       * Target Solana cluster for broadcasting.
+       * In bridge mode the host app can infer this from miniapp config,
+       * but in relay mode (QR/WebSocket) this is required so the host
+       * app knows which RPC to broadcast to.
+       * @since 1.0.0
+       * @schema
+       */
+      chain?: SolanaChain;
+      /** Optional send options */
+      options?: {
+        skipPreflight?: boolean;
+        preflightCommitment?: SolanaCommitment;
+        /** Desired commitment level for transaction confirmation. */
+        commitment?: SolanaCommitment;
+        /**
+         * The minimum slot that the request can be evaluated at.
+         * Ensures the read is not served by a node lagging behind.
+         */
+        minContextSlot?: number;
+        maxRetries?: number;
+      };
+    }>
+  >;
+  /**
+   * Request fullscreen mode.
+   * Fire-and-forget — host app responds with `fullscreen:changed` or `fullscreen:failed` event.
+   *
+   * @example
+   * send('fullscreen:request', {});
+   *
+   * @since 1.1.0
+   * @schema
+   */
+  'fullscreen:request': CreateMethodPayload<Empty>;
+  /**
+   * Exit fullscreen mode.
+   * Fire-and-forget — host app responds with `fullscreen:changed` event.
+   *
+   * @example
+   * send('fullscreen:exit', {});
+   *
+   * @since 1.1.0
+   * @schema
+   */
+  'fullscreen:exit': CreateMethodPayload<Empty>;
 }

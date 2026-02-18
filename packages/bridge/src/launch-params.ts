@@ -14,6 +14,7 @@ declare global {
     __ALIEN_PLATFORM__?: string;
     __ALIEN_SAFE_AREA_INSETS__?: SafeAreaInsets;
     __ALIEN_START_PARAM__?: string;
+    __ALIEN_FULLSCREEN__?: boolean;
   }
 }
 
@@ -67,6 +68,10 @@ function retrieveFromWindow(): LaunchParams | null {
     platform: validatePlatform(window.__ALIEN_PLATFORM__),
     safeAreaInsets: validateSafeAreaInsets(window.__ALIEN_SAFE_AREA_INSETS__),
     startParam: window.__ALIEN_START_PARAM__,
+    isFullscreen:
+      typeof window.__ALIEN_FULLSCREEN__ === 'boolean'
+        ? window.__ALIEN_FULLSCREEN__
+        : undefined,
   };
 }
 
@@ -101,6 +106,10 @@ export function parseLaunchParams(raw: string): LaunchParams {
     platform: validatePlatform(parsed.platform),
     safeAreaInsets: validateSafeAreaInsets(parsed.safeAreaInsets),
     startParam: parsed.startParam,
+    isFullscreen:
+      typeof parsed.isFullscreen === 'boolean'
+        ? parsed.isFullscreen
+        : undefined,
   };
 }
 
@@ -137,6 +146,9 @@ export function mockLaunchParamsForDev(params: Partial<LaunchParams>): void {
   if (params.startParam !== undefined) {
     window.__ALIEN_START_PARAM__ = params.startParam;
   }
+  if (params.isFullscreen !== undefined) {
+    window.__ALIEN_FULLSCREEN__ = params.isFullscreen;
+  }
 }
 
 /**
@@ -150,6 +162,7 @@ export function clearMockLaunchParams(): void {
     delete window.__ALIEN_PLATFORM__;
     delete window.__ALIEN_SAFE_AREA_INSETS__;
     delete window.__ALIEN_START_PARAM__;
+    delete window.__ALIEN_FULLSCREEN__;
     try {
       sessionStorage.removeItem(SESSION_STORAGE_KEY);
     } catch {

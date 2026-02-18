@@ -17,7 +17,22 @@ contract (no deps)      auth-client (no deps)
   bridge → depends on contract
     ↓
   react → depends on bridge + contract
+  solana-provider → depends on bridge + contract
 ```
+
+## Cascade Rule
+
+When a package is published, **all packages that depend on it must also be published** — otherwise their published `workspace:*` dependency resolves to a stale version and users won't get the update.
+
+| If releasing... | Must also release |
+|-----------------|-------------------|
+| contract | bridge, react, solana-provider |
+| bridge | react, solana-provider |
+| auth-client | (nothing) |
+| react | (nothing) |
+| solana-provider | (nothing) |
+
+Cascaded packages that had no code changes get a **patch** bump automatically.
 
 ## Supporting Files
 
@@ -49,20 +64,27 @@ Display the results table to the user showing:
 Ask the user which packages to release using a **multi-select** prompt:
 - Show packages with changes pre-selected
 - Allow user to add/remove packages (force release without changes)
-- Options: contract, auth-client, bridge, react
+- Options: contract, auth-client, bridge, react, solana-provider
 
 If no packages selected, abort the release.
 
-**Success**: User has confirmed which packages to release.
+**After selection, apply the cascade rule automatically:**
+- If contract is selected → add bridge, react, solana-provider
+- If bridge is selected → add react, solana-provider
+- Display the expanded list to the user: "Based on the dependency cascade, these packages will also be released: ..."
+
+**Success**: User has confirmed the full package list (including cascaded dependencies).
 
 ### Step 3: Select Version Bump Per Package
 
-For each selected package, ask the user to choose the version bump:
+For each **user-selected** package (not cascaded ones), ask the user to choose the version bump:
 - **Patch** (0.0.x → 0.0.x+1)
 - **Minor** (0.x.0 → 0.x+1.0)
 - **Major** (x.0.0 → x+1.0.0)
 
 Use a single multi-question prompt to collect all bumps at once.
+
+**Cascaded packages** (added automatically by the cascade rule, not directly selected by the user) get a **patch** bump automatically — do NOT ask the user for these.
 
 **Success**: Version bump selected for each package.
 
@@ -158,9 +180,9 @@ git push origin bridge@<version>
 Show message: "Pushing bridge. Click **Continue** when workflow completes."
 Wait for user to click Continue.
 
-**Push 3** - React (if selected):
+**Push 3** - React + Solana Provider (if selected):
 ```bash
-git push origin react@<version>
+git push origin react@<version> solana-provider@<version>
 ```
 
 Skip any push step if no packages in that group were selected.

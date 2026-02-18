@@ -117,6 +117,15 @@ export type PaymentTestScenario =
   | `error:${PaymentErrorCode}`;
 
 /**
+ * Fullscreen error codes.
+ * Returned in `fullscreen:failed` event when fullscreen request fails.
+ * - `ALREADY_FULLSCREEN`: Miniapp is already in fullscreen mode
+ * @since 1.1.0
+ * @schema
+ */
+export type FullscreenErrorCode = 'ALREADY_FULLSCREEN';
+
+/**
  * Haptic impact feedback styles.
  * Maps to UIImpactFeedbackGenerator styles on iOS
  * and VibrationEffect on Android.
@@ -132,3 +141,63 @@ export type HapticImpactStyle = 'light' | 'medium' | 'heavy' | 'soft' | 'rigid';
  * @schema
  */
 export type HapticNotificationType = 'success' | 'warning' | 'error';
+
+/**
+ * Solana wallet error codes (WalletConnect-compatible numeric codes).
+ *
+ * These codes are identical to WalletConnect JSON-RPC error codes,
+ * so the mobile app produces the same `(code, message)` pair for
+ * both bridge and relay transports — no mapping needed.
+ *
+ * | Code | Meaning | WC Name |
+ * |------|---------|---------|
+ * | `5000` | User rejected the request | `userRejected` |
+ * | `-32602` | Invalid params (malformed transaction, bad input) | JSON-RPC standard |
+ * | `-32603` | Internal error (send failed, unexpected error) | JSON-RPC standard |
+ * | `8000` | Request expired / timed out | `sessionRequestExpired` |
+ *
+ * @since 1.0.0
+ * @schema
+ */
+export type WalletSolanaErrorCode = 5000 | -32602 | -32603 | 8000;
+
+/**
+ * Named constants for {@link WalletSolanaErrorCode}.
+ *
+ * @example
+ * ```ts
+ * import { WALLET_ERROR } from '@alien_org/contract';
+ *
+ * if (response.errorCode === WALLET_ERROR.USER_REJECTED) {
+ *   // user cancelled
+ * }
+ * ```
+ *
+ * @since 1.0.0
+ */
+export const WALLET_ERROR = {
+  /** User rejected the request (cancelled approval screen). */
+  USER_REJECTED: 5000,
+  /** Invalid params — transaction deserialization failed, malformed input. */
+  INVALID_PARAMS: -32602,
+  /** Internal error — transaction broadcast failed, unexpected error. */
+  INTERNAL_ERROR: -32603,
+  /** Request expired before the user responded. */
+  REQUEST_EXPIRED: 8000,
+} as const;
+
+/**
+ * Solana commitment levels for send options.
+ * @since 1.0.0
+ * @schema
+ */
+export type SolanaCommitment = 'processed' | 'confirmed' | 'finalized';
+
+/**
+ * Solana chain identifiers (wallet-standard format).
+ * Used by `wallet.solana:sign.send` to tell the host app
+ * which cluster to broadcast to.
+ * @since 1.0.0
+ * @schema
+ */
+export type SolanaChain = 'solana:mainnet' | 'solana:devnet' | 'solana:testnet';

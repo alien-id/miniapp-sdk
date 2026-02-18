@@ -24,10 +24,15 @@ export {
   releases,
 } from './methods/versions';
 export type {
+  FullscreenErrorCode,
   HapticImpactStyle,
   HapticNotificationType,
   PaymentErrorCode,
   PaymentTestScenario,
   PaymentWebhookStatus,
+  SolanaChain,
+  SolanaCommitment,
   Version,
+  WalletSolanaErrorCode,
 } from './utils';
+export { WALLET_ERROR } from './utils';

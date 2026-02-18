@@ -8,18 +8,30 @@ contract (no deps)      auth-client (no deps)
   bridge → depends on contract
     ↓
   react → depends on bridge + contract
+  solana-provider → depends on bridge + contract
 ```
 
 **Publishing order matters!** Packages must be published in dependency order, otherwise users won't be able to install them.
+
+**Cascade rule:** When a package is published, **all packages that depend on it must also be published** so their `workspace:*` dependency resolves to the new version. Otherwise users installing an upstream package get a stale dependency.
+
+| If you release... | You MUST also release |
+|--------------------|-----------------------|
+| contract | bridge, react, solana-provider |
+| bridge | react, solana-provider |
+| auth-client | (nothing) |
+| react | (nothing) |
+| solana-provider | (nothing) |
 
 ## Current Versions
 
 | Package | Name | Current Version |
 |---------|------|-----------------|
-| contract | @alien_org/contract | 0.2.4 |
-| bridge | @alien_org/bridge | 0.2.5 |
-| react | @alien_org/react | 0.2.8 |
-| auth-client | @alien_org/auth-client | 0.2.4 |
+| contract | @alien_org/contract | 1.1.1-alpha |
+| bridge | @alien_org/bridge | 1.1.1-alpha |
+| react | @alien_org/react | 1.1.1-alpha |
+| auth-client | @alien_org/auth-client | 1.0.0-alpha |
+| solana-provider | @alien_org/solana-provider | 1.1.1-alpha |
 
 ## Steps
 
@@ -31,6 +43,7 @@ vim packages/contract/package.json
 vim packages/bridge/package.json
 vim packages/react/package.json
 vim packages/auth-client/package.json
+vim packages/solana-provider/package.json
 ```
 
 ### 2. Update lockfile
@@ -48,6 +61,7 @@ grep -A2 '"packages/contract"' bun.lock
 grep -A2 '"packages/bridge"' bun.lock
 grep -A2 '"packages/react"' bun.lock
 grep -A2 '"packages/auth-client"' bun.lock
+grep -A2 '"packages/solana-provider"' bun.lock
 ```
 
 ### 4. Commit changes
@@ -64,6 +78,7 @@ git tag contract@x.x.x
 git tag auth-client@x.x.x
 git tag bridge@x.x.x
 git tag react@x.x.x
+git tag solana-provider@x.x.x
 ```
 
 ### 6. Push in dependency order
@@ -79,39 +94,25 @@ git push origin develop contract@x.x.x auth-client@x.x.x
 git push origin bridge@x.x.x
 # ⏳ Wait for workflow to complete
 
-# Step 3: Push react (depends on bridge + contract)
-git push origin react@x.x.x
+# Step 3: Push react + solana-provider (depend on bridge + contract)
+git push origin react@x.x.x solana-provider@x.x.x
 ```
 
 Monitor workflows at: https://github.com/alien-id/miniapp-sdk/actions
 
 ## Releasing a Single Package
 
-If you only need to release one package, follow the dependency chain:
+You can't truly release just one package if it has dependents. The cascade rule applies:
 
-| Package | Must release first |
-|---------|-------------------|
-| contract | Nothing |
-| auth-client | Nothing |
-| bridge | contract (if changed) |
-| react | contract + bridge (if changed) |
+| Package | Also requires release |
+|---------|----------------------|
+| contract | bridge, react, solana-provider |
+| bridge | react, solana-provider |
+| auth-client | (nothing) |
+| react | (nothing) |
+| solana-provider | (nothing) |
 
-Example releasing only react:
-```bash
-# Edit version
-vim packages/react/package.json
-
-# Update lockfile
-rm bun.lock && bun install
-
-# Commit and tag
-git add packages/react/package.json bun.lock
-git commit -m "chore: bump react to x.x.x"
-git tag react@x.x.x
-
-# Push
-git push origin develop react@x.x.x
-```
+Dependents that had no code changes get a **patch** bump (the dependency version changed, which is a publishable change). Only the root package you intended to release gets the bump type you chose (minor, major, etc.).
 
 ## Troubleshooting
 

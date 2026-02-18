@@ -104,6 +104,29 @@ function MyComponent() {
 }
 ```
 
+### useBackButton
+
+Control the host app's native back button:
+
+```tsx
+import { useBackButton } from '@alien_org/react';
+
+function DetailScreen() {
+  const { show, hide, isVisible, supported } = useBackButton(() => {
+    navigate(-1);
+  });
+
+  useEffect(() => {
+    show();
+    return () => hide();
+  }, [show, hide]);
+
+  return <div>Detail content</div>;
+}
+```
+
+The hook manages visibility, listens for clicks, and hides the button on unmount. Safe to pass inline callbacks — they're stabilized internally via ref.
+
 ### useMethod
 
 Make bridge requests with state management and version checking:

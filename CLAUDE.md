@@ -9,16 +9,17 @@ Monorepo using Bun workspaces:
 ```
 miniapp-sdk/
 ├── packages/
-│   ├── bridge/       # Communication bridge (@alien_org/bridge)
-│   ├── contract/     # Type definitions & protocol (@alien_org/contract)
-│   └── react/        # React bindings (@alien_org/react)
+│   ├── bridge/           # Communication bridge (@alien_org/bridge)
+│   ├── contract/         # Type definitions & protocol (@alien_org/contract)
+│   ├── react/            # React bindings (@alien_org/react)
+│   └── solana-provider/  # Solana wallet-standard provider (@alien_org/solana-provider)
 ├── examples/
-│   ├── vite-miniapp/ # React + TypeScript example
-│   └── miniapp-bridge/
+│   ├── vite-miniapp/     # React + TypeScript example
+│   ├── solana-wallet/    # Solana wallet operations example
+│   └── reown-appkit/     # WalletConnect relay mode example
 ├── docs/
-│   ├── bridge.md          # Bridge documentation
-│   ├── host-integration.md # Host app requirements
-│   └── manifest.md        # Manifest requirements
+│   ├── wallet-bridge-integration.md  # Wallet bridge mode guide (mobile team)
+│   └── wallet-relay-guide.md         # Wallet relay mode guide (mobile team)
 ```
 
 ## Packages
@@ -37,6 +38,13 @@ Defines the communication schema and type-safe contracts.
 - `getMethodMinVersion(method)` - Get minimum required version
 - TypeScript types for type-safe communication
 
+### @alien_org/solana-provider
+Solana wallet-standard provider for the Alien bridge.
+- Implements `@wallet-standard/base` — auto-discovered by wallet adapters
+- `initAlienWallet()` - Register the wallet (call once at app entry)
+- `AlienSolanaWallet` - Wallet implementation (connect, sign, send)
+- Uses bridge internally — miniapp devs just use their existing Solana stack
+
 ### @alien_org/react
 React bindings for the bridge (TMA-style patterns).
 - `AlienProvider` - Context provider, wrap your app
@@ -54,9 +62,9 @@ Both methods and events follow: `<domain>:<action>`
 - Domain: Subsystem (e.g., `auth`, `storage.kv`, `ui.modal`)
 - Action: Operation (e.g., `request`, `response.token`)
 
-### Current Protocol (v0.0.14)
-- Methods: `payment:request` → `{ recipient, amount, token, network, invoice, reqId }`
-- Events: `payment:response` → `{ status, txHash?, errorCode?, reqId }`
+### Current Protocol (v1.0.0)
+- Methods: `payment:request`, `wallet.solana:connect`, `wallet.solana:sign.transaction`, `wallet.solana:sign.message`, `wallet.solana:sign.send`, `wallet.solana:disconnect`
+- Events: `payment:response`, `wallet.solana:connect.response`, `wallet.solana:sign.transaction.response`, `wallet.solana:sign.message.response`, `wallet.solana:sign.send.response`
 
 ### Message Flow
 ```
@@ -68,7 +76,7 @@ Host App (iOS/Android)
 ```
 
 ### Host App Requirements
-The host app must inject (see `docs/host-integration.md`):
+The host app must inject:
 - `window.__miniAppsBridge__` - Bridge with `postMessage(data: string)`
 - `window.__ALIEN_AUTH_TOKEN__` - JWT auth token
 - `window.__ALIEN_CONTRACT_VERSION__` - Semantic version (e.g., '0.0.1')
@@ -88,8 +96,8 @@ bun run <script>        # Run package scripts
 
 Run tests with Bun's test runner:
 ```bash
-cd packages/bridge
-bun test --preload tests/setup.ts tests
+cd packages/bridge && bun test
+cd packages/contract && bun test
 ```
 
 Test files in `packages/bridge/tests/`:
@@ -187,6 +195,13 @@ await execute({ recipient: 'wallet-123', amount: '100', token: 'SOL', network: '
 - `src/hooks/useMethodSupported.ts` - Check method compatibility
 - `src/hooks/useEvent.ts` - Event subscription hook
 - `src/hooks/useRequest.ts` - Request with version checking & state
+
+### Solana Provider Package
+- `src/wallet.ts` - AlienSolanaWallet (wallet-standard implementation)
+- `src/account.ts` - AlienSolanaAccount (WalletAccount implementation)
+- `src/register.ts` - initAlienWallet() registration function
+- `src/utils.ts` - Base64/Base58 encoding utilities
+- `src/icon.ts` - Wallet icon data URI
 
 ## Bun Guidelines
 

@@ -40,4 +40,9 @@ export interface LaunchParams {
    * Used for referral codes, campaign tracking, or custom routing.
    */
   startParam: string | undefined;
+  /**
+   * Whether the miniapp was launched in fullscreen mode.
+   * @since 1.1.0
+   */
+  isFullscreen: boolean | undefined;
 }
