@@ -120,6 +120,18 @@ interface LaunchParams {
 }
 ```
 
+### DisplayMode
+
+Controls how the host app renders the miniapp webview.
+
+| Mode | Header | Close / Options | WebView area | Use case |
+| ---- | ------ | --------------- | ------------ | -------- |
+| `standard` | Visible (title, close, options) | In header | Below header | Default for most miniapps |
+| `fullscreen` | Hidden | Floating overlay | Entire screen | Games, media, maps |
+| `immersive` | Hidden | **None** | Entire screen | Custom UIs that provide their own exit (must call `app:close`) |
+
+In all modes the miniapp receives `safeAreaInsets` and should respect them for system UI (status bar, notch, home indicator).
+
 ## Adding New Methods/Events
 
 1. Define in `src/methods/definitions/methods.ts` or `src/events/definitions/events.ts`

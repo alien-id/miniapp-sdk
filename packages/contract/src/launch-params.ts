@@ -12,9 +12,20 @@ export type Platform = (typeof PLATFORMS)[number];
 
 /**
  * Supported display modes for miniapps.
- * - `standard` — standard webview with native chrome
- * - `fullscreen` — fullscreen webview, native controls still visible
- * - `immersive` — no native UI elements at all (no close button, options, etc.)
+ *
+ * - `standard` — Default. Native header with close button, options menu, and
+ *   miniapp title is visible. WebView is inset below the header. Safe area
+ *   insets account for the header height.
+ *
+ * - `fullscreen` — WebView occupies the entire screen. The native close button
+ *   and options menu remain as floating overlays so the user can always exit.
+ *   The miniapp must respect safe area insets for system UI (status bar, notch,
+ *   home indicator).
+ *
+ * - `immersive` — WebView occupies the entire screen with zero native UI.
+ *   No close button, no options menu, no header — the miniapp owns the full
+ *   viewport. The miniapp is responsible for providing its own exit mechanism
+ *   (e.g. calling `app:close`). Safe area insets still apply for system UI.
  */
 export const DISPLAY_MODES = ['standard', 'fullscreen', 'immersive'] as const;
 
