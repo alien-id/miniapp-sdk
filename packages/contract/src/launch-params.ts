@@ -11,6 +11,19 @@ export const PLATFORMS = ['ios', 'android'] as const;
 export type Platform = (typeof PLATFORMS)[number];
 
 /**
+ * Supported display modes for miniapps.
+ * - `standard` — standard webview with native chrome
+ * - `fullscreen` — fullscreen webview, native controls still visible
+ * - `immersive` — no native UI elements at all (no close button, options, etc.)
+ */
+export const DISPLAY_MODES = ['standard', 'fullscreen', 'immersive'] as const;
+
+/**
+ * Display mode for the miniapp webview.
+ */
+export type DisplayMode = (typeof DISPLAY_MODES)[number];
+
+/**
  * Safe area insets in CSS pixels, injected by the host app.
  * Accounts for system UI (status bar, notch, home indicator, nav bar).
  */
@@ -41,8 +54,9 @@ export interface LaunchParams {
    */
   startParam: string | undefined;
   /**
-   * Whether the miniapp was launched in fullscreen mode.
+   * Display mode for the miniapp webview.
+   * Defaults to `'standard'` when not provided by the host app.
    * @since 1.0.0
    */
-  isFullscreen: boolean | undefined;
+  displayMode: DisplayMode;
 }

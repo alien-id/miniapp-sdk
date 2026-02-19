@@ -21,7 +21,7 @@ let mockWindow: {
     left: number;
   };
   __ALIEN_START_PARAM__?: string;
-  __ALIEN_FULLSCREEN__?: boolean;
+  __ALIEN_DISPLAY_MODE__?: string;
 };
 
 let mockSessionStorage: Map<string, string>;
@@ -344,94 +344,103 @@ describe('startParam', () => {
   });
 });
 
-describe('isFullscreen', () => {
-  test('retrieves isFullscreen true from window global', () => {
+describe('displayMode', () => {
+  test('retrieves displayMode "fullscreen" from window global', () => {
     mockWindow.__ALIEN_AUTH_TOKEN__ = 'test-token';
-    mockWindow.__ALIEN_FULLSCREEN__ = true;
+    mockWindow.__ALIEN_DISPLAY_MODE__ = 'fullscreen';
 
     const params = retrieveLaunchParams();
 
-    expect(params.isFullscreen).toBe(true);
+    expect(params.displayMode).toBe('fullscreen');
   });
 
-  test('retrieves isFullscreen false from window global', () => {
+  test('retrieves displayMode "immersive" from window global', () => {
     mockWindow.__ALIEN_AUTH_TOKEN__ = 'test-token';
-    mockWindow.__ALIEN_FULLSCREEN__ = false;
+    mockWindow.__ALIEN_DISPLAY_MODE__ = 'immersive';
 
     const params = retrieveLaunchParams();
 
-    expect(params.isFullscreen).toBe(false);
+    expect(params.displayMode).toBe('immersive');
   });
 
-  test('returns undefined when not set', () => {
+  test('retrieves displayMode "standard" from window global', () => {
+    mockWindow.__ALIEN_AUTH_TOKEN__ = 'test-token';
+    mockWindow.__ALIEN_DISPLAY_MODE__ = 'standard';
+
+    const params = retrieveLaunchParams();
+
+    expect(params.displayMode).toBe('standard');
+  });
+
+  test('defaults to "standard" when not set', () => {
     mockWindow.__ALIEN_AUTH_TOKEN__ = 'test-token';
 
     const params = retrieveLaunchParams();
 
-    expect(params.isFullscreen).toBeUndefined();
+    expect(params.displayMode).toBe('standard');
   });
 
-  test('ignores non-boolean values', () => {
+  test('defaults to "standard" for invalid values', () => {
     mockWindow.__ALIEN_AUTH_TOKEN__ = 'test-token';
-    (mockWindow as Record<string, unknown>).__ALIEN_FULLSCREEN__ = 'true';
+    mockWindow.__ALIEN_DISPLAY_MODE__ = 'invalid';
 
     const params = retrieveLaunchParams();
 
-    expect(params.isFullscreen).toBeUndefined();
+    expect(params.displayMode).toBe('standard');
   });
 
-  test('parseLaunchParams handles isFullscreen', () => {
+  test('parseLaunchParams handles displayMode', () => {
     const params = parseLaunchParams(
-      JSON.stringify({ authToken: 'test', isFullscreen: true }),
+      JSON.stringify({ authToken: 'test', displayMode: 'immersive' }),
     );
-    expect(params.isFullscreen).toBe(true);
+    expect(params.displayMode).toBe('immersive');
   });
 
-  test('parseLaunchParams ignores non-boolean isFullscreen', () => {
+  test('parseLaunchParams defaults invalid displayMode to "standard"', () => {
     const params = parseLaunchParams(
-      JSON.stringify({ authToken: 'test', isFullscreen: 'yes' }),
+      JSON.stringify({ authToken: 'test', displayMode: 'bogus' }),
     );
-    expect(params.isFullscreen).toBeUndefined();
+    expect(params.displayMode).toBe('standard');
   });
 
-  test('mockLaunchParamsForDev injects isFullscreen', () => {
+  test('mockLaunchParamsForDev injects displayMode', () => {
     mockLaunchParamsForDev({
       authToken: 'mock-token',
-      isFullscreen: true,
+      displayMode: 'immersive',
     });
 
-    expect(mockWindow.__ALIEN_FULLSCREEN__).toBe(true);
+    expect(mockWindow.__ALIEN_DISPLAY_MODE__).toBe('immersive');
   });
 
-  test('clearMockLaunchParams removes isFullscreen', () => {
-    mockWindow.__ALIEN_FULLSCREEN__ = true;
+  test('clearMockLaunchParams removes displayMode', () => {
+    mockWindow.__ALIEN_DISPLAY_MODE__ = 'fullscreen';
 
     clearMockLaunchParams();
 
-    expect(mockWindow.__ALIEN_FULLSCREEN__).toBeUndefined();
+    expect(mockWindow.__ALIEN_DISPLAY_MODE__).toBeUndefined();
   });
 
-  test('isFullscreen persists to sessionStorage', () => {
+  test('displayMode persists to sessionStorage', () => {
     mockWindow.__ALIEN_AUTH_TOKEN__ = 'test-token';
-    mockWindow.__ALIEN_FULLSCREEN__ = true;
+    mockWindow.__ALIEN_DISPLAY_MODE__ = 'immersive';
 
     retrieveLaunchParams();
 
     const stored = mockSessionStorage.get('alien/launchParams');
     expect(stored).toBeDefined();
     const parsed = JSON.parse(stored as string);
-    expect(parsed.isFullscreen).toBe(true);
+    expect(parsed.displayMode).toBe('immersive');
   });
 
-  test('isFullscreen restores from sessionStorage', () => {
+  test('displayMode restores from sessionStorage', () => {
     mockSessionStorage.set(
       'alien/launchParams',
-      JSON.stringify({ authToken: 'test', isFullscreen: true }),
+      JSON.stringify({ authToken: 'test', displayMode: 'fullscreen' }),
     );
 
     const params = retrieveLaunchParams();
 
-    expect(params.isFullscreen).toBe(true);
+    expect(params.displayMode).toBe('fullscreen');
   });
 });
 

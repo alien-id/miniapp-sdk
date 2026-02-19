@@ -33,6 +33,7 @@ import type {
   // Launch parameters
   LaunchParams,         // Host-injected params (authToken, contractVersion, etc.)
   Platform,             // 'ios' | 'android'
+  DisplayMode,          // 'standard' | 'fullscreen' | 'immersive'
 
   // Utilities
   Version,              // Semantic version string type
@@ -42,10 +43,11 @@ import type {
 ### Constants
 
 ```typescript
-import { PLATFORMS, releases } from '@alien_org/contract';
+import { DISPLAY_MODES, PLATFORMS, releases } from '@alien_org/contract';
 
-PLATFORMS  // ['ios', 'android']
-releases   // Record<Version, MethodName[]> - version to methods mapping
+PLATFORMS      // ['ios', 'android']
+DISPLAY_MODES  // ['standard', 'fullscreen', 'immersive']
+releases       // Record<Version, MethodName[]> - version to methods mapping
 ```
 
 ### Version Utilities
@@ -114,7 +116,7 @@ interface LaunchParams {
   platform: Platform | undefined;          // 'ios' | 'android'
   safeAreaInsets: SafeAreaInsets | undefined; // System UI insets (CSS px)
   startParam: string | undefined;          // Custom param (referrals, etc.)
-  isFullscreen: boolean | undefined;       // Launched in fullscreen mode
+  displayMode: DisplayMode;                 // 'standard' | 'fullscreen' | 'immersive'
 }
 ```
 
