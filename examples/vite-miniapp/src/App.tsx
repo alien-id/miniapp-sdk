@@ -138,7 +138,12 @@ function App() {
       <div className="drawer-test" style={{ marginBottom: '1.5rem' }}>
         <BottomSheet
           renderTrigger={(props) => (
-            <button {...props} type="button" className="send-button" style={{ marginBottom: 0 }}>
+            <button
+              {...props}
+              type="button"
+              className="send-button"
+              style={{ marginBottom: 0 }}
+            >
               Open Bottom Sheet
             </button>
           )}
