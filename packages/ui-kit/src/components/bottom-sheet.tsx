@@ -1,9 +1,9 @@
-import type { ComponentProps, ReactNode } from "react";
-import { Drawer } from "vaul-base";
-import "./bottom-sheet.css";
+import type { ComponentProps, ReactNode } from 'react';
+import { Drawer } from 'vaul-base';
+import './bottom-sheet.css';
 
 interface BottomSheetProps {
-  renderTrigger: ComponentProps<typeof Drawer.Trigger>["render"];
+  renderTrigger: ComponentProps<typeof Drawer.Trigger>['render'];
   children: ReactNode;
 }
 

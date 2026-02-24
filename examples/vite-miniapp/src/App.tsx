@@ -135,15 +135,10 @@ function App() {
         <p className="subtitle">Request & Event Example</p>
       </header>
 
-      <div className="drawer-test" style={{ marginBottom: "1.5rem" }}>
+      <div className="drawer-test" style={{ marginBottom: '1.5rem' }}>
         <BottomSheet
           renderTrigger={(props) => (
-            <button
-              {...props}
-              type="button"
-              className="send-button"
-              style={{ marginBottom: 0 }}
-            >
+            <button {...props} type="button" className="send-button" style={{ marginBottom: 0 }}>
               Open Bottom Sheet
             </button>
           )}
@@ -152,15 +147,15 @@ function App() {
             <img src={question} alt="Question" />
             <div className="drawer-test-text-container">
               <h3
-                style={{ fontSize: "1rem", lineHeight: "1.375rem", margin: 0 }}
+                style={{ fontSize: '1rem', lineHeight: '1.375rem', margin: 0 }}
               >
                 What is this?
               </h3>
               <p
                 style={{
-                  fontSize: "0.875rem",
-                  lineHeight: "1.25rem",
-                  color: "#8D8D8D",
+                  fontSize: '0.875rem',
+                  lineHeight: '1.25rem',
+                  color: '#8D8D8D',
                   margin: 0,
                 }}
               >
@@ -170,11 +165,7 @@ function App() {
             </div>
             <Drawer.Close
               render={(props) => (
-                <button
-                  {...props}
-                  type="button"
-                  className="drawer-test-button"
-                >
+                <button {...props} type="button" className="drawer-test-button">
                   Got it
                 </button>
               )}
