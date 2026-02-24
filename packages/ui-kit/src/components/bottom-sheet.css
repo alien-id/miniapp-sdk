@@ -1,0 +1,35 @@
+.bottomsheet-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.bottomsheet-content {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  padding: 1rem;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+  color: var(--foreground, currentColor);
+}
+
+.bottomsheet-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-radius: 40px;
+  background-color: var(--card, #1a1a1a);
+}
+
+.bottomsheet-handle {
+  margin-top: 0.75rem;
+  width: 2.75rem;
+  background-color: rgba(255, 255, 255, 0.2);
+}

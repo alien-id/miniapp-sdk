@@ -456,6 +456,38 @@
   color: #646cff;
 }
 
+.drawer-test-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding-top: 1rem;
+}
+
+.drawer-test-text-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0 20px;
+}
+
+.drawer-test-button {
+  border: none;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 20px;
+  margin-top: 20px;
+  gap: 16px;
+  border-radius: 24px;
+  background: rgba(141, 141, 141, 0.24);
+  font-weight: 700;
+}
+
 @media (max-width: 768px) {
   .app {
     padding: 1rem;

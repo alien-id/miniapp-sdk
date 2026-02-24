@@ -13,7 +13,8 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "@alien_org/react": "workspace:*",
-    "@alien_org/bridge": "workspace:*"
+    "@alien_org/bridge": "workspace:*",
+    "@alien_org/ui-kit": "workspace:*"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

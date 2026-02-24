@@ -5,8 +5,11 @@ import {
   useEvent,
   useMethod,
 } from '@alien_org/react';
+import { BottomSheet, Drawer } from '@alien_org/ui-kit';
+import '@alien_org/ui-kit/styles.css';
 import { useState } from 'react';
 import './App.css';
+import question from './assets/question.svg';
 
 interface EventLog {
   id: string;
@@ -131,6 +134,54 @@ function App() {
         <h1>Alien Miniapp SDK</h1>
         <p className="subtitle">Request & Event Example</p>
       </header>
+
+      <div className="drawer-test" style={{ marginBottom: "1.5rem" }}>
+        <BottomSheet
+          renderTrigger={(props) => (
+            <button
+              {...props}
+              type="button"
+              className="send-button"
+              style={{ marginBottom: 0 }}
+            >
+              Open Bottom Sheet
+            </button>
+          )}
+        >
+          <div className="drawer-test-content">
+            <img src={question} alt="Question" />
+            <div className="drawer-test-text-container">
+              <h3
+                style={{ fontSize: "1rem", lineHeight: "1.375rem", margin: 0 }}
+              >
+                What is this?
+              </h3>
+              <p
+                style={{
+                  fontSize: "0.875rem",
+                  lineHeight: "1.25rem",
+                  color: "#8D8D8D",
+                  margin: 0,
+                }}
+              >
+                This drawer is from <code>@alien_org/ui-kit</code>. Drag the
+                handle or tap outside to close.
+              </p>
+            </div>
+            <Drawer.Close
+              render={(props) => (
+                <button
+                  {...props}
+                  type="button"
+                  className="drawer-test-button"
+                >
+                  Got it
+                </button>
+              )}
+            />
+          </div>
+        </BottomSheet>
+      </div>
 
       <div className="status-grid">
         <div className="status-card">
