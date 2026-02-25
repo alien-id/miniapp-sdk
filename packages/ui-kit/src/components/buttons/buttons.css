@@ -15,8 +15,8 @@
 
 .alien-button:disabled {
   cursor: not-allowed;
-  background: rgba(141, 141, 141, 0.16);
-  color: rgba(141, 141, 141, 0.24);
+  background: var(--alien-color-disabled-bg, rgba(141, 141, 141, 0.16));
+  color: var(--alien-color-disabled-text, rgba(141, 141, 141, 0.24));
 }
 
 .alien-button:hover:not(:disabled) {
@@ -24,18 +24,18 @@
 }
 
 .alien-button-primary {
-  color: #ffffff;
-  background: #2979ff;
+  color: var(--alien-color-text-on-primary, #ffffff);
+  background: var(--alien-color-primary, #2979ff);
 }
 
 .alien-button-secondary {
-  color: #ffffff;
-  background: rgba(141, 141, 141, 0.24);
+  color: var(--alien-color-text-on-primary, #ffffff);
+  background: var(--alien-color-secondary, rgba(141, 141, 141, 0.24));
 }
 
 .alien-button-tinted {
-  color: #2979ff;
-  background: rgba(41, 121, 255, 0.16);
+  color: var(--alien-color-primary, #2979ff);
+  background: var(--alien-color-primary-tinted, rgba(41, 121, 255, 0.16));
 }
 
 .alien-button-tertiary {
@@ -44,6 +44,6 @@
 
 .alien-button-tertiary:disabled {
   cursor: not-allowed;
-  color: rgba(141, 141, 141, 0.24);
+  color: var(--alien-color-disabled-text, rgba(141, 141, 141, 0.24));
   background: transparent;
 }

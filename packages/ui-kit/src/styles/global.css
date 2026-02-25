@@ -1,3 +1,9 @@
 :root {
   --font-booton: "Booton", system-ui, sans-serif;
+  --alien-color-primary: #2979ff;
+  --alien-color-primary-tinted: rgba(41, 121, 255, 0.16);
+  --alien-color-secondary: rgba(141, 141, 141, 0.24);
+  --alien-color-disabled-bg: rgba(141, 141, 141, 0.16);
+  --alien-color-disabled-text: rgba(141, 141, 141, 0.24);
+  --alien-color-text-on-primary: #ffffff;
 }

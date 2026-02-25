@@ -167,14 +167,15 @@
         "vaul-base": "^1.0.0",
       },
       "devDependencies": {
-        "@types/bun": "latest",
+        "@types/bun": "^1.3.9",
         "@types/react": "^19.2.0",
         "react": "^19.2.0",
         "tsdown": "^0.20.3",
+        "typescript": "^5",
       },
       "peerDependencies": {
         "react": "^18 || ^19",
-        "typescript": "^5",
+        "react-dom": "^18 || ^19",
       },
     },
   },
