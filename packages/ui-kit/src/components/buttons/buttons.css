@@ -10,12 +10,17 @@
   border-radius: 24px;
   font-weight: 469;
   cursor: pointer;
+  transition: opacity 0.3s;
 }
 
 .alien-button:disabled {
   cursor: not-allowed;
   background: rgba(141, 141, 141, 0.16);
   color: rgba(141, 141, 141, 0.24);
+}
+
+.alien-button:hover:not(:disabled) {
+  opacity: 0.8;
 }
 
 .alien-button-primary {
