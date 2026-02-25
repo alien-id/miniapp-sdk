@@ -7,7 +7,10 @@ interface BottomSheetProps {
   children: ReactNode;
 }
 
-export const BottomSheet = ({ renderTrigger, children }: BottomSheetProps) => {
+const BottomSheetComponent = ({
+  renderTrigger,
+  children,
+}: BottomSheetProps) => {
   return (
     <Drawer.Root>
       <Drawer.Trigger render={renderTrigger} />
@@ -23,3 +26,15 @@ export const BottomSheet = ({ renderTrigger, children }: BottomSheetProps) => {
     </Drawer.Root>
   );
 };
+
+type BottomSheet = typeof BottomSheetComponent & {
+  Close: typeof Drawer.Close;
+  Title: typeof Drawer.Title;
+  Description: typeof Drawer.Description;
+};
+
+export const BottomSheet: BottomSheet = Object.assign(BottomSheetComponent, {
+  Close: Drawer.Close,
+  Title: Drawer.Title,
+  Description: Drawer.Description,
+});

@@ -5,7 +5,7 @@ import {
   useEvent,
   useMethod,
 } from '@alien_org/react';
-import { BottomSheet, Drawer } from '@alien_org/ui-kit';
+import { BottomSheet } from '@alien_org/ui-kit';
 import '@alien_org/ui-kit/styles.css';
 import { useState } from 'react';
 import './App.css';
@@ -168,7 +168,7 @@ function App() {
                 handle or tap outside to close.
               </p>
             </div>
-            <Drawer.Close
+            <BottomSheet.Close
               render={(props) => (
                 <button {...props} type="button" className="drawer-test-button">
                   Got it

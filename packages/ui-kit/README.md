@@ -46,10 +46,10 @@ function App() {
 }
 ```
 
-To add custom controls like close buttons, use the Drawer components. Our BottomSheet is built on vaul-base, and all underlying sub-components are re-exported for full flexibility
+Our BottomSheet is built on vaul-base, and all underlying sub-components are attached for full flexibility, specifically, `Close`, `Title` and `Description` components are avaliable.
 
 ```tsx
-import { BottomSheet, Drawer } from "@alien_org/ui-kit";
+import { BottomSheet } from "@alien_org/ui-kit";
 import "@alien_org/ui-kit/styles.css";
 
 function App() {
@@ -74,7 +74,7 @@ function App() {
           This drawer is from <code>@alien_org/ui-kit</code>. Drag the handle or
           tap outside to close.
         </p>
-        <Drawer.Close
+        <BottomSheet.Close
           render={(props) => (
             <button {...props} type="button" className="drawer-test-button">
               Got it
