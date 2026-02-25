@@ -5,7 +5,13 @@ import {
   useEvent,
   useMethod,
 } from '@alien_org/react';
-import { BottomSheet } from '@alien_org/ui-kit';
+import {
+  BottomSheet,
+  PrimaryButton,
+  SecondaryButton,
+  TertiaryButton,
+  TintedButton,
+} from '@alien_org/ui-kit';
 import '@alien_org/ui-kit/styles.css';
 import { useState } from 'react';
 import './App.css';
@@ -170,9 +176,30 @@ function App() {
             </div>
             <BottomSheet.Close
               render={(props) => (
-                <button {...props} type="button" className="drawer-test-button">
-                  Got it
-                </button>
+                <>
+                  <PrimaryButton {...props} style={{ marginTop: '1rem' }}>
+                    Got it
+                  </PrimaryButton>
+                  <SecondaryButton {...props}>Got it but grey</SecondaryButton>
+                  <TertiaryButton {...props}>
+                    Got it but with transparent background
+                  </TertiaryButton>
+                  <TintedButton {...props}>
+                    Got it but with semi-transparent blue background
+                  </TintedButton>
+                  <PrimaryButton {...props} disabled>
+                    Got it but you can't click it
+                  </PrimaryButton>
+                  <SecondaryButton {...props} disabled>
+                    Got it but you can't click it
+                  </SecondaryButton>
+                  <TertiaryButton {...props} disabled>
+                    Got it but you can't click it and background is transparent
+                  </TertiaryButton>
+                  <TintedButton {...props} disabled>
+                    Got it but you can't click it again
+                  </TintedButton>
+                </>
               )}
             />
           </div>

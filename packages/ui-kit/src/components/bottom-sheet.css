@@ -1,10 +1,10 @@
-.bottomsheet-overlay {
+.alien-bottomsheet-overlay {
   position: fixed;
   inset: 0;
   background-color: rgba(0, 0, 0, 0.8);
 }
 
-.bottomsheet-content {
+.alien-bottomsheet-content {
   position: fixed;
   left: 0;
   right: 0;
@@ -17,7 +17,7 @@
   color: var(--foreground, currentColor);
 }
 
-.bottomsheet-inner {
+.alien-bottomsheet-inner {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -28,7 +28,7 @@
   background-color: var(--card, #1a1a1a);
 }
 
-.bottomsheet-handle {
+.alien-bottomsheet-handle {
   margin-top: 0.75rem;
   width: 2.75rem;
   background-color: rgba(255, 255, 255, 0.2);

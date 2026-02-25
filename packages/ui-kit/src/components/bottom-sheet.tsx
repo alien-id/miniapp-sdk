@@ -15,10 +15,10 @@ const BottomSheetComponent = ({
     <Drawer.Root>
       <Drawer.Trigger render={renderTrigger} />
       <Drawer.Portal>
-        <Drawer.Overlay className="bottomsheet-overlay" />
-        <Drawer.Content className="bottomsheet-content">
-          <div className="bottomsheet-inner">
-            <Drawer.Handle className="bottomsheet-handle" />
+        <Drawer.Overlay className="alien-bottomsheet-overlay" />
+        <Drawer.Content className="alien-bottomsheet-content">
+          <div className="alien-bottomsheet-inner">
+            <Drawer.Handle className="alien-bottomsheet-handle" />
             {children}
           </div>
         </Drawer.Content>

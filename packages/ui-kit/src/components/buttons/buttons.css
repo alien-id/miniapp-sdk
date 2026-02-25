@@ -1,0 +1,44 @@
+.alien-button {
+  font-family: var(--font-booton);
+  border: none;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 20px;
+  gap: 0.5rem;
+  border-radius: 24px;
+  font-weight: 469;
+  cursor: pointer;
+}
+
+.alien-button:disabled {
+  cursor: not-allowed;
+  background: rgba(141, 141, 141, 0.16);
+  color: rgba(141, 141, 141, 0.24);
+}
+
+.alien-button-primary {
+  color: #ffffff;
+  background: #2979ff;
+}
+
+.alien-button-secondary {
+  color: #ffffff;
+  background: rgba(141, 141, 141, 0.24);
+}
+
+.alien-button-tinted {
+  color: #2979ff;
+  background: rgba(41, 121, 255, 0.16);
+}
+
+.alien-button-tertiary {
+  background: transparent;
+}
+
+.alien-button-tertiary:disabled {
+  cursor: not-allowed;
+  color: rgba(141, 141, 141, 0.24);
+  background: transparent;
+}
