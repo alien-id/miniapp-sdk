@@ -1,6 +1,17 @@
 // Re-export request options type
-export type { LinkInterceptorOptions, RequestOptions } from '@alien_org/bridge';
-export { send } from '@alien_org/bridge';
+export type {
+  AvailabilityOptions,
+  LinkInterceptorOptions,
+  RequestOptions,
+  SafeRequestOptions,
+  SafeResult,
+} from '@alien_org/bridge';
+export {
+  isAvailable,
+  requestIfAvailable,
+  send,
+  sendIfAvailable,
+} from '@alien_org/bridge';
 // Re-export types from contract for convenience
 export type {
   EventName,
@@ -18,6 +29,7 @@ export { AlienProvider, type AlienProviderProps } from './context';
 // Errors
 export {
   BridgeError,
+  BridgeMethodUnsupportedError,
   BridgeTimeoutError,
   BridgeUnavailableError,
   BridgeWindowUnavailableError,

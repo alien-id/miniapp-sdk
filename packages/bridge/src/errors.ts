@@ -48,3 +48,27 @@ export class BridgeTimeoutError extends BridgeError {
     this.timeout = timeout;
   }
 }
+
+/**
+ * Thrown when a method is not supported by the current contract version.
+ */
+export class BridgeMethodUnsupportedError extends BridgeError {
+  readonly method: string;
+  readonly contractVersion: string;
+  readonly minVersion: string | undefined;
+
+  constructor(
+    method: string,
+    contractVersion: string,
+    minVersion: string | undefined,
+  ) {
+    const message = minVersion
+      ? `Method "${method}" requires version ${minVersion}, but host provides ${contractVersion}`
+      : `Method "${method}" is not supported`;
+    super(message);
+    this.name = 'BridgeMethodUnsupportedError';
+    this.method = method;
+    this.contractVersion = contractVersion;
+    this.minVersion = minVersion;
+  }
+}
