@@ -90,11 +90,6 @@ Subscribe to bridge events:
 import { useEvent } from '@alien_org/react';
 
 function MyComponent() {
-  // Handle miniapp close (cleanup before close)
-  useEvent('miniapp:close', () => {
-    saveState();
-  });
-
   // Handle back button
   useEvent('host.back.button:clicked', () => {
     navigateBack();

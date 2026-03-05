@@ -95,7 +95,6 @@ getReleaseVersion('app:ready');           // '0.0.9'
 
 | Event | Since | Description |
 |-------|-------|-------------|
-| `miniapp:close` | 0.0.14 | Host is closing miniapp |
 | `host.back.button:clicked` | 1.0.0 | Back button was clicked |
 | `payment:response` | 0.1.1 | Payment result |
 | `clipboard:response` | 0.1.1 | Clipboard read result |

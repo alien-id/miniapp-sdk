@@ -66,7 +66,7 @@ Both methods and events follow: `<domain>:<action>`
 
 ### Current Protocol (v1.0.0)
 - Methods: `app:ready`, `app:close`, `payment:request`, `clipboard:write`, `clipboard:read`, `link:open`, `haptic:impact`, `haptic:notification`, `haptic:selection`, `host.back.button:toggle`, `wallet.solana:connect`, `wallet.solana:disconnect`, `wallet.solana:sign.transaction`, `wallet.solana:sign.message`, `wallet.solana:sign.send`
-- Events: `miniapp:close`, `host.back.button:clicked`, `payment:response`, `clipboard:response`, `wallet.solana:connect.response`, `wallet.solana:sign.transaction.response`, `wallet.solana:sign.message.response`, `wallet.solana:sign.send.response`
+- Events: `host.back.button:clicked`, `payment:response`, `clipboard:response`, `wallet.solana:connect.response`, `wallet.solana:sign.transaction.response`, `wallet.solana:sign.message.response`, `wallet.solana:sign.send.response`
 
 ### Message Flow
 ```

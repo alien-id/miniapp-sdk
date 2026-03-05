@@ -13,12 +13,6 @@ import type { CreateEventPayload } from '../types/payload';
  */
 export interface Events {
   /**
-   * Miniapp close event, fired by the host app just before the miniapp is closed.
-   * @since 0.0.14
-   * @schema
-   */
-  'miniapp:close': CreateEventPayload<Empty>;
-  /**
    * Host app's back button clicked event.
    * @since 1.0.0
    * @schema
