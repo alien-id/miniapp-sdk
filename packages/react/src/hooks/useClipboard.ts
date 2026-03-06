@@ -71,7 +71,11 @@ export function useClipboard(
 
   const writeText = useCallback(
     (text: string) => {
-      send.ifAvailable('clipboard:write', { text }, { version: contractVersion });
+      send.ifAvailable(
+        'clipboard:write',
+        { text },
+        { version: contractVersion },
+      );
     },
     [contractVersion],
   );

@@ -52,14 +52,22 @@ export function useHaptic(): UseHapticReturn {
 
   const impactOccurred = useCallback(
     (style: HapticImpactStyle) => {
-      send.ifAvailable('haptic:impact', { style }, { version: contractVersion });
+      send.ifAvailable(
+        'haptic:impact',
+        { style },
+        { version: contractVersion },
+      );
     },
     [contractVersion],
   );
 
   const notificationOccurred = useCallback(
     (type: HapticNotificationType) => {
-      send.ifAvailable('haptic:notification', { type }, { version: contractVersion });
+      send.ifAvailable(
+        'haptic:notification',
+        { type },
+        { version: contractVersion },
+      );
     },
     [contractVersion],
   );

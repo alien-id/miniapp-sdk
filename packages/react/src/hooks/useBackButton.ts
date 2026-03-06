@@ -86,14 +86,22 @@ export function useBackButton(onPress?: () => void): UseBackButtonReturn {
     if (visibleRef.current) return;
     visibleRef.current = true;
     setIsVisible(true);
-    send.ifAvailable('host.back.button:toggle', { visible: true }, { version: contractVersion });
+    send.ifAvailable(
+      'host.back.button:toggle',
+      { visible: true },
+      { version: contractVersion },
+    );
   }, [contractVersion]);
 
   const hide = useCallback(() => {
     if (!visibleRef.current) return;
     visibleRef.current = false;
     setIsVisible(false);
-    send.ifAvailable('host.back.button:toggle', { visible: false }, { version: contractVersion });
+    send.ifAvailable(
+      'host.back.button:toggle',
+      { visible: false },
+      { version: contractVersion },
+    );
   }, [contractVersion]);
 
   // Hide back button on unmount to prevent stale native UI.
