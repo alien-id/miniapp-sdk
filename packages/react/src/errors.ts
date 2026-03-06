@@ -1,5 +1,6 @@
 import {
   BridgeError,
+  BridgeMethodUnsupportedError,
   BridgeTimeoutError,
   BridgeUnavailableError,
   BridgeWindowUnavailableError,
@@ -43,6 +44,7 @@ export class MethodNotSupportedError extends ReactSDKError {
 // Re-export bridge errors for convenience
 export {
   BridgeError,
+  BridgeMethodUnsupportedError,
   BridgeTimeoutError,
   BridgeUnavailableError,
   BridgeWindowUnavailableError,
