@@ -43,7 +43,7 @@ const METHOD_EVENT_PAIRS: MethodEventPair[] = [
       token: 'SOL',
       network: 'solana',
       invoice: `inv-${Date.now()}`,
-      title: 'Test Payment',
+      item: { title: 'Test Payment', iconUrl: '', quantity: 1 },
     }),
   },
 ];
