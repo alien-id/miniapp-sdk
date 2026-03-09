@@ -191,7 +191,7 @@ export function createMockBridge(
       if (delay > 0) {
         pendingTimeouts.push(setTimeout(dispatchResponse, delay));
       } else {
-        dispatchResponse();
+        queueMicrotask(dispatchResponse);
       }
     },
   };

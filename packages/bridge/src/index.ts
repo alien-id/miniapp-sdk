@@ -33,9 +33,6 @@ export {
 // Link interceptor
 export type { LinkInterceptorOptions } from './link-interceptor';
 export { enableLinkInterceptor } from './link-interceptor';
-// Mock bridge
-export type { MethodCall, MockBridgeInstance, MockBridgeOptions } from './mock';
-export { createMockBridge } from './mock';
 export type { RequestOptions } from './request';
 // Request-safe types
 export type { SafeRequestOptions } from './request-safe';

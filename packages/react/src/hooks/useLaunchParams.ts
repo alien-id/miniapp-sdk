@@ -1,6 +1,6 @@
 import { getLaunchParams } from '@alien_org/bridge';
 import type { LaunchParams } from '@alien_org/contract';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 /**
  * Hook to get launch params.
@@ -22,11 +22,7 @@ import { useEffect, useState } from 'react';
  * ```
  */
 export function useLaunchParams(): LaunchParams | undefined {
-  const [params, setParams] = useState<LaunchParams | undefined>(undefined);
-
-  useEffect(() => {
-    setParams(getLaunchParams());
-  }, []);
+  const [params] = useState(() => getLaunchParams());
 
   return params;
 }

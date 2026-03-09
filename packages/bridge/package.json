@@ -15,6 +15,16 @@
         "types": "./dist/index.d.cts",
         "default": "./dist/index.cjs"
       }
+    },
+    "./mock": {
+      "import": {
+        "types": "./dist/mock.d.mts",
+        "default": "./dist/mock.mjs"
+      },
+      "require": {
+        "types": "./dist/mock.d.cts",
+        "default": "./dist/mock.cjs"
+      }
     }
   },
   "files": [
@@ -31,7 +41,7 @@
   },
   "scripts": {
     "build": "tsdown",
-    "test": "bun test --preload tests/setup.ts tests",
+    "test": "bun test tests",
     "prepublishOnly": "bun run build"
   },
   "dependencies": {

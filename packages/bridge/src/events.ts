@@ -11,27 +11,27 @@ type EmitteryEventMap = {
   [K in keyof Events]: Events[K]['payload'];
 };
 
-class BridgeEmitter extends Emittery<EmitteryEventMap> {
-  constructor() {
-    super();
-    // Setup message listener to receive events from host app
+let emitter: Emittery<EmitteryEventMap> | undefined;
+
+function getEmitter(): Emittery<EmitteryEventMap> {
+  if (!emitter) {
+    emitter = new Emittery<EmitteryEventMap>();
     setupMessageListener((message) => {
       if (message.type === 'event') {
-        void this.emit(message.name, message.payload);
+        void emitter?.emit(message.name, message.payload);
       }
     });
   }
+  return emitter;
 }
-
-const emitter = new BridgeEmitter();
 
 export function on<T extends EventName>(
   name: T,
   listener: EventListener<T>,
 ): () => void {
-  emitter.on(name, listener);
+  getEmitter().on(name, listener);
   return () => {
-    emitter.off(name, listener);
+    getEmitter().off(name, listener);
   };
 }
 
@@ -39,12 +39,12 @@ export function off<T extends EventName>(
   name: T,
   listener: EventListener<T>,
 ): void {
-  emitter.off(name, listener);
+  getEmitter().off(name, listener);
 }
 
 export async function emit<T extends EventName>(
   name: T,
   payload: EmitteryEventMap[T],
 ): Promise<void> {
-  await emitter.emit(name, payload);
+  await getEmitter().emit(name, payload);
 }

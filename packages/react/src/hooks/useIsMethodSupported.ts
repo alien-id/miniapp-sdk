@@ -30,10 +30,10 @@ export interface MethodSupportResult {
  *
  * @example
  * ```tsx
- * import { useMethodSupported } from '@alien_org/react';
+ * import { useIsMethodSupported } from '@alien_org/react';
  *
  * function MyComponent() {
- *   const { supported, minVersion } = useMethodSupported('payment:request');
+ *   const { supported, minVersion } = useIsMethodSupported('payment:request');
  *
  *   if (!supported) {
  *     return <div>This feature requires version {minVersion}</div>;
