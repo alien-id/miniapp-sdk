@@ -44,6 +44,6 @@
   "devDependencies": {
     "@types/react": "^19.1.8",
     "react": "^19.1.0",
-    "tsdown": "^0.18.1"
+    "tsdown": "^0.21.0"
   }
 }

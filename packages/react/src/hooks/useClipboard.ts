@@ -1,6 +1,6 @@
 import { request, send } from '@alien_org/bridge';
 import { isMethodSupported } from '@alien_org/contract';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useAlien } from './useAlien';
 
 /** Clipboard error codes from the host app. */
@@ -63,6 +63,7 @@ export function useClipboard(
 
   const [isReading, setIsReading] = useState(false);
   const [errorCode, setErrorCode] = useState<ClipboardErrorCode | null>(null);
+  const readingRef = useRef(false);
 
   const supported = contractVersion
     ? isMethodSupported('clipboard:write', contractVersion) &&
@@ -81,6 +82,7 @@ export function useClipboard(
   );
 
   const readText = useCallback(async (): Promise<string | null> => {
+    if (readingRef.current) return null;
     if (!isBridgeAvailable) return null;
     if (
       contractVersion &&
@@ -88,6 +90,7 @@ export function useClipboard(
     )
       return null;
 
+    readingRef.current = true;
     setIsReading(true);
     setErrorCode(null);
 
@@ -108,6 +111,7 @@ export function useClipboard(
     } catch {
       return null;
     } finally {
+      readingRef.current = false;
       setIsReading(false);
     }
   }, [isBridgeAvailable, contractVersion, timeout]);

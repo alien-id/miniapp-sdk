@@ -2,11 +2,15 @@
 export type {
   AvailabilityOptions,
   LinkInterceptorOptions,
+  MethodCall,
+  MockBridgeInstance,
+  MockBridgeOptions,
   RequestOptions,
   SafeRequestOptions,
   SafeResult,
 } from '@alien_org/bridge';
 export {
+  createMockBridge,
   isAvailable,
   requestIfAvailable,
   send,

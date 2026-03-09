@@ -1,6 +1,6 @@
 import type { EventName, EventPayload, Events } from '@alien_org/contract';
 import Emittery from 'emittery';
-import { sendMessage, setupMessageListener } from './transport';
+import { setupMessageListener } from './transport';
 
 export type EventListener<T extends EventName = EventName> = (
   payload: EventPayload<T>,
@@ -46,13 +46,5 @@ export async function emit<T extends EventName>(
   name: T,
   payload: EmitteryEventMap[T],
 ): Promise<void> {
-  // Emit locally (await to ensure listeners are called)
   await emitter.emit(name, payload);
-
-  // Send to host app via postMessage
-  sendMessage({
-    type: 'event',
-    name,
-    payload,
-  });
 }
