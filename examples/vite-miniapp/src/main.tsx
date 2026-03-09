@@ -1,3 +1,4 @@
+import { isBridgeAvailable } from '@alien_org/bridge';
 import { createMockBridge } from '@alien_org/bridge/mock';
 import { AlienProvider } from '@alien_org/react';
 import { StrictMode } from 'react';
@@ -8,7 +9,7 @@ import App from './App.tsx';
 // In dev mode (outside the Alien App), create a mock bridge so the
 // SDK works without the native host.  The mock auto-responds to
 // methods like payment:request and clipboard:read.
-if (import.meta.env.DEV && !window.__miniAppsBridge__) {
+if (import.meta.env.DEV && !isBridgeAvailable()) {
   createMockBridge();
 }
 

@@ -1,3 +1,4 @@
+import { isBridgeAvailable } from '@alien_org/bridge';
 import { createMockBridge } from '@alien_org/bridge/mock';
 import { AlienProvider } from '@alien_org/react';
 import { initAlienWallet } from '@alien_org/solana-provider';
@@ -6,7 +7,7 @@ import { createRoot } from 'react-dom/client';
 
 // In dev mode, create a mock bridge so the SDK and wallet provider
 // work without the native host.
-if (import.meta.env.DEV && !window.__miniAppsBridge__) {
+if (import.meta.env.DEV && !isBridgeAvailable()) {
   createMockBridge();
 }
 
