@@ -46,9 +46,7 @@ describe('AuthClient tests', () => {
   });
 
   test('should require audience option', () => {
-    expect(() =>
-      createAuthClient({ audience: 'test-audience' }),
-    ).not.toThrow();
+    expect(() => createAuthClient({ audience: 'test-audience' })).not.toThrow();
   });
 
   test('should throw error for expired token', async () => {
