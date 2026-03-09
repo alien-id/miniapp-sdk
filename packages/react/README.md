@@ -90,11 +90,6 @@ Subscribe to bridge events:
 import { useEvent } from '@alien_org/react';
 
 function MyComponent() {
-  // Handle miniapp close (cleanup before close)
-  useEvent('miniapp:close', () => {
-    saveState();
-  });
-
   // Handle back button
   useEvent('host.back.button:clicked', () => {
     navigateBack();
@@ -206,7 +201,7 @@ function BuyButton({ orderId }: { orderId: string }) {
     token: 'SOL',
     network: 'solana',
     invoice: orderId,
-    title: 'Premium Plan',
+    item: { title: 'Premium Plan', iconUrl: 'https://example.com/icon.png', quantity: 1 },
   });
 
   if (isPaid) return <div>Thank you! TX: {txHash}</div>;

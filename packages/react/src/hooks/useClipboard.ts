@@ -71,15 +71,13 @@ export function useClipboard(
 
   const writeText = useCallback(
     (text: string) => {
-      if (!isBridgeAvailable) return;
-      if (
-        contractVersion &&
-        !isMethodSupported('clipboard:write', contractVersion)
-      )
-        return;
-      send('clipboard:write', { text });
+      send.ifAvailable(
+        'clipboard:write',
+        { text },
+        { version: contractVersion },
+      );
     },
-    [isBridgeAvailable, contractVersion],
+    [contractVersion],
   );
 
   const readText = useCallback(async (): Promise<string | null> => {

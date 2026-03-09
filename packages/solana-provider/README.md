@@ -196,13 +196,13 @@ The provider encodes all data (transactions, messages) as **base64** for the bri
 
 ## Contract Version
 
-The wallet methods require contract version **1.0.0** or higher. Use `useMethodSupported` from `@alien_org/react` to check compatibility before using wallet features:
+The wallet methods require contract version **1.0.0** or higher. Use `useIsMethodSupported` from `@alien_org/react` to check compatibility before using wallet features:
 
 ```tsx
-import { useMethodSupported } from '@alien_org/react';
+import { useIsMethodSupported } from '@alien_org/react';
 
 function WalletFeature() {
-  const { supported, minVersion } = useMethodSupported('wallet.solana:connect');
+  const { supported, minVersion } = useIsMethodSupported('wallet.solana:connect');
 
   if (!supported) {
     return <p>Please update Alien App to v{minVersion} or later.</p>;

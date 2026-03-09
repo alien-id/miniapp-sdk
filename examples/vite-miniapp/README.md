@@ -5,8 +5,8 @@ This example demonstrates how to use the `@alien_org/react` SDK to listen for ev
 ## What This Example Shows
 
 - How to use the `useEvent` hook to listen for events from the host app
-- How to check bridge availability with `useBridgeAvailable`
-- How to access auth token and contract version with `useAuthToken` and `useContractVersion`
+- How to check bridge availability with `useAlien`
+- How to access launch parameters with `useLaunchParams`
 - Clean, modern UI showcasing event reception in real-time
 
 ## Features

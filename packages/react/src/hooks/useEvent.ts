@@ -17,11 +17,6 @@ type EventCallback<E extends EventName> = (payload: EventPayload<E>) => void;
  * import { useEvent } from '@alien_org/react';
  *
  * function MyComponent() {
- *   useEvent('miniapp:close', () => {
- *     // Cleanup before miniapp closes
- *     saveState();
- *   });
- *
  *   useEvent('host.back.button:clicked', () => {
  *     // Handle back button press
  *     navigateBack();

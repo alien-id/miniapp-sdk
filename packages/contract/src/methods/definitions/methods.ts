@@ -7,6 +7,7 @@ import type {
   SolanaCommitment,
   WithReqId,
 } from '../../utils';
+
 import type { CreateMethodPayload } from '../types/payload';
 
 /**
@@ -17,27 +18,27 @@ export interface Methods {
   /**
    * Miniapp ready method.
    * Sent by the miniapp to notify the host app that it has loaded and is ready to be displayed.
-   * @since 0.0.1
+   * @since 0.0.9
    * @schema
    */
   'app:ready': CreateMethodPayload<Empty>;
   /**
-   * Miniapp close acknowledgment method.
-   * Sent by the miniapp to notify the host app that it has completed cleanup and is ready to be closed.
-   * Note that if the miniapp takes longer than 10 seconds to close, the host app will force close the miniapp.
-   * @since 0.0.14
+   * Close the miniapp.
+   * Sent by the miniapp to request the host app to close it.
+   * Fire-and-forget — no response expected.
+   * @since 1.0.0
    * @schema
    */
-  'miniapp:close.ack': CreateMethodPayload<Empty>;
+  'app:close': CreateMethodPayload<Empty>;
   /**
    * Toggle host app's back button visibility.
-   * @since 0.0.14
+   * @since 1.0.0
    * @schema
    */
   'host.back.button:toggle': CreateMethodPayload<{
     /**
      * Whether to show or hide the back button.
-     * @since 0.0.14
+     * @since 1.0.0
      * @schema
      */
     visible: boolean;
@@ -314,26 +315,4 @@ export interface Methods {
       };
     }>
   >;
-  /**
-   * Request fullscreen mode.
-   * Fire-and-forget — host app responds with `fullscreen:changed` or `fullscreen:failed` event.
-   *
-   * @example
-   * send('fullscreen:request', {});
-   *
-   * @since 1.1.0
-   * @schema
-   */
-  'fullscreen:request': CreateMethodPayload<Empty>;
-  /**
-   * Exit fullscreen mode.
-   * Fire-and-forget — host app responds with `fullscreen:changed` event.
-   *
-   * @example
-   * send('fullscreen:exit', {});
-   *
-   * @since 1.1.0
-   * @schema
-   */
-  'fullscreen:exit': CreateMethodPayload<Empty>;
 }

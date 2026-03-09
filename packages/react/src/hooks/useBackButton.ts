@@ -86,41 +86,33 @@ export function useBackButton(onPress?: () => void): UseBackButtonReturn {
     if (visibleRef.current) return;
     visibleRef.current = true;
     setIsVisible(true);
-    if (!isBridgeAvailable) return;
-    if (
-      contractVersion &&
-      !isMethodSupported('host.back.button:toggle', contractVersion)
-    )
-      return;
-    send('host.back.button:toggle', { visible: true });
-  }, [isBridgeAvailable, contractVersion]);
+    send.ifAvailable(
+      'host.back.button:toggle',
+      { visible: true },
+      { version: contractVersion },
+    );
+  }, [contractVersion]);
 
   const hide = useCallback(() => {
     if (!visibleRef.current) return;
     visibleRef.current = false;
     setIsVisible(false);
-    if (!isBridgeAvailable) return;
-    if (
-      contractVersion &&
-      !isMethodSupported('host.back.button:toggle', contractVersion)
-    )
-      return;
-    send('host.back.button:toggle', { visible: false });
-  }, [isBridgeAvailable, contractVersion]);
+    send.ifAvailable(
+      'host.back.button:toggle',
+      { visible: false },
+      { version: contractVersion },
+    );
+  }, [contractVersion]);
 
   // Hide back button on unmount to prevent stale native UI.
-  // Wrapped in try-catch because send() throws if the bridge
-  // object is gone (e.g. WebView being torn down).
+  // send.ifAvailable handles the case where bridge is already
+  // gone during WebView teardown.
   useEffect(() => {
     return () => {
-      if (!visibleRef.current || !isBridgeAvailable) return;
-      try {
-        send('host.back.button:toggle', { visible: false });
-      } catch {
-        // Bridge already gone — nothing to clean up
-      }
+      if (!visibleRef.current) return;
+      send.ifAvailable('host.back.button:toggle', { visible: false });
     };
-  }, [isBridgeAvailable]);
+  }, []);
 
   return useMemo(
     () => ({ isVisible, show, hide, supported }),

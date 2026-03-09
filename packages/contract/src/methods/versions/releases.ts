@@ -16,7 +16,6 @@ export const releases: Record<
   )[]
 > = {
   '0.0.9': ['app:ready'],
-  '0.0.14': ['miniapp:close.ack', 'host.back.button:toggle'],
   '0.1.1': ['payment:request', 'clipboard:write', 'clipboard:read'],
   '0.1.3': ['link:open'],
   '0.2.4': ['haptic:impact', 'haptic:notification', 'haptic:selection'],
@@ -26,6 +25,7 @@ export const releases: Record<
     'wallet.solana:sign.transaction',
     'wallet.solana:sign.message',
     'wallet.solana:sign.send',
+    'app:close',
+    'host.back.button:toggle',
   ],
-  '1.1.0': ['fullscreen:request', 'fullscreen:exit'],
 };

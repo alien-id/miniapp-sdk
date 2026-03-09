@@ -42,7 +42,7 @@ export interface UseHapticReturn {
  * ```
  */
 export function useHaptic(): UseHapticReturn {
-  const { contractVersion, isBridgeAvailable } = useAlien();
+  const { contractVersion } = useAlien();
 
   const supported = contractVersion
     ? isMethodSupported('haptic:impact', contractVersion) &&
@@ -52,39 +52,29 @@ export function useHaptic(): UseHapticReturn {
 
   const impactOccurred = useCallback(
     (style: HapticImpactStyle) => {
-      if (!isBridgeAvailable) return;
-      if (
-        contractVersion &&
-        !isMethodSupported('haptic:impact', contractVersion)
-      )
-        return;
-      send('haptic:impact', { style });
+      send.ifAvailable(
+        'haptic:impact',
+        { style },
+        { version: contractVersion },
+      );
     },
-    [isBridgeAvailable, contractVersion],
+    [contractVersion],
   );
 
   const notificationOccurred = useCallback(
     (type: HapticNotificationType) => {
-      if (!isBridgeAvailable) return;
-      if (
-        contractVersion &&
-        !isMethodSupported('haptic:notification', contractVersion)
-      )
-        return;
-      send('haptic:notification', { type });
+      send.ifAvailable(
+        'haptic:notification',
+        { type },
+        { version: contractVersion },
+      );
     },
-    [isBridgeAvailable, contractVersion],
+    [contractVersion],
   );
 
   const selectionChanged = useCallback(() => {
-    if (!isBridgeAvailable) return;
-    if (
-      contractVersion &&
-      !isMethodSupported('haptic:selection', contractVersion)
-    )
-      return;
-    send('haptic:selection', {});
-  }, [isBridgeAvailable, contractVersion]);
+    send.ifAvailable('haptic:selection', {}, { version: contractVersion });
+  }, [contractVersion]);
 
   return useMemo(
     () => ({

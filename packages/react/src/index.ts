@@ -1,11 +1,21 @@
 // Re-export request options type
-export type { LinkInterceptorOptions, RequestOptions } from '@alien_org/bridge';
-export { send } from '@alien_org/bridge';
+export type {
+  AvailabilityOptions,
+  LinkInterceptorOptions,
+  RequestOptions,
+  SafeRequestOptions,
+  SafeResult,
+} from '@alien_org/bridge';
+export {
+  isAvailable,
+  requestIfAvailable,
+  send,
+  sendIfAvailable,
+} from '@alien_org/bridge';
 // Re-export types from contract for convenience
 export type {
   EventName,
   EventPayload,
-  FullscreenErrorCode,
   HapticImpactStyle,
   HapticNotificationType,
   MethodName,
@@ -19,6 +29,7 @@ export { AlienProvider, type AlienProviderProps } from './context';
 // Errors
 export {
   BridgeError,
+  BridgeMethodUnsupportedError,
   BridgeTimeoutError,
   BridgeUnavailableError,
   BridgeWindowUnavailableError,
@@ -38,7 +49,6 @@ export {
   type UseBackButtonReturn,
   type UseClipboardOptions,
   type UseClipboardReturn,
-  type UseFullscreenReturn,
   type UseHapticReturn,
   type UseMethodExecuteResult,
   type UseMethodOptions,
@@ -48,7 +58,6 @@ export {
   useBackButton,
   useClipboard,
   useEvent,
-  useFullscreen,
   useHaptic,
   useIsMethodSupported,
   useLaunchParams,

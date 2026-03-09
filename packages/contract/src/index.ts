@@ -7,8 +7,13 @@ export type {
   EventName,
   EventPayload,
 } from './events/types';
-export type { LaunchParams, Platform, SafeAreaInsets } from './launch-params';
-export { PLATFORMS } from './launch-params';
+export type {
+  DisplayMode,
+  LaunchParams,
+  Platform,
+  SafeAreaInsets,
+} from './launch-params';
+export { DISPLAY_MODES, PLATFORMS } from './launch-params';
 export type { Methods } from './methods/methods';
 export type {
   CreateMethodPayload,
@@ -24,7 +29,6 @@ export {
   releases,
 } from './methods/versions';
 export type {
-  FullscreenErrorCode,
   HapticImpactStyle,
   HapticNotificationType,
   PaymentErrorCode,
