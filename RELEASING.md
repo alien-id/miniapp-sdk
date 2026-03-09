@@ -30,11 +30,11 @@ version. Otherwise users installing an upstream package get a stale dependency.
 
 | Package | Name | Current Version |
 | --- | --- | --- |
-| contract | @alien_org/contract | 1.3.1-beta |
-| bridge | @alien_org/bridge | 1.3.1-beta |
-| react | @alien_org/react | 1.3.1-beta |
-| auth-client | @alien_org/auth-client | 1.3.1-beta |
-| solana-provider | @alien_org/solana-provider | 1.3.1-beta |
+| contract | @alien_org/contract | 1.3.1 |
+| bridge | @alien_org/bridge | 1.3.1 |
+| react | @alien_org/react | 1.3.1 |
+| auth-client | @alien_org/auth-client | 1.3.1 |
+| solana-provider | @alien_org/solana-provider | 1.3.1 |
 
 ## Steps
 
