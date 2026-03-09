@@ -2,7 +2,8 @@
 
 [![npm](https://img.shields.io/npm/v/@alien_org/auth-client.svg)](https://www.npmjs.com/package/@alien_org/auth-client)
 
-Core authentication utilities for the Alien Miniapp SDK. This package provides tools for verifying JWT tokens issued by the Alien SSO.
+Core authentication utilities for the Alien Miniapp SDK.
+Provides tools for verifying JWT tokens issued by the Alien SSO.
 
 Use it in your miniapp backend to verify tokens sent by miniapp.
 
@@ -22,7 +23,9 @@ Use `createAuthClient` to verify JWT access tokens from Alien SSO.
 import { createAuthClient } from '@alien_org/auth-client';
 
 
-const client = createAuthClient();
+const client = createAuthClient({
+  audience: 'your-miniapp-provider-address'
+});
 
 try {
   const tokenInfo = await client.verifyToken(accessToken);
@@ -41,6 +44,7 @@ import { createAuthClient } from '@alien_org/auth-client';
 
 
 const client = createAuthClient({
+  audience: 'your-miniapp-provider-address',
   jwksUrl: "https://sso.alien-api.com/.well-known/jwks.json"
 });
 
@@ -50,4 +54,19 @@ try {
 } catch (error) {
   console.error('Invalid token:', error);
 }
+```
+
+### Custom JWKS resolver (advanced)
+
+For testing or custom key retrieval, pass a prebuilt `JWTVerifyGetKey` resolver:
+
+```typescript
+import { createLocalJWKSet } from 'jose';
+import { createAuthClient } from '@alien_org/auth-client';
+
+const jwks = createLocalJWKSet({ keys: [publicJwk] });
+const client = createAuthClient({
+  audience: 'your-miniapp-provider-address',
+  jwks,
+});
 ```

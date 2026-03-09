@@ -20,7 +20,7 @@
     "@solana/web3.js": "^1.98.0"
   },
   "devDependencies": {
-    "@types/node": "^22.15.29",
+    "@types/node": "^25.3.5",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",

@@ -12,6 +12,13 @@ export {
   send,
   sendIfAvailable,
 } from '@alien_org/bridge';
+// Re-export mock bridge from dedicated entrypoint
+export type {
+  MethodCall,
+  MockBridgeInstance,
+  MockBridgeOptions,
+} from '@alien_org/bridge/mock';
+export { createMockBridge } from '@alien_org/bridge/mock';
 // Re-export types from contract for convenience
 export type {
   EventName,

@@ -124,9 +124,9 @@ export function AlienProvider({
 
   const ready = useCallback(() => {
     if (readySent.current) return;
-    readySent.current = true;
     if (isBridgeAvailable()) {
       send('app:ready', {});
+      readySent.current = true;
     }
   }, []);
 
@@ -141,6 +141,7 @@ export function AlienProvider({
     const launchParams = getLaunchParams();
     const bridgeAvailable = isBridgeAvailable();
     launchParamsLoaded.current = !!launchParams;
+
     setValue({
       authToken: launchParams?.authToken,
       contractVersion: launchParams?.contractVersion,
@@ -148,6 +149,7 @@ export function AlienProvider({
       ready,
     });
     setSafeAreaCssVars(launchParams?.safeAreaInsets);
+
     if (!bridgeAvailable) {
       console.warn(
         '[@alien_org/react] Bridge is not available. Running in dev mode? The SDK will handle errors gracefully, but bridge communication will not work.',

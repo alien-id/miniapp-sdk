@@ -9,6 +9,8 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { BridgeError, MethodNotSupportedError } from '../errors';
 import { useAlien } from './useAlien';
 
+const ALREADY_LOADING_RESULT: PaymentResult = { status: 'loading' };
+
 // Derive types from contract - single source of truth
 type PaymentRequestPayload = MethodPayload<'payment:request'>;
 type PaymentResponsePayload = EventPayload<'payment:response'>;
@@ -128,7 +130,7 @@ interface PaymentState {
  *     token: 'SOL',
  *     network: 'solana',
  *     invoice: orderId,
- *     title: 'Premium Plan',
+ *     item: { title: 'Premium Plan', iconUrl: 'https://example.com/icon.png', quantity: 1 },
  *   });
  *
  *   if (isPaid) return <div>Thank you! TX: {txHash}</div>;
@@ -170,8 +172,13 @@ export function usePayment(options: UsePaymentOptions = {}): UsePaymentReturn {
     callbacksRef.current.onStatusChange?.(newState.status);
   }, []);
 
+  const loadingRef = useRef(false);
+
   const pay = useCallback(
     async (params: PaymentParams): Promise<PaymentResult> => {
+      // Prevent concurrent payment calls
+      if (loadingRef.current) return ALREADY_LOADING_RESULT;
+
       // Check bridge availability
       if (!isBridgeAvailable) {
         const error = new Error(
@@ -223,6 +230,7 @@ export function usePayment(options: UsePaymentOptions = {}): UsePaymentReturn {
         return result;
       }
 
+      loadingRef.current = true;
       updateState({ status: 'loading' });
 
       try {
@@ -267,6 +275,8 @@ export function usePayment(options: UsePaymentOptions = {}): UsePaymentReturn {
         updateState(result);
         callbacksRef.current.onFailed?.('unknown', error);
         return result;
+      } finally {
+        loadingRef.current = false;
       }
     },
     [isBridgeAvailable, contractVersion, timeout, updateState],

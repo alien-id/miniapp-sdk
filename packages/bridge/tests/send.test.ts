@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, expect, test } from 'bun:test';
-import { BridgeUnavailableError } from '../src/errors';
+import {
+  BridgeUnavailableError,
+  BridgeWindowUnavailableError,
+} from '../src/errors';
 import { send } from '../src/send';
 
 // Mock window object
@@ -72,10 +75,10 @@ test('send - should throw BridgeUnavailableError if bridge not available', () =>
   expect(bridgePostMessageCalls.length).toBe(0);
 });
 
-test('send - should throw BridgeUnavailableError if window is undefined (SSR)', () => {
+test('send - should throw BridgeWindowUnavailableError if window is undefined (SSR)', () => {
   delete (globalThis as { window?: unknown }).window;
 
-  expect(() => send('app:ready', {})).toThrow(BridgeUnavailableError);
+  expect(() => send('app:ready', {})).toThrow(BridgeWindowUnavailableError);
   expect(bridgePostMessageCalls.length).toBe(0);
 
   // Restore window for other tests
