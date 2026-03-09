@@ -1,9 +1,6 @@
 import { getLaunchParams } from '@alien_org/bridge';
 import type { LaunchParams } from '@alien_org/contract';
-import { useEffect, useLayoutEffect, useState } from 'react';
-
-const useIsomorphicLayoutEffect =
-  typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+import { useState } from 'react';
 
 /**
  * Hook to get launch params.
@@ -25,11 +22,7 @@ const useIsomorphicLayoutEffect =
  * ```
  */
 export function useLaunchParams(): LaunchParams | undefined {
-  const [params, setParams] = useState<LaunchParams | undefined>(undefined);
-
-  useIsomorphicLayoutEffect(() => {
-    setParams(getLaunchParams());
-  }, []);
+  const [params] = useState(() => getLaunchParams());
 
   return params;
 }

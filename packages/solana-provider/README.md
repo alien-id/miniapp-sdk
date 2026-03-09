@@ -143,29 +143,24 @@ All wallet operations throw `AlienWalletError` on failure. The `code` property i
 
 ```ts
 import { AlienWalletError } from '@alien_org/solana-provider';
+import { WALLET_ERROR } from '@alien_org/contract';
 
 try {
   await sendTransaction(tx, connection);
 } catch (err) {
   if (err instanceof AlienWalletError) {
     switch (err.code) {
-      case 'rejected':
+      case WALLET_ERROR.USER_REJECTED: // 5000
         // User rejected the request in the Alien app
         break;
-      case 'not_connected':
-        // Wallet not connected
+      case WALLET_ERROR.INVALID_PARAMS: // -32602
+        // Malformed input (e.g. invalid transaction)
         break;
-      case 'invalid_transaction':
-        // Transaction could not be parsed
+      case WALLET_ERROR.INTERNAL_ERROR: // -32603
+        // Host-side internal/send failure
         break;
-      case 'send_failed':
-        // Transaction broadcast failed
-        break;
-      case 'timeout':
+      case WALLET_ERROR.REQUEST_EXPIRED: // 8000
         // Host app did not respond in time
-        break;
-      case 'unknown':
-        // Unexpected error
         break;
     }
   }

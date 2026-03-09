@@ -1,4 +1,4 @@
-import { request, send } from '@alien_org/bridge';
+import { BridgeTimeoutError, request, send } from '@alien_org/bridge';
 import {
   type SolanaChain,
   WALLET_ERROR,
@@ -50,6 +50,22 @@ export class AlienWalletError extends Error {
     this.name = 'AlienWalletError';
     this.code = code;
   }
+}
+
+function normalizeWalletError(error: unknown): AlienWalletError {
+  if (error instanceof AlienWalletError) {
+    return error;
+  }
+
+  if (error instanceof BridgeTimeoutError) {
+    return new AlienWalletError(WALLET_ERROR.REQUEST_EXPIRED, error.message);
+  }
+
+  if (error instanceof Error) {
+    return new AlienWalletError(WALLET_ERROR.INTERNAL_ERROR, error.message);
+  }
+
+  return new AlienWalletError(WALLET_ERROR.INTERNAL_ERROR, String(error));
 }
 
 export class AlienSolanaWallet implements Wallet {
@@ -117,7 +133,9 @@ export class AlienSolanaWallet implements Wallet {
       {},
       'wallet.solana:connect.response',
       { timeout: 60000 },
-    );
+    ).catch((error) => {
+      throw normalizeWalletError(error);
+    });
 
     if (response.errorCode) {
       throw new AlienWalletError(response.errorCode, response.errorMessage);
@@ -140,7 +158,7 @@ export class AlienSolanaWallet implements Wallet {
   #disconnect: StandardDisconnectMethod = async () => {
     if (this.#accounts.length === 0) return;
 
-    send('wallet.solana:disconnect', {} as Record<string, never>);
+    send.ifAvailable('wallet.solana:disconnect', {});
     this.#accounts = [];
     this.#emit('change', { accounts: this.accounts });
   };
@@ -180,7 +198,9 @@ export class AlienSolanaWallet implements Wallet {
         { transaction: transactionBase64 },
         'wallet.solana:sign.transaction.response',
         { timeout: 60000 },
-      );
+      ).catch((error) => {
+        throw normalizeWalletError(error);
+      });
 
       if (response.errorCode) {
         throw new AlienWalletError(response.errorCode, response.errorMessage);
@@ -219,16 +239,8 @@ export class AlienSolanaWallet implements Wallet {
           options: input.options
             ? {
                 skipPreflight: input.options.skipPreflight,
-                preflightCommitment: input.options.preflightCommitment as
-                  | 'processed'
-                  | 'confirmed'
-                  | 'finalized'
-                  | undefined,
-                commitment: input.options.commitment as
-                  | 'processed'
-                  | 'confirmed'
-                  | 'finalized'
-                  | undefined,
+                preflightCommitment: input.options.preflightCommitment,
+                commitment: input.options.commitment,
                 minContextSlot: input.options.minContextSlot,
                 maxRetries: input.options.maxRetries,
               }
@@ -236,7 +248,9 @@ export class AlienSolanaWallet implements Wallet {
         },
         'wallet.solana:sign.send.response',
         { timeout: 60000 },
-      );
+      ).catch((error) => {
+        throw normalizeWalletError(error);
+      });
 
       if (response.errorCode) {
         throw new AlienWalletError(response.errorCode, response.errorMessage);
@@ -271,7 +285,9 @@ export class AlienSolanaWallet implements Wallet {
         { message: messageBase58 },
         'wallet.solana:sign.message.response',
         { timeout: 60000 },
-      );
+      ).catch((error) => {
+        throw normalizeWalletError(error);
+      });
 
       if (response.errorCode) {
         throw new AlienWalletError(response.errorCode, response.errorMessage);

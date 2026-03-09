@@ -28,7 +28,7 @@ export async function request<M extends MethodName, E extends EventName>(
   options: RequestOptions = {},
 ): Promise<EventPayload<E>> {
   const reqId = options.reqId || generateReqId();
-  const timeout = options.timeout || DEFAULT_TIMEOUT;
+  const timeout = options.timeout ?? DEFAULT_TIMEOUT;
 
   // Add reqId to params
   const payload = {
@@ -57,10 +57,15 @@ export async function request<M extends MethodName, E extends EventName>(
     on(responseEvent, handleResponse);
 
     // Send method request to host app via postMessage
-    sendMessage({
-      type: 'method',
-      name: method,
-      payload,
-    });
+    try {
+      sendMessage({
+        type: 'method',
+        name: method,
+        payload,
+      });
+    } catch (err) {
+      cleanup();
+      reject(err instanceof Error ? err : new Error(String(err)));
+    }
   });
 }
