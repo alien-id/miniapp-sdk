@@ -24,7 +24,7 @@ export type WalletError = {
  */
 type WalletResponse<TResult> = WithReqId<
   | { /** Success payload. */ result: TResult; error?: never }
-  | { result?: never; /** Error payload. */ error: WalletError }
+  | { result?: never /** Error payload. */; error: WalletError }
 >;
 
 /**
