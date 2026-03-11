@@ -148,11 +148,18 @@ export type HapticNotificationType = 'success' | 'warning' | 'error';
  * | `-32602` | Invalid params (malformed transaction, bad input) | JSON-RPC standard |
  * | `-32603` | Internal error (unexpected error) | JSON-RPC standard |
  * | `8000` | Request expired / timed out | WalletConnect |
+ * | `-32601` | Method not found (unknown wallet method) | JSON-RPC standard |
  *
  * @since 1.0.0
  * @schema
  */
-export type WalletSolanaErrorCode = 4001 | -32003 | -32602 | -32603 | 8000;
+export type WalletSolanaErrorCode =
+  | 4001
+  | -32003
+  | -32602
+  | -32603
+  | 8000
+  | -32601;
 
 /**
  * Named constants for {@link WalletSolanaErrorCode}.
@@ -179,6 +186,8 @@ export const WALLET_ERROR = {
   INTERNAL_ERROR: -32603,
   /** Request expired before the user responded. */
   REQUEST_EXPIRED: 8000,
+  /** Method not found — unknown wallet method name. */
+  METHOD_NOT_FOUND: -32601,
 } as const satisfies Record<string, WalletSolanaErrorCode>;
 
 /**

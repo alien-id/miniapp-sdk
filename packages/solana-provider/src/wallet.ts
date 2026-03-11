@@ -220,7 +220,7 @@ export class AlienSolanaWallet implements Wallet {
         );
       }
 
-      if (!response.result?.signedTransaction) {
+      if (!response.result?.transaction) {
         throw new AlienWalletError(
           WALLET_ERROR.INTERNAL_ERROR,
           'No signed transaction in response',
@@ -228,7 +228,7 @@ export class AlienSolanaWallet implements Wallet {
       }
 
       outputs.push({
-        signedTransaction: base64Decode(response.result.signedTransaction),
+        signedTransaction: base64Decode(response.result.transaction),
       });
     }
 

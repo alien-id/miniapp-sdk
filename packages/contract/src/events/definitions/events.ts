@@ -129,7 +129,7 @@ export interface Events {
   'wallet.solana:sign.transaction.response': CreateEventPayload<
     WalletResponse<{
       /** Base64-encoded signed transaction */
-      signedTransaction: string;
+      transaction: string;
     }>
   >;
   /**

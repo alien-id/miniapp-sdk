@@ -63,7 +63,7 @@ const METHOD_RESPONSE_MAP: Record<
   'wallet.solana:sign.transaction': {
     event: 'wallet.solana:sign.transaction.response',
     defaultResponse: (reqId) => ({
-      result: { signedTransaction: 'mock-signed-tx' },
+      result: { transaction: 'mock-signed-tx' },
       reqId,
     }),
   },

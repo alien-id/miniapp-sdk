@@ -175,6 +175,9 @@ try {
       case WALLET_ERROR.REQUEST_EXPIRED: // 8000
         // Host app did not respond in time
         break;
+      case WALLET_ERROR.METHOD_NOT_FOUND: // -32601
+        // Host app does not recognize this wallet method
+        break;
     }
   }
 }

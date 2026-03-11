@@ -11,7 +11,7 @@ const requestMock = mock(async (_method: string) => {
       };
     case 'wallet.solana:sign.transaction':
       return {
-        result: { signedTransaction: 'mock-signed-tx' },
+        result: { transaction: 'mock-signed-tx' },
         reqId: 'req-sign-tx',
       };
     case 'wallet.solana:sign.message':
@@ -53,6 +53,7 @@ mock.module('@alien_org/contract', () => ({
     INVALID_PARAMS: -32602,
     INTERNAL_ERROR: -32603,
     REQUEST_EXPIRED: 8000,
+    METHOD_NOT_FOUND: -32601,
   },
 }));
 
@@ -203,6 +204,25 @@ describe('AlienSolanaWallet', () => {
     });
   });
 
+  test('preserves method-not-found errors from the host', async () => {
+    const { WALLET_ERROR } = await import('@alien_org/contract');
+    const { AlienSolanaWallet } = await import('../src/wallet');
+
+    const wallet = new AlienSolanaWallet();
+
+    requestMock.mockImplementationOnce(async () => ({
+      error: { code: -32601, message: 'Method not found' },
+      reqId: 'req-missing-method',
+    }));
+
+    await expect(
+      wallet.features['standard:connect'].connect(),
+    ).rejects.toMatchObject({
+      code: WALLET_ERROR.METHOD_NOT_FOUND,
+      message: 'Method not found',
+    });
+  });
+
   test('signTransaction returns signed transaction bytes', async () => {
     const { AlienSolanaWallet } = await import('../src/wallet');
 
@@ -212,7 +232,7 @@ describe('AlienSolanaWallet', () => {
     if (!account) throw new Error('Expected connected account');
 
     requestMock.mockImplementationOnce(async () => ({
-      result: { signedTransaction: btoa(String.fromCharCode(9, 8, 7)) },
+      result: { transaction: btoa(String.fromCharCode(9, 8, 7)) },
       reqId: 'req-sign-tx',
     }));
 
