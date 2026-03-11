@@ -44,11 +44,17 @@ const SOLANA_CHAINS = [
 
 export class AlienWalletError extends Error {
   readonly code: WalletSolanaErrorCode;
+  readonly data?: Record<string, unknown>;
 
-  constructor(code: WalletSolanaErrorCode, message?: string) {
+  constructor(
+    code: WalletSolanaErrorCode,
+    message?: string,
+    data?: Record<string, unknown>,
+  ) {
     super(message ?? `Wallet error: ${code}`);
     this.name = 'AlienWalletError';
     this.code = code;
+    this.data = data;
   }
 }
 
@@ -137,18 +143,22 @@ export class AlienSolanaWallet implements Wallet {
       throw normalizeWalletError(error);
     });
 
-    if (response.errorCode) {
-      throw new AlienWalletError(response.errorCode, response.errorMessage);
+    if (response.error) {
+      throw new AlienWalletError(
+        response.error.code,
+        response.error.message,
+        response.error.data,
+      );
     }
 
-    if (!response.publicKey) {
+    if (!response.result?.publicKey) {
       throw new AlienWalletError(
         WALLET_ERROR.INTERNAL_ERROR,
         'No public key in connect response',
       );
     }
 
-    const account = new AlienSolanaAccount(response.publicKey);
+    const account = new AlienSolanaAccount(response.result.publicKey);
     this.#accounts = [account];
     this.#emit('change', { accounts: this.accounts });
 
@@ -202,11 +212,15 @@ export class AlienSolanaWallet implements Wallet {
         throw normalizeWalletError(error);
       });
 
-      if (response.errorCode) {
-        throw new AlienWalletError(response.errorCode, response.errorMessage);
+      if (response.error) {
+        throw new AlienWalletError(
+          response.error.code,
+          response.error.message,
+          response.error.data,
+        );
       }
 
-      if (!response.signedTransaction) {
+      if (!response.result?.signedTransaction) {
         throw new AlienWalletError(
           WALLET_ERROR.INTERNAL_ERROR,
           'No signed transaction in response',
@@ -214,7 +228,7 @@ export class AlienSolanaWallet implements Wallet {
       }
 
       outputs.push({
-        signedTransaction: base64Decode(response.signedTransaction),
+        signedTransaction: base64Decode(response.result.signedTransaction),
       });
     }
 
@@ -252,11 +266,15 @@ export class AlienSolanaWallet implements Wallet {
         throw normalizeWalletError(error);
       });
 
-      if (response.errorCode) {
-        throw new AlienWalletError(response.errorCode, response.errorMessage);
+      if (response.error) {
+        throw new AlienWalletError(
+          response.error.code,
+          response.error.message,
+          response.error.data,
+        );
       }
 
-      if (!response.signature) {
+      if (!response.result?.signature) {
         throw new AlienWalletError(
           WALLET_ERROR.INTERNAL_ERROR,
           'No signature in response',
@@ -265,7 +283,7 @@ export class AlienSolanaWallet implements Wallet {
 
       // Response signature is base58-encoded, decode to bytes
       outputs.push({
-        signature: base58Decode(response.signature),
+        signature: base58Decode(response.result.signature),
       });
     }
 
@@ -289,11 +307,15 @@ export class AlienSolanaWallet implements Wallet {
         throw normalizeWalletError(error);
       });
 
-      if (response.errorCode) {
-        throw new AlienWalletError(response.errorCode, response.errorMessage);
+      if (response.error) {
+        throw new AlienWalletError(
+          response.error.code,
+          response.error.message,
+          response.error.data,
+        );
       }
 
-      if (!response.signature || !response.publicKey) {
+      if (!response.result?.signature || !response.result?.publicKey) {
         throw new AlienWalletError(
           WALLET_ERROR.INTERNAL_ERROR,
           'No signature or publicKey in response',
@@ -302,7 +324,7 @@ export class AlienSolanaWallet implements Wallet {
 
       outputs.push({
         signedMessage: input.message,
-        signature: base58Decode(response.signature),
+        signature: base58Decode(response.result.signature),
         signatureType: 'ed25519',
       });
     }
