@@ -2,7 +2,7 @@
 
 ## Package Dependencies
 
-```
+```text
 contract (no deps)      auth-client (no deps)
     ↓
   bridge → depends on contract
@@ -11,12 +11,15 @@ contract (no deps)      auth-client (no deps)
   solana-provider → depends on bridge + contract
 ```
 
-**Publishing order matters!** Packages must be published in dependency order, otherwise users won't be able to install them.
+**Publishing order matters!** Packages must be published in dependency order,
+otherwise users won't be able to install them.
 
-**Cascade rule:** When a package is published, **all packages that depend on it must also be published** so their `workspace:*` dependency resolves to the new version. Otherwise users installing an upstream package get a stale dependency.
+**Cascade rule:** When a package is published, **all packages that depend on it
+must also be published** so their `workspace:*` dependency resolves to the new
+version. Otherwise users installing an upstream package get a stale dependency.
 
 | If you release... | You MUST also release |
-|--------------------|-----------------------|
+| --- | --- |
 | contract | bridge, react, solana-provider |
 | bridge | react, solana-provider |
 | auth-client | (nothing) |
@@ -26,18 +29,19 @@ contract (no deps)      auth-client (no deps)
 ## Current Versions
 
 | Package | Name | Current Version |
-|---------|------|-----------------|
-| contract | @alien_org/contract | 1.3.0-alpha |
-| bridge | @alien_org/bridge | 1.3.0-alpha |
-| react | @alien_org/react | 1.3.0-alpha |
-| auth-client | @alien_org/auth-client | 1.3.0-alpha |
-| solana-provider | @alien_org/solana-provider | 1.3.0-alpha |
+| --- | --- | --- |
+| contract | @alien_org/contract | 2.0.0-beta |
+| bridge | @alien_org/bridge | 2.0.0-beta |
+| react | @alien_org/react | 2.0.0-beta |
+| auth-client | @alien_org/auth-client | 2.0.0-beta |
+| solana-provider | @alien_org/solana-provider | 2.0.0-beta |
 
 ## Steps
 
 ### 1. Bump versions in package.json files
 
 Edit the version field in each package you want to release:
+
 ```bash
 vim packages/contract/package.json
 vim packages/bridge/package.json
@@ -48,7 +52,9 @@ vim packages/solana-provider/package.json
 
 ### 2. Update lockfile
 
-**Important:** `bun install` alone won't update workspace versions. You must regenerate the lockfile:
+**Important:** `bun install` alone won't update workspace versions.
+You must regenerate the lockfile:
+
 ```bash
 rm bun.lock && bun install
 ```
@@ -56,6 +62,7 @@ rm bun.lock && bun install
 ### 3. Verify lockfile has correct versions
 
 Check that the new versions appear in bun.lock:
+
 ```bash
 grep -A2 '"packages/contract"' bun.lock
 grep -A2 '"packages/bridge"' bun.lock
@@ -83,7 +90,8 @@ git tag solana-provider@x.x.x
 
 ### 6. Push in dependency order
 
-**This is critical!** Push tags in the correct order and wait for each workflow to complete.
+**This is critical!** Push tags in the correct order and wait for each
+workflow to complete.
 
 ```bash
 # Step 1: Push commit + packages with no dependencies
@@ -98,34 +106,41 @@ git push origin bridge@x.x.x
 git push origin react@x.x.x solana-provider@x.x.x
 ```
 
-Monitor workflows at: https://github.com/alien-id/miniapp-sdk/actions
+Monitor workflows at: <https://github.com/alien-id/miniapp-sdk/actions>
 
 ## Releasing a Single Package
 
-You can't truly release just one package if it has dependents. The cascade rule applies:
+You can't truly release just one package if it has dependents.
+The cascade rule applies:
 
 | Package | Also requires release |
-|---------|----------------------|
+| --- | --- |
 | contract | bridge, react, solana-provider |
 | bridge | react, solana-provider |
 | auth-client | (nothing) |
 | react | (nothing) |
 | solana-provider | (nothing) |
 
-Dependents that had no code changes get a **patch** bump (the dependency version changed, which is a publishable change). Only the root package you intended to release gets the bump type you chose (minor, major, etc.).
+Dependents that had no code changes get a **patch** bump (the dependency
+version changed, which is a publishable change). Only the root package you
+intended to release gets the bump type you chose (minor, major, etc.).
 
 ## Troubleshooting
 
 ### "Package has a dependency loop" error
 
-This happens when running `bun update @alien_org/*`. Don't use `bun update` for workspace packages. Instead:
+This happens when running `bun update @alien_org/*`. Don't use `bun update`
+for workspace packages. Instead:
+
 ```bash
 rm bun.lock && bun install
 ```
 
 ### Lockfile versions not updating
 
-If `bun install` shows "no changes" but versions are wrong, delete and regenerate:
+If `bun install` shows "no changes" but versions are wrong, delete and
+regenerate:
+
 ```bash
 rm bun.lock && bun install
 ```
@@ -137,6 +152,7 @@ Remove `bundle: true` from `tsdown.config.ts`. Bundling is the default behavior.
 ### Tags already exist on remote
 
 Delete and recreate:
+
 ```bash
 # Delete remote tag
 git push origin :refs/tags/package@x.x.x
@@ -147,4 +163,6 @@ git push origin package@x.x.x
 
 ## Why the lockfile update?
 
-The lockfile stores workspace package versions. When publishing, bun uses versions from the lockfile, not package.json. If you skip this step, the published package will have the old version number.
+The lockfile stores workspace package versions. When publishing, bun uses
+versions from the lockfile, not package.json. If you skip this step, the
+published package will have the old version number.
