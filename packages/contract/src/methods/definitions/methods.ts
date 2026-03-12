@@ -266,6 +266,23 @@ export interface Methods {
     WithReqId<{
       /** Base64-encoded serialized transaction (legacy or versioned) */
       transaction: string;
+      /** Base58-encoded public key of the signing account */
+      pubkey?: string;
+      /**
+       * Target Solana cluster.
+       * Optional in bridge mode (host app infers from config),
+       * but may be forwarded for simulation context.
+       * @since 1.0.0
+       * @schema
+       */
+      chain?: SolanaChain;
+      /** Optional simulation/preflight options */
+      options?: {
+        /** Preflight commitment level. */
+        preflightCommitment?: SolanaCommitment;
+        /** Minimum slot that the request can be evaluated at. */
+        minContextSlot?: number;
+      };
     }>
   >;
   /**
@@ -278,6 +295,8 @@ export interface Methods {
     WithReqId<{
       /** Base58-encoded message bytes */
       message: string;
+      /** Base58-encoded public key of the signing account */
+      pubkey?: string;
     }>
   >;
   /**
@@ -291,6 +310,8 @@ export interface Methods {
     WithReqId<{
       /** Base64-encoded serialized transaction (legacy or versioned) */
       transaction: string;
+      /** Base58-encoded public key of the signing account */
+      pubkey?: string;
       /**
        * Target Solana cluster for broadcasting.
        * In bridge mode the host app can infer this from miniapp config,
@@ -300,8 +321,11 @@ export interface Methods {
        * @schema
        */
       chain?: SolanaChain;
-      /** Optional send options */
-      options?: {
+      /**
+       * Send options passed to Solana RPC `sendTransaction`.
+       * Field name matches WalletConnect `solana_signAndSendTransaction`.
+       */
+      sendOptions?: {
         skipPreflight?: boolean;
         preflightCommitment?: SolanaCommitment;
         /** Desired commitment level for transaction confirmation. */

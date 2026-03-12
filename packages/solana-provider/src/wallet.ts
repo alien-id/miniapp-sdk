@@ -205,7 +205,17 @@ export class AlienSolanaWallet implements Wallet {
 
       const response = await request(
         'wallet.solana:sign.transaction',
-        { transaction: transactionBase64 },
+        {
+          transaction: transactionBase64,
+          pubkey: input.account.address,
+          chain: input.chain as SolanaChain | undefined,
+          options: input.options
+            ? {
+                preflightCommitment: input.options.preflightCommitment,
+                minContextSlot: input.options.minContextSlot,
+              }
+            : undefined,
+        },
         'wallet.solana:sign.transaction.response',
         { timeout: 60000 },
       ).catch((error) => {
@@ -249,8 +259,9 @@ export class AlienSolanaWallet implements Wallet {
         'wallet.solana:sign.send',
         {
           transaction: transactionBase64,
+          pubkey: input.account.address,
           chain: input.chain as SolanaChain,
-          options: input.options
+          sendOptions: input.options
             ? {
                 skipPreflight: input.options.skipPreflight,
                 preflightCommitment: input.options.preflightCommitment,
@@ -300,7 +311,7 @@ export class AlienSolanaWallet implements Wallet {
 
       const response = await request(
         'wallet.solana:sign.message',
-        { message: messageBase58 },
+        { message: messageBase58, pubkey: input.account.address },
         'wallet.solana:sign.message.response',
         { timeout: 60000 },
       ).catch((error) => {
