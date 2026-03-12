@@ -83,7 +83,7 @@ getReleaseVersion('app:ready');           // '0.0.9'
 | `haptic:impact` | 0.2.4 | Trigger haptic impact feedback |
 | `haptic:notification` | 0.2.4 | Trigger haptic notification feedback |
 | `haptic:selection` | 0.2.4 | Trigger haptic selection feedback |
-| `wallet.solana:connect` | 1.0.0 | Request Solana wallet connection |
+| `wallet.solana:connect` | 1.0.0 | Bridge/injected-wallet account authorization |
 | `wallet.solana:disconnect` | 1.0.0 | Disconnect from Solana wallet |
 | `wallet.solana:sign.transaction` | 1.0.0 | Sign a Solana transaction |
 | `wallet.solana:sign.message` | 1.0.0 | Sign a Solana message |

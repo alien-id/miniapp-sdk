@@ -243,8 +243,10 @@ export interface Methods {
    */
   'haptic:selection': CreateMethodPayload<Empty>;
   /**
-   * Request Solana wallet connection.
-   * Returns the wallet's public key on success.
+   * Request Solana wallet connection in bridge/injected mode.
+   * This is the bridge wrapper around the injected-wallet account
+   * authorization step and returns the wallet's public key on success.
+   * WalletConnect relay uses account RPC methods instead.
    * @since 1.0.0
    * @schema
    */
