@@ -125,7 +125,7 @@ describe('AlienSolanaWallet', () => {
   });
 
   test('throws AlienWalletError when response contains error envelope', async () => {
-    const { WALLET_ERROR } = await import('@alien_org/contract');
+    const { WALLET_ERROR } = await import('@alien-id/miniapps-contract');
     const { AlienSolanaWallet, AlienWalletError } = await import(
       '../src/wallet'
     );
@@ -179,7 +179,7 @@ describe('AlienSolanaWallet', () => {
   });
 
   test('signAndSendTransaction throws on error envelope from bridge', async () => {
-    const { WALLET_ERROR } = await import('@alien_org/contract');
+    const { WALLET_ERROR } = await import('@alien-id/miniapps-contract');
     const { AlienSolanaWallet } = await import('../src/wallet');
 
     const wallet = new AlienSolanaWallet();
@@ -205,7 +205,7 @@ describe('AlienSolanaWallet', () => {
   });
 
   test('preserves method-not-found errors from the host', async () => {
-    const { WALLET_ERROR } = await import('@alien_org/contract');
+    const { WALLET_ERROR } = await import('@alien-id/miniapps-contract');
     const { AlienSolanaWallet } = await import('../src/wallet');
 
     const wallet = new AlienSolanaWallet();
