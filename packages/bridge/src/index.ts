@@ -9,7 +9,7 @@ export type {
   EventPayload,
   MethodName,
   MethodPayload,
-} from '@alien_org/contract';
+} from '@alien-id/miniapps-contract';
 // Errors
 export {
   BridgeError,

@@ -3,7 +3,7 @@ import type {
   EventPayload,
   MethodName,
   MethodPayload,
-} from '@alien_org/contract';
+} from '@alien-id/miniapps-contract';
 import type { RequestOptions } from './request';
 import { request } from './request';
 import type { AvailabilityOptions, SafeResult } from './safe-result';
@@ -25,7 +25,7 @@ export interface SafeRequestOptions
  *
  * @example
  * ```ts
- * import { requestIfAvailable } from '@alien_org/bridge';
+ * import { requestIfAvailable } from '@alien-id/miniapps-bridge';
  *
  * const result = await requestIfAvailable(
  *   'payment:request',

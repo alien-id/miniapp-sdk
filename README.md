@@ -9,11 +9,11 @@ TypeScript SDK for building miniapps that run inside the Alien mobile app. Provi
 
 | Package | Version | Description |
 |---------|---------|-------------|
-| [`@alien_org/react`](./packages/react) | [![npm](https://img.shields.io/npm/v/@alien_org/react.svg)](https://www.npmjs.com/package/@alien_org/react) | React hooks and context provider |
-| [`@alien_org/bridge`](./packages/bridge) | [![npm](https://img.shields.io/npm/v/@alien_org/bridge.svg)](https://www.npmjs.com/package/@alien_org/bridge) | Low-level WebView ↔ Host communication |
-| [`@alien_org/contract`](./packages/contract) | [![npm](https://img.shields.io/npm/v/@alien_org/contract.svg)](https://www.npmjs.com/package/@alien_org/contract) | Type definitions and protocol versioning |
-| [`@alien_org/auth-client`](./packages/auth-client) | [![npm](https://img.shields.io/npm/v/@alien_org/auth-client.svg)](https://www.npmjs.com/package/@alien_org/auth-client) | JWT verification for miniapp backends |
-| [`@alien_org/solana-provider`](./packages/solana-provider) | [![npm](https://img.shields.io/npm/v/@alien_org/solana-provider.svg)](https://www.npmjs.com/package/@alien_org/solana-provider) | Solana wallet provider (Wallet Standard) |
+| [`@alien-id/miniapps-react`](./packages/react) | [![npm](https://img.shields.io/npm/v/@alien-id/miniapps-react.svg)](https://www.npmjs.com/package/@alien-id/miniapps-react) | React hooks and context provider |
+| [`@alien-id/miniapps-bridge`](./packages/bridge) | [![npm](https://img.shields.io/npm/v/@alien-id/miniapps-bridge.svg)](https://www.npmjs.com/package/@alien-id/miniapps-bridge) | Low-level WebView ↔ Host communication |
+| [`@alien-id/miniapps-contract`](./packages/contract) | [![npm](https://img.shields.io/npm/v/@alien-id/miniapps-contract.svg)](https://www.npmjs.com/package/@alien-id/miniapps-contract) | Type definitions and protocol versioning |
+| [`@alien-id/miniapps-auth-client`](./packages/auth-client) | [![npm](https://img.shields.io/npm/v/@alien-id/miniapps-auth-client.svg)](https://www.npmjs.com/package/@alien-id/miniapps-auth-client) | JWT verification for miniapp backends |
+| [`@alien-id/miniapps-solana-provider`](./packages/solana-provider) | [![npm](https://img.shields.io/npm/v/@alien-id/miniapps-solana-provider.svg)](https://www.npmjs.com/package/@alien-id/miniapps-solana-provider) | Solana wallet provider (Wallet Standard) |
 
 ## Documentation
 

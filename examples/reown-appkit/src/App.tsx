@@ -1,4 +1,4 @@
-import { useAlien } from '@alien_org/react';
+import { useAlien } from '@alien-id/miniapps-react';
 import { useAppKitAccount, useAppKitNetwork } from '@reown/appkit/react';
 import { useAppKitConnection } from '@reown/appkit-adapter-solana/react';
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';

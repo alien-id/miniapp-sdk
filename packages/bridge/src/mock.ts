@@ -3,7 +3,7 @@ import type {
   EventPayload,
   LaunchParams,
   MethodName,
-} from '@alien_org/contract';
+} from '@alien-id/miniapps-contract';
 import { emit } from './events';
 import { clearMockLaunchParams, mockLaunchParamsForDev } from './launch-params';
 import type { Message } from './transport';

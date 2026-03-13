@@ -27,11 +27,11 @@ contract (no deps)      auth-client (no deps)
 
 | Package | Name | Current Version |
 |---------|------|-----------------|
-| contract | @alien_org/contract | 1.3.0-alpha |
-| bridge | @alien_org/bridge | 1.3.0-alpha |
-| react | @alien_org/react | 1.3.0-alpha |
-| auth-client | @alien_org/auth-client | 1.3.0-alpha |
-| solana-provider | @alien_org/solana-provider | 1.3.0-alpha |
+| contract | @alien-id/miniapps-contract | 1.3.1 |
+| bridge | @alien-id/miniapps-bridge | 1.3.1 |
+| react | @alien-id/miniapps-react | 1.3.1 |
+| auth-client | @alien-id/miniapps-auth-client | 1.3.1 |
+| solana-provider | @alien-id/miniapps-solana-provider | 1.3.1 |
 
 ## Steps
 
@@ -118,7 +118,7 @@ Dependents that had no code changes get a **patch** bump (the dependency version
 
 ### "Package has a dependency loop" error
 
-This happens when running `bun update @alien_org/*`. Don't use `bun update` for workspace packages. Instead:
+This happens when running `bun update @alien-id/miniapps-*`. Don't use `bun update` for workspace packages. Instead:
 ```bash
 rm bun.lock && bun install
 ```

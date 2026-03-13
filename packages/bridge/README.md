@@ -1,17 +1,17 @@
-# @alien_org/bridge
+# @alien-id/miniapps-bridge
 
-[![npm](https://img.shields.io/npm/v/@alien_org/bridge.svg)](https://www.npmjs.com/package/@alien_org/bridge)
+[![npm](https://img.shields.io/npm/v/@alien-id/miniapps-bridge.svg)](https://www.npmjs.com/package/@alien-id/miniapps-bridge)
 
 Type-safe bridge for miniapp (webview) to host app communication.
 
-**Strict Mode**: Throws errors when bridge is unavailable. For React apps, use `@alien_org/react` which handles errors gracefully.
+**Strict Mode**: Throws errors when bridge is unavailable. For React apps, use `@alien-id/miniapps-react` which handles errors gracefully.
 
 ## API
 
 ### Events
 
 ```typescript
-import { on, off, emit } from '@alien_org/bridge';
+import { on, off, emit } from '@alien-id/miniapps-bridge';
 
 // Subscribe to events from host app
 const unsubscribe = on('payment:response', (payload) => {
@@ -29,7 +29,7 @@ await emit('payment:response', { status: 'paid', txHash: '...', reqId: '...' });
 ### Request-Response
 
 ```typescript
-import { request } from '@alien_org/bridge';
+import { request } from '@alien-id/miniapps-bridge';
 
 // Send method and wait for response event
 // Signature: request(method, params, responseEvent, options?)
@@ -45,7 +45,7 @@ const response = await request(
 ### Fire-and-Forget Methods
 
 ```typescript
-import { send } from '@alien_org/bridge';
+import { send } from '@alien-id/miniapps-bridge';
 
 // Send one-way method without waiting for response
 send('app:ready', {});
@@ -54,7 +54,7 @@ send('app:ready', {});
 ### Bridge Availability
 
 ```typescript
-import { isBridgeAvailable } from '@alien_org/bridge';
+import { isBridgeAvailable } from '@alien-id/miniapps-bridge';
 
 if (isBridgeAvailable()) {
   // Bridge is ready
@@ -72,7 +72,7 @@ import {
   parseLaunchParams,
   mockLaunchParamsForDev,
   clearMockLaunchParams,
-} from '@alien_org/bridge';
+} from '@alien-id/miniapps-bridge';
 
 // Get launch params (returns undefined if unavailable)
 const params = getLaunchParams();
@@ -106,7 +106,7 @@ import {
   BridgeWindowUnavailableError,
   BridgeTimeoutError,
   LaunchParamsError,
-} from '@alien_org/bridge';
+} from '@alien-id/miniapps-bridge';
 
 try {
   const response = await request(

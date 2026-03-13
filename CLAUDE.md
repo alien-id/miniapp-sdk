@@ -9,11 +9,11 @@ Monorepo using Bun workspaces:
 ```
 miniapp-sdk/
 ├── packages/
-│   ├── auth-client/      # JWT verification (@alien_org/auth-client)
-│   ├── bridge/           # Communication bridge (@alien_org/bridge)
-│   ├── contract/         # Type definitions & protocol (@alien_org/contract)
-│   ├── react/            # React bindings (@alien_org/react)
-│   └── solana-provider/  # Solana wallet-standard provider (@alien_org/solana-provider)
+│   ├── auth-client/      # JWT verification (@alien-id/miniapps-auth-client)
+│   ├── bridge/           # Communication bridge (@alien-id/miniapps-bridge)
+│   ├── contract/         # Type definitions & protocol (@alien-id/miniapps-contract)
+│   ├── react/            # React bindings (@alien-id/miniapps-react)
+│   └── solana-provider/  # Solana wallet-standard provider (@alien-id/miniapps-solana-provider)
 ├── examples/
 │   ├── vite-miniapp/     # React + TypeScript example
 │   ├── solana-wallet/    # Solana wallet operations example
@@ -22,13 +22,13 @@ miniapp-sdk/
 
 ## Packages
 
-### @alien_org/bridge
+### @alien-id/miniapps-bridge
 Minimal, type-safe bridge for WebView ↔ Host App communication.
 - API: `on()`, `off()`, `emit()`, `request()`, `send()`
 - Uses `window.__miniAppsBridge__` for native communication
 - Graceful dev-mode fallback (logs warnings when bridge unavailable)
 
-### @alien_org/contract
+### @alien-id/miniapps-contract
 Defines the communication schema and type-safe contracts.
 - Defines all Methods (request-response) and Events (one-way)
 - Protocol versioning support via `releases.ts`
@@ -36,14 +36,14 @@ Defines the communication schema and type-safe contracts.
 - `getMethodMinVersion(method)` - Get minimum required version
 - TypeScript types for type-safe communication
 
-### @alien_org/solana-provider
+### @alien-id/miniapps-solana-provider
 Solana wallet-standard provider for the Alien bridge.
 - Implements `@wallet-standard/base` — auto-discovered by wallet adapters
 - `initAlienWallet()` - Register the wallet (call once at app entry)
 - `AlienSolanaWallet` - Wallet implementation (connect, sign, send)
 - Uses bridge internally — miniapp devs just use their existing Solana stack
 
-### @alien_org/react
+### @alien-id/miniapps-react
 React bindings for the bridge (TMA-style patterns).
 - `AlienProvider` - Context provider, wrap your app
 - `useAlien()` - Access context (authToken, contractVersion, isBridgeAvailable)
@@ -120,7 +120,7 @@ Uses Biomejs (config: `biome.json`):
 
 ### Events
 ```typescript
-import { on, off, emit } from '@alien_org/bridge';
+import { on, off, emit } from '@alien-id/miniapps-bridge';
 
 const unsubscribe = on('payment:response', (payload) => {
   console.log(payload.status, payload.reqId);
@@ -131,7 +131,7 @@ await emit('payment:response', { status: 'paid', txHash: '...', reqId: '...' });
 
 ### Request-Response
 ```typescript
-import { request } from '@alien_org/bridge';
+import { request } from '@alien-id/miniapps-bridge';
 
 const response = await request(
   'payment:request',
@@ -144,7 +144,7 @@ const response = await request(
 ## React API
 
 ```tsx
-import { AlienProvider, useAlien, useLaunchParams, useEvent, useMethod, useIsMethodSupported } from '@alien_org/react';
+import { AlienProvider, useAlien, useLaunchParams, useEvent, useMethod, useIsMethodSupported } from '@alien-id/miniapps-react';
 
 // Wrap app with provider
 <AlienProvider><App /></AlienProvider>

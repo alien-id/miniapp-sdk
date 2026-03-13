@@ -17,8 +17,8 @@
     // Path mappings for workspace dependencies
     "baseUrl": ".",
     "paths": {
-      "@alien_org/contract": ["../contract/src"],
-      "@alien_org/contract/*": ["../contract/src/*"]
+      "@alien-id/miniapps-contract": ["../contract/src"],
+      "@alien-id/miniapps-contract/*": ["../contract/src/*"]
     },
 
     // Best practices

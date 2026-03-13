@@ -1,5 +1,5 @@
-import { getLaunchParams, isBridgeAvailable } from '@alien_org/bridge';
-import { isMethodSupported } from '@alien_org/contract';
+import { getLaunchParams, isBridgeAvailable } from '@alien-id/miniapps-bridge';
+import { isMethodSupported } from '@alien-id/miniapps-contract';
 import { registerWallet } from '@wallet-standard/wallet';
 import { AlienSolanaWallet } from './wallet';
 
@@ -22,7 +22,7 @@ export function initAlienWallet(): void {
     !isMethodSupported('wallet.solana:connect', contractVersion)
   ) {
     console.warn(
-      `[@alien_org/solana-provider] Wallet is not supported by contract version ${contractVersion}. Requires 1.0.0+.`,
+      `[@alien-id/miniapps-solana-provider] Wallet is not supported by contract version ${contractVersion}. Requires 1.0.0+.`,
     );
     return;
   }

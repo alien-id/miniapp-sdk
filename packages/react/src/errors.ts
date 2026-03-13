@@ -4,8 +4,8 @@ import {
   BridgeTimeoutError,
   BridgeUnavailableError,
   BridgeWindowUnavailableError,
-} from '@alien_org/bridge';
-import type { MethodName, Version } from '@alien_org/contract';
+} from '@alien-id/miniapps-bridge';
+import type { MethodName, Version } from '@alien-id/miniapps-contract';
 
 /**
  * Base class for all React SDK errors.

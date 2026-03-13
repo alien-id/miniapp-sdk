@@ -1,5 +1,5 @@
-import type { MethodName, Version } from '@alien_org/contract';
-import { getMethodMinVersion, isMethodSupported } from '@alien_org/contract';
+import type { MethodName, Version } from '@alien-id/miniapps-contract';
+import { getMethodMinVersion, isMethodSupported } from '@alien-id/miniapps-contract';
 import { BridgeMethodUnsupportedError, BridgeUnavailableError } from './errors';
 import { isBridgeAvailable } from './utils';
 

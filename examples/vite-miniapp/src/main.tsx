@@ -1,6 +1,6 @@
-import { isBridgeAvailable } from '@alien_org/bridge';
-import { createMockBridge } from '@alien_org/bridge/mock';
-import { AlienProvider } from '@alien_org/react';
+import { isBridgeAvailable } from '@alien-id/miniapps-bridge';
+import { createMockBridge } from '@alien-id/miniapps-bridge/mock';
+import { AlienProvider } from '@alien-id/miniapps-react';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';

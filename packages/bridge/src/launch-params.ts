@@ -4,8 +4,8 @@ import type {
   Platform,
   SafeAreaInsets,
   Version,
-} from '@alien_org/contract';
-import { DISPLAY_MODES, PLATFORMS } from '@alien_org/contract';
+} from '@alien-id/miniapps-contract';
+import { DISPLAY_MODES, PLATFORMS } from '@alien-id/miniapps-contract';
 
 declare global {
   interface Window {
@@ -127,7 +127,7 @@ export function mockLaunchParamsForDev(params: Partial<LaunchParams>): void {
     );
   }
 
-  console.warn('[@alien_org/bridge] Using mock launch params - dev mode');
+  console.warn('[@alien-id/miniapps-bridge] Using mock launch params - dev mode');
 
   // Inject directly into window globals (same as host app)
   if (params.authToken !== undefined) {

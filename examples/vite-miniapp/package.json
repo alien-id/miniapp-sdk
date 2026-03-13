@@ -12,8 +12,8 @@
   "dependencies": {
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "@alien_org/react": "workspace:*",
-    "@alien_org/bridge": "workspace:*"
+    "@alien-id/miniapps-react": "workspace:*",
+    "@alien-id/miniapps-bridge": "workspace:*"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
