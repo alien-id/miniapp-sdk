@@ -5,20 +5,20 @@ export type {
   RequestOptions,
   SafeRequestOptions,
   SafeResult,
-} from '@alien_org/bridge';
+} from '@alien-id/miniapps-bridge';
 export {
   isAvailable,
   requestIfAvailable,
   send,
   sendIfAvailable,
-} from '@alien_org/bridge';
+} from '@alien-id/miniapps-bridge';
 // Re-export mock bridge from dedicated entrypoint
 export type {
   MethodCall,
   MockBridgeInstance,
   MockBridgeOptions,
-} from '@alien_org/bridge/mock';
-export { createMockBridge } from '@alien_org/bridge/mock';
+} from '@alien-id/miniapps-bridge/mock';
+export { createMockBridge } from '@alien-id/miniapps-bridge/mock';
 // Re-export types from contract for convenience
 export type {
   EventName,
@@ -28,9 +28,12 @@ export type {
   MethodName,
   MethodPayload,
   Version,
-} from '@alien_org/contract';
+} from '@alien-id/miniapps-contract';
 // Re-export version utilities from contract
-export { getMethodMinVersion, isMethodSupported } from '@alien_org/contract';
+export {
+  getMethodMinVersion,
+  isMethodSupported,
+} from '@alien-id/miniapps-contract';
 // Provider
 export { AlienProvider, type AlienProviderProps } from './context';
 // Errors

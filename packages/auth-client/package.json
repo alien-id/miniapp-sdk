@@ -1,5 +1,5 @@
 {
-  "name": "@alien_org/auth-client",
+  "name": "@alien-id/miniapps-auth-client",
   "version": "2.0.0-beta",
   "type": "module",
   "main": "./dist/index.cjs",

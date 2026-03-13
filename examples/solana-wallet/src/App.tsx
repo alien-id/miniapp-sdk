@@ -1,4 +1,4 @@
-import { useAlien } from '@alien_org/react';
+import { useAlien } from '@alien-id/miniapps-react';
 import {
   ConnectionProvider,
   useWallet,

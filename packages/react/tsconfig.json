@@ -14,10 +14,10 @@
 
     "baseUrl": ".",
     "paths": {
-      "@alien_org/bridge": ["../bridge/src"],
-      "@alien_org/bridge/*": ["../bridge/src/*"],
-      "@alien_org/contract": ["../contract/src"],
-      "@alien_org/contract/*": ["../contract/src/*"]
+      "@alien-id/miniapps-bridge": ["../bridge/src"],
+      "@alien-id/miniapps-bridge/*": ["../bridge/src/*"],
+      "@alien-id/miniapps-contract": ["../contract/src"],
+      "@alien-id/miniapps-contract/*": ["../contract/src/*"]
     },
 
     "strict": true,

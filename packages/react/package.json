@@ -1,5 +1,5 @@
 {
-  "name": "@alien_org/react",
+  "name": "@alien-id/miniapps-react",
   "version": "2.0.0-beta",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -34,8 +34,8 @@
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
-    "@alien_org/bridge": "workspace:*",
-    "@alien_org/contract": "workspace:*"
+    "@alien-id/miniapps-bridge": "workspace:*",
+    "@alien-id/miniapps-contract": "workspace:*"
   },
   "peerDependencies": {
     "react": "^18 || ^19",

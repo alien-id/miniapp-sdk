@@ -3,7 +3,7 @@ import type {
   EventPayload,
   MethodName,
   MethodPayload,
-} from '@alien_org/contract';
+} from '@alien-id/miniapps-contract';
 import { BridgeTimeoutError } from './errors';
 import { off, on } from './events';
 import { sendMessage } from './transport';

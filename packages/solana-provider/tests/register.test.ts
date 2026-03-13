@@ -11,7 +11,7 @@ mock.module('@wallet-standard/wallet', () => ({
   registerWallet: registerWalletMock,
 }));
 
-mock.module('@alien_org/bridge', () => ({
+mock.module('@alien-id/miniapps-bridge', () => ({
   isBridgeAvailable: isBridgeAvailableMock,
   getLaunchParams: getLaunchParamsMock,
   request: mock(() => Promise.resolve({})),
@@ -24,7 +24,7 @@ mock.module('@alien_org/bridge', () => ({
   BridgeTimeoutError: class extends Error {},
 }));
 
-mock.module('@alien_org/contract', () => ({
+mock.module('@alien-id/miniapps-contract', () => ({
   isMethodSupported: isMethodSupportedMock,
   WALLET_ERROR: {
     USER_REJECTED: 4001,

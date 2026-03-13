@@ -40,13 +40,13 @@ const sendMock = Object.assign(
   },
 );
 
-mock.module('@alien_org/bridge', () => ({
+mock.module('@alien-id/miniapps-bridge', () => ({
   request: requestMock,
   send: sendMock,
   BridgeTimeoutError: MockBridgeTimeoutError,
 }));
 
-mock.module('@alien_org/contract', () => ({
+mock.module('@alien-id/miniapps-contract', () => ({
   WALLET_ERROR: {
     USER_REJECTED: 4001,
     TRANSACTION_REJECTED: -32003,
@@ -82,7 +82,7 @@ describe('AlienSolanaWallet', () => {
   });
 
   test('normalizes bridge timeout errors from connect', async () => {
-    const { WALLET_ERROR } = await import('@alien_org/contract');
+    const { WALLET_ERROR } = await import('@alien-id/miniapps-contract');
     const { AlienSolanaWallet } = await import('../src/wallet');
 
     requestMock.mockRejectedValueOnce(
@@ -100,7 +100,7 @@ describe('AlienSolanaWallet', () => {
   });
 
   test('normalizes generic request errors from signAndSendTransaction', async () => {
-    const { WALLET_ERROR } = await import('@alien_org/contract');
+    const { WALLET_ERROR } = await import('@alien-id/miniapps-contract');
     const { AlienSolanaWallet } = await import('../src/wallet');
 
     const wallet = new AlienSolanaWallet();

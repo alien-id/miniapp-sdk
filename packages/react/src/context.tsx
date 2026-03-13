@@ -3,8 +3,8 @@ import {
   getLaunchParams,
   isBridgeAvailable,
   send,
-} from '@alien_org/bridge';
-import type { SafeAreaInsets, Version } from '@alien_org/contract';
+} from '@alien-id/miniapps-bridge';
+import type { SafeAreaInsets, Version } from '@alien-id/miniapps-contract';
 
 import {
   createContext,
@@ -103,7 +103,7 @@ function setSafeAreaCssVars(insets: SafeAreaInsets | undefined): void {
  *
  * @example
  * ```tsx
- * import { AlienProvider } from '@alien_org/react';
+ * import { AlienProvider } from '@alien-id/miniapps-react';
  *
  * function App() {
  *   return (
@@ -152,7 +152,7 @@ export function AlienProvider({
 
     if (!bridgeAvailable) {
       console.warn(
-        '[@alien_org/react] Bridge is not available. Running in dev mode? The SDK will handle errors gracefully, but bridge communication will not work.',
+        '[@alien-id/miniapps-react] Bridge is not available. Running in dev mode? The SDK will handle errors gracefully, but bridge communication will not work.',
       );
     }
   }, [ready]);

@@ -1,9 +1,9 @@
-import { BridgeTimeoutError, request, send } from '@alien_org/bridge';
+import { BridgeTimeoutError, request, send } from '@alien-id/miniapps-bridge';
 import {
   type SolanaChain,
   WALLET_ERROR,
   type WalletSolanaErrorCode,
-} from '@alien_org/contract';
+} from '@alien-id/miniapps-contract';
 import type {
   SolanaSignAndSendTransactionFeature,
   SolanaSignAndSendTransactionMethod,

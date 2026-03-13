@@ -166,7 +166,7 @@ export type WalletSolanaErrorCode =
  *
  * @example
  * ```ts
- * import { WALLET_ERROR } from '@alien_org/contract';
+ * import { WALLET_ERROR } from '@alien-id/miniapps-contract';
  *
  * if (response.error?.code === WALLET_ERROR.USER_REJECTED) {
  *   // user cancelled

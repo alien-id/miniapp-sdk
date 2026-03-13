@@ -1,5 +1,5 @@
 {
-  "name": "@alien_org/contract",
+  "name": "@alien-id/miniapps-contract",
   "version": "2.0.0-beta",
   "type": "module",
   "main": "./dist/index.cjs",

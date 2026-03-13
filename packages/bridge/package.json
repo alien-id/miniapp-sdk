@@ -1,5 +1,5 @@
 {
-  "name": "@alien_org/bridge",
+  "name": "@alien-id/miniapps-bridge",
   "version": "2.0.0-beta",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -45,7 +45,7 @@
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
-    "@alien_org/contract": "workspace:*",
+    "@alien-id/miniapps-contract": "workspace:*",
     "emittery": "^1.2.1"
   },
   "devDependencies": {

@@ -30,11 +30,11 @@ version. Otherwise users installing an upstream package get a stale dependency.
 
 | Package | Name | Current Version |
 | --- | --- | --- |
-| contract | @alien_org/contract | 2.0.0-beta |
-| bridge | @alien_org/bridge | 2.0.0-beta |
-| react | @alien_org/react | 2.0.0-beta |
-| auth-client | @alien_org/auth-client | 2.0.0-beta |
-| solana-provider | @alien_org/solana-provider | 2.0.0-beta |
+| contract | @alien-id/miniapps-contract | 2.0.0-beta |
+| bridge | @alien-id/miniapps-bridge | 2.0.0-beta |
+| react | @alien-id/miniapps-react | 2.0.0-beta |
+| auth-client | @alien-id/miniapps-auth-client | 2.0.0-beta |
+| solana-provider | @alien-id/miniapps-solana-provider | 2.0.0-beta |
 
 ## Steps
 
@@ -129,8 +129,8 @@ intended to release gets the bump type you chose (minor, major, etc.).
 
 ### "Package has a dependency loop" error
 
-This happens when running `bun update @alien_org/*`. Don't use `bun update`
-for workspace packages. Instead:
+This happens when running `bun update @alien-id/miniapps-*`.
+Don't use `bun update` for workspace packages. Instead:
 
 ```bash
 rm bun.lock && bun install
