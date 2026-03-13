@@ -109,7 +109,7 @@ function SendSol() {
 | `solana:signAndSendTransaction` | Sign and broadcast a transaction |
 | `solana:signMessage` | Sign an arbitrary message (Ed25519) |
 
-Supported chains: `solana:mainnet`, `solana:devnet`
+Supported chains: `solana:mainnet`, `solana:devnet`, `solana:testnet`
 
 Supported transaction versions: `legacy`, `0` (versioned transactions)
 
@@ -207,6 +207,10 @@ function WalletFeature() {
 }
 ```
 
+If the bridge is unavailable, `initAlienWallet()` returns without
+registering. If the contract version is too old, it logs a warning and
+does not register.
+
 ## API Reference
 
 ### `initAlienWallet()`
@@ -222,11 +226,11 @@ The wallet class implementing the `Wallet` interface from `@wallet-standard/base
 Implements `WalletAccount`. Created internally on connect. Properties:
 - `address` — base58 public key string
 - `publicKey` — `Uint8Array` (32 bytes)
-- `chains` — `['solana:mainnet', 'solana:devnet']`
+- `chains` — `['solana:mainnet', 'solana:devnet', 'solana:testnet']`
 - `features` — `['solana:signTransaction', 'solana:signAndSendTransaction', 'solana:signMessage']`
 
 ### `AlienWalletError`
 
 Error class thrown by wallet operations. Properties:
-- `code` — `WalletSolanaErrorCode` (`'rejected'` | `'not_connected'` | `'invalid_transaction'` | `'send_failed'` | `'timeout'` | `'unknown'`)
+- `code` — `WalletSolanaErrorCode` (`5000 | -32602 | -32603 | 8000`)
 - `message` — Human-readable error description

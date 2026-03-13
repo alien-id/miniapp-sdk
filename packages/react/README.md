@@ -26,6 +26,11 @@ function App() {
 }
 ```
 
+Provider options:
+
+- `autoReady` - defaults to `true`; set to `false` if you want to call `ready()` manually
+- `interceptLinks` - defaults to `true`; intercepts external links through the host app
+
 ## Hooks
 
 ### useAlien
@@ -214,6 +219,66 @@ function BuyButton({ orderId }: { orderId: string }) {
 }
 ```
 
+### useClipboard
+
+Read and write text via the host app clipboard.
+
+```tsx
+import { useClipboard } from '@alien-id/miniapps-react';
+
+function CopyButton() {
+  const { writeText, readText, isReading, supported } = useClipboard();
+
+  if (!supported) return null;
+
+  return (
+    <button
+      onClick={async () => {
+        writeText('Hello');
+        console.log(await readText());
+      }}
+      disabled={isReading}
+    >
+      Copy
+    </button>
+  );
+}
+```
+
+### useHaptic
+
+Trigger native haptic feedback.
+
+```tsx
+import { useHaptic } from '@alien-id/miniapps-react';
+
+function LikeButton() {
+  const { impactOccurred, supported } = useHaptic();
+
+  return (
+    <button
+      onClick={() => supported && impactOccurred('medium')}
+    >
+      Like
+    </button>
+  );
+}
+```
+
+### useLinkInterceptor
+
+Enable link interception manually when `AlienProvider` is configured
+with `interceptLinks={false}`.
+
+```tsx
+import { useLinkInterceptor } from '@alien-id/miniapps-react';
+
+function App() {
+  useLinkInterceptor({ openMode: 'external' });
+  return <a href="https://example.com">Open</a>;
+}
+```
+
 ## Re-exports
 
 The package re-exports utilities from `@alien-id/miniapps-contract` and `@alien-id/miniapps-bridge`:
@@ -221,7 +286,11 @@ The package re-exports utilities from `@alien-id/miniapps-contract` and `@alien-
 ```tsx
 import {
   // From @alien-id/miniapps-bridge
+  createMockBridge,
+  isAvailable,
+  requestIfAvailable,
   send,
+  sendIfAvailable,
   type RequestOptions,
 
   // From @alien-id/miniapps-contract

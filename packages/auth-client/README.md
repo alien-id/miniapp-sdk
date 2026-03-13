@@ -18,13 +18,14 @@ bun add @alien-id/miniapps-auth-client
 ### Verifying Tokens
 
 Use `createAuthClient` to verify JWT access tokens from Alien SSO.
+The `audience` option is required and should be your miniapp provider
+address.
 
 ```typescript
 import { createAuthClient } from '@alien-id/miniapps-auth-client';
 
-
 const client = createAuthClient({
-  audience: 'your-miniapp-provider-address'
+  audience: 'your-miniapp-provider-address',
 });
 
 try {
@@ -35,6 +36,11 @@ try {
 }
 ```
 
+By default, the client verifies:
+
+- `issuer`: `https://sso.alien-api.com`
+- `jwksUrl`: `https://sso.alien-api.com/oauth/jwks`
+
 ### Custom JWKS URL
 
 `createAuthClient` accepts an optional jwksUrl parameter to use custom JWKS endpoint for JWT verification.
@@ -42,10 +48,9 @@ try {
 ```typescript
 import { createAuthClient } from '@alien-id/miniapps-auth-client';
 
-
 const client = createAuthClient({
   audience: 'your-miniapp-provider-address',
-  jwksUrl: "https://sso.alien-api.com/.well-known/jwks.json"
+  jwksUrl: 'https://your-auth-server.example.com/oauth/jwks',
 });
 
 try {
@@ -69,4 +74,37 @@ const client = createAuthClient({
   audience: 'your-miniapp-provider-address',
   jwks,
 });
+```
+
+### Custom issuer
+
+Override the expected JWT issuer if you are verifying tokens from a
+different SSO environment.
+
+```typescript
+import { createAuthClient } from '@alien-id/miniapps-auth-client';
+
+const client = createAuthClient({
+  audience: 'your-miniapp-provider-address',
+  issuer: 'https://your-auth-server.example.com',
+});
+```
+
+### Error handling
+
+The package re-exports `jose` error classes as `JwtErrors`.
+
+```typescript
+import {
+  createAuthClient,
+  JwtErrors,
+} from '@alien-id/miniapps-auth-client';
+
+try {
+  await client.verifyToken(accessToken);
+} catch (error) {
+  if (error instanceof JwtErrors.JWTExpired) {
+    console.error('Token expired');
+  }
+}
 ```
