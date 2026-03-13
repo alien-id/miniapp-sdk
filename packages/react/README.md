@@ -1,13 +1,13 @@
-# @alien_org/react
+# @alien-id/miniapps-react
 
-[![npm](https://img.shields.io/npm/v/@alien_org/react.svg)](https://www.npmjs.com/package/@alien_org/react)
+[![npm](https://img.shields.io/npm/v/@alien-id/miniapps-react.svg)](https://www.npmjs.com/package/@alien-id/miniapps-react)
 
 React bindings for the Alien miniapp SDK. This is the primary interface for developers.
 
 ## Installation
 
 ```bash
-bun add @alien_org/react
+bun add @alien-id/miniapps-react
 ```
 
 ## Quick Start
@@ -15,7 +15,7 @@ bun add @alien_org/react
 Wrap your app with `AlienProvider`:
 
 ```tsx
-import { AlienProvider } from '@alien_org/react';
+import { AlienProvider } from '@alien-id/miniapps-react';
 
 function App() {
   return (
@@ -33,7 +33,7 @@ function App() {
 Access the Alien context (auth token, contract version, bridge availability):
 
 ```tsx
-import { useAlien } from '@alien_org/react';
+import { useAlien } from '@alien-id/miniapps-react';
 
 function MyComponent() {
   const { authToken, contractVersion, isBridgeAvailable } = useAlien();
@@ -51,7 +51,7 @@ function MyComponent() {
 Get all launch parameters injected by the host app:
 
 ```tsx
-import { useLaunchParams } from '@alien_org/react';
+import { useLaunchParams } from '@alien-id/miniapps-react';
 
 function MyComponent() {
   const launchParams = useLaunchParams();
@@ -69,7 +69,7 @@ function MyComponent() {
 Check if a method is supported by the host:
 
 ```tsx
-import { useIsMethodSupported } from '@alien_org/react';
+import { useIsMethodSupported } from '@alien-id/miniapps-react';
 
 function MyComponent() {
   const { supported, minVersion } = useIsMethodSupported('payment:request');
@@ -87,7 +87,7 @@ function MyComponent() {
 Subscribe to bridge events:
 
 ```tsx
-import { useEvent } from '@alien_org/react';
+import { useEvent } from '@alien-id/miniapps-react';
 
 function MyComponent() {
   // Handle back button
@@ -104,7 +104,7 @@ function MyComponent() {
 Control the host app's native back button:
 
 ```tsx
-import { useBackButton } from '@alien_org/react';
+import { useBackButton } from '@alien-id/miniapps-react';
 
 function DetailScreen() {
   const { show, hide, isVisible, supported } = useBackButton(() => {
@@ -127,7 +127,7 @@ The hook manages visibility, listens for clicks, and hides the button on unmount
 Make bridge requests with state management and version checking:
 
 ```tsx
-import { useMethod } from '@alien_org/react';
+import { useMethod } from '@alien-id/miniapps-react';
 
 function PayButton() {
   const { execute, data, error, isLoading, supported, reset } = useMethod(
@@ -173,7 +173,7 @@ const { execute } = useMethod('payment:request', 'payment:response', { checkVers
 Handle payments with full state management:
 
 ```tsx
-import { usePayment } from '@alien_org/react';
+import { usePayment } from '@alien-id/miniapps-react';
 
 function BuyButton({ orderId }: { orderId: string }) {
   const {
@@ -216,15 +216,15 @@ function BuyButton({ orderId }: { orderId: string }) {
 
 ## Re-exports
 
-The package re-exports utilities from `@alien_org/contract` and `@alien_org/bridge`:
+The package re-exports utilities from `@alien-id/miniapps-contract` and `@alien-id/miniapps-bridge`:
 
 ```tsx
 import {
-  // From @alien_org/bridge
+  // From @alien-id/miniapps-bridge
   send,
   type RequestOptions,
 
-  // From @alien_org/contract
+  // From @alien-id/miniapps-contract
   isMethodSupported,
   getMethodMinVersion,
   type MethodName,
@@ -232,7 +232,7 @@ import {
   type EventName,
   type EventPayload,
   type Version,
-} from '@alien_org/react';
+} from '@alien-id/miniapps-react';
 ```
 
 ## Error Handling
@@ -247,12 +247,12 @@ import {
   ReactSDKError,           // Base class for React SDK errors
   MethodNotSupportedError, // Method not supported by contract version
 
-  // Bridge errors (re-exported from @alien_org/bridge)
+  // Bridge errors (re-exported from @alien-id/miniapps-bridge)
   BridgeError,                  // Base class for bridge errors
   BridgeUnavailableError,       // Bridge not available
   BridgeTimeoutError,           // Request timed out
   BridgeWindowUnavailableError, // Window undefined (SSR)
-} from '@alien_org/react';
+} from '@alien-id/miniapps-react';
 ```
 
 ## Development Mode

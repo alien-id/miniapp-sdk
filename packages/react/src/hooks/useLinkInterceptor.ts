@@ -1,7 +1,7 @@
 import {
   enableLinkInterceptor,
   type LinkInterceptorOptions,
-} from '@alien_org/bridge';
+} from '@alien-id/miniapps-bridge';
 import { useEffect } from 'react';
 import { useAlien } from './useAlien';
 

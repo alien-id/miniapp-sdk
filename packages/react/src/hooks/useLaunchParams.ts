@@ -1,5 +1,5 @@
-import { getLaunchParams } from '@alien_org/bridge';
-import type { LaunchParams } from '@alien_org/contract';
+import { getLaunchParams } from '@alien-id/miniapps-bridge';
+import type { LaunchParams } from '@alien-id/miniapps-contract';
 import { useState } from 'react';
 
 /**
@@ -8,7 +8,7 @@ import { useState } from 'react';
  *
  * @example
  * ```tsx
- * import { useLaunchParams } from '@alien_org/react';
+ * import { useLaunchParams } from '@alien-id/miniapps-react';
  *
  * function MyComponent() {
  *   const launchParams = useLaunchParams();

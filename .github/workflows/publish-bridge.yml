@@ -88,7 +88,7 @@ jobs:
 
       - name: Publish to npm
         working-directory: packages/bridge
-        run: npm publish ./alien_org-bridge-*.tgz --access public --provenance --tag ${{ steps.npm-tag.outputs.tag }}
+        run: npm publish ./alien-id-miniapps-bridge-*.tgz --access public --provenance --tag ${{ steps.npm-tag.outputs.tag }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -99,4 +99,4 @@ jobs:
           make_latest: ${{ steps.npm-tag.outputs.tag == 'latest' }}
           body: |
             ## npm
-            https://www.npmjs.com/package/@alien_org/bridge
+            https://www.npmjs.com/package/@alien-id/miniapps-bridge

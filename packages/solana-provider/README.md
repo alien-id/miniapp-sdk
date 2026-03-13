@@ -1,4 +1,4 @@
-# @alien_org/solana-provider
+# @alien-id/miniapps-solana-provider
 
 Solana wallet provider for Alien miniapps. Implements the [Wallet Standard](https://github.com/wallet-standard/wallet-standard) so the Alien Wallet is auto-discovered by `@solana/wallet-adapter` — no manual adapter config needed.
 
@@ -7,7 +7,7 @@ Solana wallet provider for Alien miniapps. Implements the [Wallet Standard](http
 ## Install
 
 ```bash
-bun add @alien_org/solana-provider
+bun add @alien-id/miniapps-solana-provider
 ```
 
 If you use `@solana/wallet-adapter-react` (most common setup), you also need:
@@ -24,7 +24,7 @@ Call `initAlienWallet()` once at your app's entry point, **before** rendering an
 
 ```ts
 // src/main.tsx
-import { initAlienWallet } from '@alien_org/solana-provider';
+import { initAlienWallet } from '@alien-id/miniapps-solana-provider';
 
 initAlienWallet();
 ```
@@ -118,7 +118,7 @@ Supported transaction versions: `legacy`, `0` (versioned transactions)
 You can use `AlienSolanaWallet` directly if you're not using React:
 
 ```ts
-import { AlienSolanaWallet } from '@alien_org/solana-provider';
+import { AlienSolanaWallet } from '@alien-id/miniapps-solana-provider';
 
 const wallet = new AlienSolanaWallet();
 
@@ -142,8 +142,8 @@ const { signature } = (
 All wallet operations throw `AlienWalletError` on failure. The `code` property indicates what went wrong:
 
 ```ts
-import { AlienWalletError } from '@alien_org/solana-provider';
-import { WALLET_ERROR } from '@alien_org/contract';
+import { AlienWalletError } from '@alien-id/miniapps-solana-provider';
+import { WALLET_ERROR } from '@alien-id/miniapps-contract';
 
 try {
   await sendTransaction(tx, connection);
@@ -191,10 +191,10 @@ The provider encodes all data (transactions, messages) as **base64** for the bri
 
 ## Contract Version
 
-The wallet methods require contract version **1.0.0** or higher. Use `useIsMethodSupported` from `@alien_org/react` to check compatibility before using wallet features:
+The wallet methods require contract version **1.0.0** or higher. Use `useIsMethodSupported` from `@alien-id/miniapps-react` to check compatibility before using wallet features:
 
 ```tsx
-import { useIsMethodSupported } from '@alien_org/react';
+import { useIsMethodSupported } from '@alien-id/miniapps-react';
 
 function WalletFeature() {
   const { supported, minVersion } = useIsMethodSupported('wallet.solana:connect');

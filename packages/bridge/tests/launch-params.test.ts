@@ -214,7 +214,7 @@ describe('mockLaunchParamsForDev', () => {
     mockLaunchParamsForDev({ authToken: 'mock-token' });
 
     expect(warnMock).toHaveBeenCalledWith(
-      '[@alien_org/bridge] Using mock launch params - dev mode',
+      '[@alien-id/miniapps-bridge] Using mock launch params - dev mode',
     );
 
     console.warn = originalWarn;

@@ -1,4 +1,4 @@
-import type { MethodName, MethodPayload } from '@alien_org/contract';
+import type { MethodName, MethodPayload } from '@alien-id/miniapps-contract';
 import type { AvailabilityOptions, SafeResult } from './safe-result';
 import { checkAvailability } from './safe-result';
 import { send } from './send';
@@ -14,7 +14,7 @@ import { send } from './send';
  *
  * @example
  * ```ts
- * import { sendIfAvailable } from '@alien_org/bridge';
+ * import { sendIfAvailable } from '@alien-id/miniapps-bridge';
  *
  * const result = sendIfAvailable('haptic:impact', { style: 'medium' });
  * if (!result.ok) {

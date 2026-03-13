@@ -1,2 +1,2 @@
 [install.scopes]
-"@alien_org" = { url = "https://registry.npmjs.org" }
+"@alien-id" = { url = "https://registry.npmjs.org" }

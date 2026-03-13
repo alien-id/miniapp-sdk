@@ -1,5 +1,5 @@
-import { on, send } from '@alien_org/bridge';
-import { isMethodSupported } from '@alien_org/contract';
+import { on, send } from '@alien-id/miniapps-bridge';
+import { isMethodSupported } from '@alien-id/miniapps-contract';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAlien } from './useAlien';
 

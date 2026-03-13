@@ -1,9 +1,9 @@
-import { send } from '@alien_org/bridge';
+import { send } from '@alien-id/miniapps-bridge';
 import {
   type HapticImpactStyle,
   type HapticNotificationType,
   isMethodSupported,
-} from '@alien_org/contract';
+} from '@alien-id/miniapps-contract';
 import { useCallback, useMemo } from 'react';
 import { useAlien } from './useAlien';
 
