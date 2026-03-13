@@ -27,11 +27,11 @@ contract (no deps)      auth-client (no deps)
 
 | Package | Name | Current Version |
 |---------|------|-----------------|
-| contract | @alien-id/miniapps-contract | 1.3.1 |
-| bridge | @alien-id/miniapps-bridge | 1.3.1 |
-| react | @alien-id/miniapps-react | 1.3.1 |
-| auth-client | @alien-id/miniapps-auth-client | 1.3.1 |
-| solana-provider | @alien-id/miniapps-solana-provider | 1.3.1 |
+| contract | @alien-id/miniapps-contract | 1.3.2 |
+| bridge | @alien-id/miniapps-bridge | 1.3.2 |
+| react | @alien-id/miniapps-react | 1.3.2 |
+| auth-client | @alien-id/miniapps-auth-client | 1.3.2 |
+| solana-provider | @alien-id/miniapps-solana-provider | 1.3.2 |
 
 ## Steps
 
