@@ -56,29 +56,31 @@ const METHOD_RESPONSE_MAP: Record<
   'wallet.solana:connect': {
     event: 'wallet.solana:connect.response',
     defaultResponse: (reqId) => ({
-      publicKey: '11111111111111111111111111111111',
+      result: { publicKey: '11111111111111111111111111111111' },
       reqId,
     }),
   },
   'wallet.solana:sign.transaction': {
     event: 'wallet.solana:sign.transaction.response',
     defaultResponse: (reqId) => ({
-      signedTransaction: 'mock-signed-tx',
+      result: { transaction: 'mock-signed-tx' },
       reqId,
     }),
   },
   'wallet.solana:sign.message': {
     event: 'wallet.solana:sign.message.response',
     defaultResponse: (reqId) => ({
-      signature: 'mock-sig',
-      publicKey: '11111111111111111111111111111111',
+      result: {
+        signature: 'mock-sig',
+        publicKey: '11111111111111111111111111111111',
+      },
       reqId,
     }),
   },
   'wallet.solana:sign.send': {
     event: 'wallet.solana:sign.send.response',
     defaultResponse: (reqId) => ({
-      signature: `mock-sig-${reqId}`,
+      result: { signature: `mock-sig-${reqId}` },
       reqId,
     }),
   },

@@ -134,23 +134,32 @@ export type HapticImpactStyle = 'light' | 'medium' | 'heavy' | 'soft' | 'rigid';
 export type HapticNotificationType = 'success' | 'warning' | 'error';
 
 /**
- * Solana wallet error codes (WalletConnect-compatible numeric codes).
+ * Solana wallet error codes (EIP-1193 / JSON-RPC 2.0 compatible).
  *
- * These codes are identical to WalletConnect JSON-RPC error codes,
- * so the mobile app produces the same `(code, message)` pair for
- * both bridge and relay transports — no mapping needed.
+ * These codes follow the EIP-1193 and JSON-RPC 2.0 standards so that
+ * dapp SDKs (viem, wagmi, wallet-adapter) can detect them without mapping.
+ * The mobile app produces the same `{ code, message }` pair for
+ * both bridge and relay transports.
  *
- * | Code | Meaning | WC Name |
- * |------|---------|---------|
- * | `5000` | User rejected the request | `userRejected` |
+ * | Code | Meaning | Standard |
+ * |------|---------|----------|
+ * | `4001` | User rejected the request | EIP-1193 |
+ * | `-32003` | Transaction rejected (simulation/broadcast failure) | JSON-RPC server error |
  * | `-32602` | Invalid params (malformed transaction, bad input) | JSON-RPC standard |
- * | `-32603` | Internal error (send failed, unexpected error) | JSON-RPC standard |
- * | `8000` | Request expired / timed out | `sessionRequestExpired` |
+ * | `-32603` | Internal error (unexpected error) | JSON-RPC standard |
+ * | `8000` | Request expired / timed out | WalletConnect |
+ * | `-32601` | Method not found (unknown wallet method) | JSON-RPC standard |
  *
  * @since 1.0.0
  * @schema
  */
-export type WalletSolanaErrorCode = 5000 | -32602 | -32603 | 8000;
+export type WalletSolanaErrorCode =
+  | 4001
+  | -32003
+  | -32602
+  | -32603
+  | 8000
+  | -32601;
 
 /**
  * Named constants for {@link WalletSolanaErrorCode}.
@@ -159,7 +168,7 @@ export type WalletSolanaErrorCode = 5000 | -32602 | -32603 | 8000;
  * ```ts
  * import { WALLET_ERROR } from '@alien-id/miniapps-contract';
  *
- * if (response.errorCode === WALLET_ERROR.USER_REJECTED) {
+ * if (response.error?.code === WALLET_ERROR.USER_REJECTED) {
  *   // user cancelled
  * }
  * ```
@@ -167,15 +176,19 @@ export type WalletSolanaErrorCode = 5000 | -32602 | -32603 | 8000;
  * @since 1.0.0
  */
 export const WALLET_ERROR = {
-  /** User rejected the request (cancelled approval screen). */
-  USER_REJECTED: 5000,
+  /** User rejected the request (cancelled approval screen). EIP-1193 code 4001. */
+  USER_REJECTED: 4001,
+  /** Transaction rejected — simulation failed or broadcast rejected by the cluster. */
+  TRANSACTION_REJECTED: -32003,
   /** Invalid params — transaction deserialization failed, malformed input. */
   INVALID_PARAMS: -32602,
-  /** Internal error — transaction broadcast failed, unexpected error. */
+  /** Internal error — unexpected error. */
   INTERNAL_ERROR: -32603,
   /** Request expired before the user responded. */
   REQUEST_EXPIRED: 8000,
-} as const;
+  /** Method not found — unknown wallet method name. */
+  METHOD_NOT_FOUND: -32601,
+} as const satisfies Record<string, WalletSolanaErrorCode>;
 
 /**
  * Solana commitment levels for send options.

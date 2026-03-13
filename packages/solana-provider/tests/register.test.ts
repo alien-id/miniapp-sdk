@@ -27,7 +27,8 @@ mock.module('@alien-id/miniapps-bridge', () => ({
 mock.module('@alien-id/miniapps-contract', () => ({
   isMethodSupported: isMethodSupportedMock,
   WALLET_ERROR: {
-    USER_REJECTED: 5000,
+    USER_REJECTED: 4001,
+    TRANSACTION_REJECTED: -32003,
     INVALID_PARAMS: -32602,
     INTERNAL_ERROR: -32603,
     REQUEST_EXPIRED: 8000,

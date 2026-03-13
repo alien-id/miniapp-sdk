@@ -1,5 +1,6 @@
 // Re-export methods
 
+export type { WalletError } from './events/definitions/events';
 // Re-export events
 export type { Events } from './events/events';
 export type {

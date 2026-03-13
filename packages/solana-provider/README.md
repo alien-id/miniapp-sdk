@@ -1,8 +1,13 @@
 # @alien-id/miniapps-solana-provider
 
-Solana wallet provider for Alien miniapps. Implements the [Wallet Standard](https://github.com/wallet-standard/wallet-standard) so the Alien Wallet is auto-discovered by `@solana/wallet-adapter` — no manual adapter config needed.
+Solana wallet provider for Alien miniapps. Implements the
+[Wallet Standard](https://github.com/wallet-standard/wallet-standard) so the
+Alien Wallet is auto-discovered by `@solana/wallet-adapter` — no manual
+adapter config needed.
 
-> **Runs inside the Alien app WebView only.** The provider communicates with the host app's native wallet through the miniapp bridge (`window.__miniAppsBridge__`).
+> **Runs inside the Alien app WebView only.** The provider communicates with
+> the host app's native wallet through the miniapp bridge
+> (`window.__miniAppsBridge__`).
 
 ## Install
 
@@ -20,7 +25,9 @@ bun add @solana/wallet-adapter-react @solana/wallet-adapter-react-ui @solana/web
 
 ### 1. Register the wallet
 
-Call `initAlienWallet()` once at your app's entry point, **before** rendering any wallet UI. This registers Alien Wallet with the wallet-standard registry so adapters can discover it.
+Call `initAlienWallet()` once at your app's entry point, **before** rendering
+any wallet UI. This registers Alien Wallet with the wallet-standard registry
+so adapters can discover it.
 
 ```ts
 // src/main.tsx
@@ -31,7 +38,8 @@ initAlienWallet();
 
 ### 2. Set up providers (React)
 
-Use the standard Solana wallet adapter providers. Pass an **empty array** to `wallets` — Alien Wallet is discovered automatically via wallet-standard.
+Use the standard Solana wallet adapter providers. Pass an **empty array** to
+`wallets` — Alien Wallet is discovered automatically via wallet-standard.
 
 ```tsx
 // src/App.tsx
@@ -101,7 +109,7 @@ function SendSol() {
 ## Supported Features
 
 | Feature | Description |
-|---|---|
+| --- | --- |
 | `standard:connect` | Connect to the wallet, returns the public key |
 | `standard:disconnect` | Disconnect from the wallet |
 | `standard:events` | Listen for account changes |
@@ -139,7 +147,8 @@ const { signature } = (
 
 ## Error Handling
 
-All wallet operations throw `AlienWalletError` on failure. The `code` property indicates what went wrong:
+All wallet operations throw `AlienWalletError` on failure. The `code`
+property indicates what went wrong:
 
 ```ts
 import { AlienWalletError } from '@alien-id/miniapps-solana-provider';
@@ -150,17 +159,24 @@ try {
 } catch (err) {
   if (err instanceof AlienWalletError) {
     switch (err.code) {
-      case WALLET_ERROR.USER_REJECTED: // 5000
+      case WALLET_ERROR.USER_REJECTED: // 4001 (EIP-1193)
         // User rejected the request in the Alien app
+        break;
+      case WALLET_ERROR.TRANSACTION_REJECTED: // -32003
+        // Simulation failed or broadcast rejected by the cluster
+        // Check err.data for structured details
         break;
       case WALLET_ERROR.INVALID_PARAMS: // -32602
         // Malformed input (e.g. invalid transaction)
         break;
       case WALLET_ERROR.INTERNAL_ERROR: // -32603
-        // Host-side internal/send failure
+        // Host-side unexpected error
         break;
       case WALLET_ERROR.REQUEST_EXPIRED: // 8000
         // Host app did not respond in time
+        break;
+      case WALLET_ERROR.METHOD_NOT_FOUND: // -32601
+        // Host app does not recognize this wallet method
         break;
     }
   }
@@ -177,21 +193,26 @@ sequenceDiagram
 
     Miniapp->>Bridge: wallet.features['standard:connect'].connect()
     Bridge->>Host: wallet.solana:connect (via postMessage)
-    Host-->>Bridge: wallet.solana:connect.response { publicKey }
+    Host-->>Bridge: wallet.solana:connect.response { result: { publicKey } }
     Bridge-->>Miniapp: { accounts: [{ address, publicKey }] }
 
     Miniapp->>Bridge: wallet.features['solana:signAndSendTransaction'].signAndSendTransaction(...)
     Bridge->>Host: wallet.solana:sign.send { transaction (base64) }
     Host->>Host: Sign with user's key, broadcast to Solana
-    Host-->>Bridge: wallet.solana:sign.send.response { signature }
+    Host-->>Bridge: wallet.solana:sign.send.response { result: { signature } }
     Bridge-->>Miniapp: { signature: Uint8Array }
 ```
 
-The provider encodes all data (transactions, messages) as **base64** for the bridge, and decodes responses back to `Uint8Array` for the wallet-standard interface. Public keys and transaction signatures use **base58** encoding in bridge messages.
+The provider encodes all data (transactions, messages) as **base64** for
+the bridge, and decodes responses back to `Uint8Array` for the
+wallet-standard interface. Public keys and transaction signatures use
+**base58** encoding in bridge messages.
 
 ## Contract Version
 
-The wallet methods require contract version **1.0.0** or higher. Use `useIsMethodSupported` from `@alien-id/miniapps-react` to check compatibility before using wallet features:
+The wallet methods require contract version **1.0.0** or higher. Use
+`useIsMethodSupported` from `@alien-id/miniapps-react` to check compatibility
+before using wallet features:
 
 ```tsx
 import { useIsMethodSupported } from '@alien-id/miniapps-react';
@@ -211,22 +232,29 @@ function WalletFeature() {
 
 ### `initAlienWallet()`
 
-Registers the Alien Wallet with the wallet-standard registry. Call once at app startup. Safe to call multiple times (no-op after first call).
+Registers the Alien Wallet with the wallet-standard registry. Call once at
+app startup. Safe to call multiple times (no-op after first call).
 
 ### `AlienSolanaWallet`
 
-The wallet class implementing the `Wallet` interface from `@wallet-standard/base`. You only need this for non-React usage or advanced scenarios.
+The wallet class implementing the `Wallet` interface from
+`@wallet-standard/base`. You only need this for non-React usage or
+advanced scenarios.
 
 ### `AlienSolanaAccount`
 
 Implements `WalletAccount`. Created internally on connect. Properties:
+
 - `address` — base58 public key string
 - `publicKey` — `Uint8Array` (32 bytes)
 - `chains` — `['solana:mainnet', 'solana:devnet']`
-- `features` — `['solana:signTransaction', 'solana:signAndSendTransaction', 'solana:signMessage']`
+- `features` — `['solana:signTransaction', 'solana:signAndSendTransaction',
+  'solana:signMessage']`
 
 ### `AlienWalletError`
 
 Error class thrown by wallet operations. Properties:
-- `code` — `WalletSolanaErrorCode` (`'rejected'` | `'not_connected'` | `'invalid_transaction'` | `'send_failed'` | `'timeout'` | `'unknown'`)
+
+- `code` — `WalletSolanaErrorCode` (numeric error code)
 - `message` — Human-readable error description
+- `data` — Optional structured error details

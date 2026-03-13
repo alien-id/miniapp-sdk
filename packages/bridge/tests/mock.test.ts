@@ -99,7 +99,7 @@ describe('createMockBridge', () => {
       { reqId: 'req-conn-1', timeout: 1000 },
     );
 
-    expect(response.publicKey).toBe('11111111111111111111111111111111');
+    expect(response.result?.publicKey).toBe('11111111111111111111111111111111');
     expect(response.reqId).toBe('req-conn-1');
   });
 

@@ -6,6 +6,27 @@ import type {
 } from '../../utils';
 import type { CreateEventPayload } from '../types/payload';
 
+/** JSON-RPC 2.0 error payload for wallet responses. */
+export type WalletError = {
+  /** Numeric error code. See {@link WalletSolanaErrorCode}. */
+  code: WalletSolanaErrorCode;
+  /** Human-readable error description. */
+  message: string;
+  /** Optional structured error details. */
+  data?: Record<string, unknown>;
+};
+
+/**
+ * JSON-RPC 2.0 aligned wallet response envelope (discriminated union).
+ * Exactly one of `result` or `error` is present — never both, never neither.
+ * @since 1.0.0
+ * @schema
+ */
+type WalletResponse<TResult> = WithReqId<
+  | { /** Success payload. */ result: TResult; error?: never }
+  | { result?: never /** Error payload. */; error: WalletError }
+>;
+
 /**
  * Events interface defining all available events and their payloads.
  * @since 0.0.1
@@ -89,64 +110,52 @@ export interface Events {
   >;
   /**
    * Solana wallet connection response.
+   * Uses JSON-RPC 2.0 aligned `result`/`error` envelope.
    * @since 1.0.0
    * @schema
    */
   'wallet.solana:connect.response': CreateEventPayload<
-    WithReqId<{
+    WalletResponse<{
       /** Base58-encoded public key of the connected wallet */
-      publicKey?: string;
-      /** Numeric error code (WalletConnect-compatible). See {@link WalletSolanaErrorCode}. */
-      errorCode?: WalletSolanaErrorCode;
-      /** Human-readable error description */
-      errorMessage?: string;
+      publicKey: string;
     }>
   >;
   /**
    * Solana transaction signing response.
+   * Uses JSON-RPC 2.0 aligned `result`/`error` envelope.
    * @since 1.0.0
    * @schema
    */
   'wallet.solana:sign.transaction.response': CreateEventPayload<
-    WithReqId<{
+    WalletResponse<{
       /** Base64-encoded signed transaction */
-      signedTransaction?: string;
-      /** Numeric error code (WalletConnect-compatible). See {@link WalletSolanaErrorCode}. */
-      errorCode?: WalletSolanaErrorCode;
-      /** Human-readable error description */
-      errorMessage?: string;
+      transaction: string;
     }>
   >;
   /**
    * Solana message signing response.
+   * Uses JSON-RPC 2.0 aligned `result`/`error` envelope.
    * @since 1.0.0
    * @schema
    */
   'wallet.solana:sign.message.response': CreateEventPayload<
-    WithReqId<{
+    WalletResponse<{
       /** Base58-encoded Ed25519 signature (64 bytes) */
-      signature?: string;
-      /** Base58-encoded public key that signed the message */
-      publicKey?: string;
-      /** Numeric error code (WalletConnect-compatible). See {@link WalletSolanaErrorCode}. */
-      errorCode?: WalletSolanaErrorCode;
-      /** Human-readable error description */
-      errorMessage?: string;
+      signature: string;
+      /** Base58-encoded public key that produced the signature */
+      publicKey: string;
     }>
   >;
   /**
    * Solana sign-and-send transaction response.
+   * Uses JSON-RPC 2.0 aligned `result`/`error` envelope.
    * @since 1.0.0
    * @schema
    */
   'wallet.solana:sign.send.response': CreateEventPayload<
-    WithReqId<{
+    WalletResponse<{
       /** Base58-encoded transaction signature */
-      signature?: string;
-      /** Numeric error code (WalletConnect-compatible). See {@link WalletSolanaErrorCode}. */
-      errorCode?: WalletSolanaErrorCode;
-      /** Human-readable error description */
-      errorMessage?: string;
+      signature: string;
     }>
   >;
 }
