@@ -127,7 +127,9 @@ export function mockLaunchParamsForDev(params: Partial<LaunchParams>): void {
     );
   }
 
-  console.warn('[@alien-id/miniapps-bridge] Using mock launch params - dev mode');
+  console.warn(
+    '[@alien-id/miniapps-bridge] Using mock launch params - dev mode',
+  );
 
   // Inject directly into window globals (same as host app)
   if (params.authToken !== undefined) {

@@ -30,7 +30,10 @@ export type {
   Version,
 } from '@alien-id/miniapps-contract';
 // Re-export version utilities from contract
-export { getMethodMinVersion, isMethodSupported } from '@alien-id/miniapps-contract';
+export {
+  getMethodMinVersion,
+  isMethodSupported,
+} from '@alien-id/miniapps-contract';
 // Provider
 export { AlienProvider, type AlienProviderProps } from './context';
 // Errors
