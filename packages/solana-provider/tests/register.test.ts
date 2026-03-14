@@ -21,7 +21,6 @@ mock.module('@alien-id/miniapps-bridge', () => ({
       ifAvailable: mock(() => ({ ok: true, data: undefined })),
     },
   ),
-
 }));
 
 mock.module('@alien-id/miniapps-contract', () => ({
