@@ -1,7 +1,5 @@
 import { beforeEach, describe, expect, mock, test } from 'bun:test';
 
-class MockBridgeTimeoutError extends Error {}
-
 const requestMock = mock(async (method: string) => {
   if (method === 'wallet.solana:connect') {
     return {
@@ -28,7 +26,6 @@ const sendMock = Object.assign(
 mock.module('@alien-id/miniapps-bridge', () => ({
   request: requestMock,
   send: sendMock,
-  BridgeTimeoutError: MockBridgeTimeoutError,
 }));
 
 mock.module('@alien-id/miniapps-contract', () => ({
@@ -62,24 +59,6 @@ describe('AlienSolanaWallet', () => {
       }
 
       return { reqId: 'req-default' };
-    });
-  });
-
-  test('normalizes bridge timeout errors from connect', async () => {
-    const { WALLET_ERROR } = await import('@alien-id/miniapps-contract');
-    const { AlienSolanaWallet } = await import('../src/wallet');
-
-    requestMock.mockRejectedValueOnce(
-      new MockBridgeTimeoutError('Request timed out'),
-    );
-
-    const wallet = new AlienSolanaWallet();
-
-    await expect(
-      wallet.features['standard:connect'].connect(),
-    ).rejects.toMatchObject({
-      code: WALLET_ERROR.REQUEST_EXPIRED,
-      message: 'Request timed out',
     });
   });
 

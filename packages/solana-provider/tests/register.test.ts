@@ -21,7 +21,6 @@ mock.module('@alien-id/miniapps-bridge', () => ({
       ifAvailable: mock(() => ({ ok: true, data: undefined })),
     },
   ),
-  BridgeTimeoutError: class extends Error {},
 }));
 
 mock.module('@alien-id/miniapps-contract', () => ({

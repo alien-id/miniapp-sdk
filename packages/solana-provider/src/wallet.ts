@@ -1,4 +1,4 @@
-import { BridgeTimeoutError, request, send } from '@alien-id/miniapps-bridge';
+import { request, send } from '@alien-id/miniapps-bridge';
 import {
   type SolanaChain,
   WALLET_ERROR,
@@ -55,10 +55,6 @@ export class AlienWalletError extends Error {
 function normalizeWalletError(error: unknown): AlienWalletError {
   if (error instanceof AlienWalletError) {
     return error;
-  }
-
-  if (error instanceof BridgeTimeoutError) {
-    return new AlienWalletError(WALLET_ERROR.REQUEST_EXPIRED, error.message);
   }
 
   if (error instanceof Error) {
@@ -132,7 +128,6 @@ export class AlienSolanaWallet implements Wallet {
       'wallet.solana:connect',
       {},
       'wallet.solana:connect.response',
-      { timeout: 60000 },
     ).catch((error) => {
       throw normalizeWalletError(error);
     });
@@ -197,7 +192,6 @@ export class AlienSolanaWallet implements Wallet {
         'wallet.solana:sign.transaction',
         { transaction: transactionBase64 },
         'wallet.solana:sign.transaction.response',
-        { timeout: 60000 },
       ).catch((error) => {
         throw normalizeWalletError(error);
       });
@@ -247,7 +241,6 @@ export class AlienSolanaWallet implements Wallet {
             : undefined,
         },
         'wallet.solana:sign.send.response',
-        { timeout: 60000 },
       ).catch((error) => {
         throw normalizeWalletError(error);
       });
@@ -284,7 +277,6 @@ export class AlienSolanaWallet implements Wallet {
         'wallet.solana:sign.message',
         { message: messageBase58 },
         'wallet.solana:sign.message.response',
-        { timeout: 60000 },
       ).catch((error) => {
         throw normalizeWalletError(error);
       });
