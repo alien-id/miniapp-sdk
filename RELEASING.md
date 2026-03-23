@@ -34,7 +34,7 @@ version. Otherwise users installing an upstream package get a stale dependency.
 | bridge | @alien-id/miniapps-bridge | 1.3.4 |
 | react | @alien-id/miniapps-react | 1.3.4 |
 | auth-client | @alien-id/miniapps-auth-client | 1.3.4 |
-| solana-provider | @alien-id/miniapps-solana-provider | 1.3.5 |
+| solana-provider | @alien-id/miniapps-solana-provider | 1.3.6 |
 
 ## Steps
 
