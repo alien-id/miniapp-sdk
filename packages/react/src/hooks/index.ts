@@ -1,5 +1,6 @@
 export { useAlien } from './useAlien';
 export { type UseBackButtonReturn, useBackButton } from './useBackButton';
+export { type UseCloseReturn, useClose } from './useClose';
 export {
   type ClipboardErrorCode,
   type UseClipboardOptions,

@@ -127,6 +127,22 @@ function DetailScreen() {
 
 The hook manages visibility, listens for clicks, and hides the button on unmount. Safe to pass inline callbacks — they're stabilized internally via ref.
 
+### useClose
+
+Request the host app to close the miniapp:
+
+```tsx
+import { useClose } from '@alien-id/miniapps-react';
+
+function CloseButton() {
+  const { close, supported } = useClose();
+
+  if (!supported) return null;
+
+  return <button onClick={close}>Close</button>;
+}
+```
+
 ### useMethod
 
 Make bridge requests with state management and version checking:
