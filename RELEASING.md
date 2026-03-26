@@ -32,7 +32,7 @@ version. Otherwise users installing an upstream package get a stale dependency.
 | --- | --- | --- |
 | contract | @alien-id/miniapps-contract | 1.3.4 |
 | bridge | @alien-id/miniapps-bridge | 1.3.4 |
-| react | @alien-id/miniapps-react | 1.3.4 |
+| react | @alien-id/miniapps-react | 1.4.0 |
 | auth-client | @alien-id/miniapps-auth-client | 1.3.4 |
 | solana-provider | @alien-id/miniapps-solana-provider | 1.3.6 |
 
