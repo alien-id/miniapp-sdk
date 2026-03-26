@@ -1,12 +1,12 @@
 export { useAlien } from './useAlien';
 export { type UseBackButtonReturn, useBackButton } from './useBackButton';
-export { type UseCloseReturn, useClose } from './useClose';
 export {
   type ClipboardErrorCode,
   type UseClipboardOptions,
   type UseClipboardReturn,
   useClipboard,
 } from './useClipboard';
+export { type UseCloseReturn, useClose } from './useClose';
 export { useEvent } from './useEvent';
 export { type UseHapticReturn, useHaptic } from './useHaptic';
 export {
