@@ -6,6 +6,7 @@ export {
   type UseClipboardReturn,
   useClipboard,
 } from './useClipboard';
+export { type UseCloseReturn, useClose } from './useClose';
 export { useEvent } from './useEvent';
 export { type UseHapticReturn, useHaptic } from './useHaptic';
 export {
