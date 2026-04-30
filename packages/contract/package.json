@@ -1,6 +1,6 @@
 {
   "name": "@alien-id/miniapps-contract",
-  "version": "1.5.0",
+  "version": "1.5.0-alpha",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

@@ -1,6 +1,6 @@
 {
   "name": "@alien-id/miniapps-bridge",
-  "version": "1.4.0",
+  "version": "1.4.1-alpha",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
