@@ -42,6 +42,18 @@ Cascaded packages that had no code changes get a **patch** bump automatically.
 
 Execute steps in order. Each step has clear success criteria.
 
+### Step 0: Sync `main`
+
+Releases land on `main` per the project's GitHub Flow configuration. Switch to `main` and pull the latest before bumping anything:
+
+```bash
+git switch main && git pull --ff-only origin main
+```
+
+If `git pull --ff-only` fails (local `main` has diverged), abort and ask the user to resolve before continuing — never force-update `main`.
+
+**Success**: working tree clean and on `main` at `origin/main` HEAD.
+
 ### Step 1: Detect Changes
 
 Run the change detection script:
@@ -167,7 +179,7 @@ Push tags in dependency order, waiting for CI between each group.
 
 **Push 1** - Independent packages:
 ```bash
-git push origin develop contract@<version> auth-client@<version>
+git push origin main contract@<version> auth-client@<version>
 ```
 Show message: "Pushing contract and auth-client. Click **Continue** when workflows complete."
 Provide link: https://github.com/alien-id/miniapp-sdk/actions
