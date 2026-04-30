@@ -21,6 +21,12 @@ export {
   useMethod,
 } from './useMethod';
 export {
+  type NotificationPermissionStatus,
+  type UseNotificationPermissionOptions,
+  type UseNotificationPermissionReturn,
+  useNotificationPermission,
+} from './useNotificationPermission';
+export {
   type PaymentCallbacks,
   type PaymentErrorCode,
   type PaymentParams,

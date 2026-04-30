@@ -28,4 +28,5 @@ export const releases: Record<
     'app:close',
     'host.back.button:toggle',
   ],
+  '1.5.0': ['notifications:permission.request'],
 };

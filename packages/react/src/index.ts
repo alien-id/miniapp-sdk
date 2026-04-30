@@ -50,6 +50,7 @@ export {
 export {
   type ClipboardErrorCode,
   type MethodSupportResult,
+  type NotificationPermissionStatus,
   type PaymentCallbacks,
   type PaymentErrorCode,
   type PaymentParams,
@@ -63,6 +64,8 @@ export {
   type UseHapticReturn,
   type UseMethodExecuteResult,
   type UseMethodOptions,
+  type UseNotificationPermissionOptions,
+  type UseNotificationPermissionReturn,
   type UsePaymentOptions,
   type UsePaymentReturn,
   useAlien,
@@ -75,5 +78,6 @@ export {
   useLaunchParams,
   useLinkInterceptor,
   useMethod,
+  useNotificationPermission,
   usePayment,
 } from './hooks';

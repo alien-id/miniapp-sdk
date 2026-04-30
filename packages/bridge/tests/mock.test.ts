@@ -39,7 +39,7 @@ describe('createMockBridge', () => {
   test('sets launch param globals with defaults', () => {
     mock = createMockBridge();
     expect(window.__ALIEN_AUTH_TOKEN__).toBe('mock-auth-token');
-    expect(window.__ALIEN_CONTRACT_VERSION__).toBe('1.0.0');
+    expect(window.__ALIEN_CONTRACT_VERSION__).toBe('1.5.0');
     expect(window.__ALIEN_PLATFORM__).toBe('ios');
     expect(window.__ALIEN_DISPLAY_MODE__).toBe('standard');
   });
@@ -53,7 +53,7 @@ describe('createMockBridge', () => {
     });
     expect(window.__ALIEN_AUTH_TOKEN__).toBe('custom-token');
     expect(window.__ALIEN_PLATFORM__).toBe('android');
-    expect(window.__ALIEN_CONTRACT_VERSION__).toBe('1.0.0');
+    expect(window.__ALIEN_CONTRACT_VERSION__).toBe('1.5.0');
   });
 
   test('auto-responds to payment:request with default payload', async () => {

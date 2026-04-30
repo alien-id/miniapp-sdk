@@ -82,6 +82,13 @@ const METHOD_RESPONSE_MAP: Record<
       reqId,
     }),
   },
+  'notifications:permission.request': {
+    event: 'notifications:permission.response',
+    defaultResponse: (reqId) => ({
+      status: 'granted',
+      reqId,
+    }),
+  },
 };
 
 const FIRE_AND_FORGET_METHODS = new Set<string>([
@@ -98,7 +105,7 @@ const FIRE_AND_FORGET_METHODS = new Set<string>([
 
 const DEFAULT_LAUNCH_PARAMS: Partial<LaunchParams> = {
   authToken: 'mock-auth-token',
-  contractVersion: '1.0.0',
+  contractVersion: '1.5.0',
   platform: 'ios',
   displayMode: 'standard',
 };
