@@ -1,5 +1,6 @@
 import type {
   Empty,
+  NotificationPermissionStatus,
   PaymentErrorCode,
   WalletSolanaErrorCode,
   WithReqId,
@@ -147,6 +148,30 @@ export interface Events {
       errorCode?: WalletSolanaErrorCode;
       /** Human-readable error description */
       errorMessage?: string;
+    }>
+  >;
+  /**
+   * Notification permission response.
+   *
+   * Statuses (Phase 1):
+   * - `granted`: User allowed notifications for this miniapp.
+   * - `denied`: User dismissed the consent prompt.
+   * - `rate_limited`: Host suppressed the prompt; budget exhausted.
+   *
+   * `prompt` is never returned — the request either short-circuits from
+   * stored consent or resolves the drawer to granted/denied.
+   *
+   * @since 1.5.0
+   * @schema
+   */
+  'notifications:permission.response': CreateEventPayload<
+    WithReqId<{
+      /**
+       * Resolved permission status.
+       * @since 1.5.0
+       * @schema
+       */
+      status: NotificationPermissionStatus;
     }>
   >;
 }

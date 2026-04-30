@@ -315,4 +315,16 @@ export interface Methods {
       };
     }>
   >;
+  /**
+   * Request OS push-notification permission for this miniapp.
+   *
+   * Prompts the user via the host consent drawer unless consent is already
+   * `granted` or the host's per-miniapp prompt budget is exhausted. The
+   * `notifications:permission.response` event carries the resolved status:
+   * `granted` | `denied` | `rate_limited`.
+   *
+   * @since 1.5.0
+   * @schema
+   */
+  'notifications:permission.request': CreateMethodPayload<WithReqId<Empty>>;
 }

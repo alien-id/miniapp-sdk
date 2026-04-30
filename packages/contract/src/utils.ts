@@ -185,6 +185,22 @@ export const WALLET_ERROR = {
 export type SolanaCommitment = 'processed' | 'confirmed' | 'finalized';
 
 /**
+ * Notification permission status returned by `notifications:permission.request`.
+ *
+ * - `granted`: User allowed notifications for this miniapp.
+ * - `denied`: User dismissed the consent prompt.
+ * - `rate_limited`: Host suppressed the prompt (≤ 3 prompts per rolling 24 h
+ *   per `sessionAddress` × miniapp). Stored consent is unchanged.
+ *
+ * @since 1.5.0
+ * @schema
+ */
+export type NotificationPermissionStatus =
+  | 'granted'
+  | 'denied'
+  | 'rate_limited';
+
+/**
  * Solana chain identifiers (wallet-standard format).
  * Used by `wallet.solana:sign.send` to tell the host app
  * which cluster to broadcast to.
