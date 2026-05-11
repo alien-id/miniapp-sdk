@@ -17,7 +17,8 @@ function b64urlByteLength(s: string): number {
   // RFC 7518 §3.3 modulus floor check operates on byte length of `n`.
   // Decode just enough to count bytes; jose imports the same value.
   const b64 = s.replace(/-/g, '+').replace(/_/g, '/');
-  const pad = b64.length % 4 === 0 ? b64 : b64 + '='.repeat(4 - (b64.length % 4));
+  const pad =
+    b64.length % 4 === 0 ? b64 : b64 + '='.repeat(4 - (b64.length % 4));
   return atob(pad).length;
 }
 
@@ -69,7 +70,10 @@ class AuthClient {
     // `enc` JOSE header parameter. Encrypted access tokens are not
     // supported by this verifier; reject with a typed error so callers can
     // distinguish encryption from generic JWS malformation.
-    if (typeof accessToken === 'string' && accessToken.split('.').length === 5) {
+    if (
+      typeof accessToken === 'string' &&
+      accessToken.split('.').length === 5
+    ) {
       throw new Error('encrypted JWT (JWE) is not supported');
     }
     // RFC 7515 §2: BASE64URL is the RFC 4648 §5 URL-safe alphabet with no
@@ -138,8 +142,13 @@ export const createAuthClient = ({
       throw new Error('audience must be a non-empty string');
     }
   } else if (Array.isArray(audience)) {
-    if (audience.length === 0 || audience.some((a) => typeof a !== 'string' || a.length === 0)) {
-      throw new Error('audience array must contain at least one non-empty string');
+    if (
+      audience.length === 0 ||
+      audience.some((a) => typeof a !== 'string' || a.length === 0)
+    ) {
+      throw new Error(
+        'audience array must contain at least one non-empty string',
+      );
     }
   } else {
     throw new Error('audience is required');
@@ -155,8 +164,8 @@ export const createAuthClient = ({
   }
   return new AuthClient(jwksResolver, audience, effectiveIssuer);
 };
-export type { AuthClient, AuthClientOptions };
 export { errors as JwtErrors } from 'jose';
+export type { AuthClient, AuthClientOptions };
 
 // ─── RFC 6750 §3 / RFC 9449 §7.1 — WWW-Authenticate challenge builders ───────
 
@@ -314,7 +323,10 @@ function b64urlEncode(bytes: Uint8Array): string {
 
 async function sha256Base64Url(input: string): Promise<string> {
   const data = new TextEncoder().encode(input);
-  const buf = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
+  const buf = data.buffer.slice(
+    data.byteOffset,
+    data.byteOffset + data.byteLength,
+  );
   const hash = await crypto.subtle.digest('SHA-256', buf);
   return b64urlEncode(new Uint8Array(hash));
 }
@@ -362,16 +374,22 @@ export async function verifyDPoPProof(
   const typRaw = header.typ;
   const typLower = typeof typRaw === 'string' ? typRaw.toLowerCase() : '';
   if (typLower !== 'dpop+jwt' && typLower !== 'application/dpop+jwt') {
-    throw new Error(`DPoP proof: invalid typ ${String(typRaw)} (RFC 9449 §4.1)`);
+    throw new Error(
+      `DPoP proof: invalid typ ${String(typRaw)} (RFC 9449 §4.1)`,
+    );
   }
   const algs = opts.algorithms ?? DEFAULT_DPOP_ALGS;
   if (typeof header.alg !== 'string' || !algs.includes(header.alg)) {
-    throw new Error(`DPoP proof: invalid alg ${String(header.alg)} (RFC 9449 §4.1)`);
+    throw new Error(
+      `DPoP proof: invalid alg ${String(header.alg)} (RFC 9449 §4.1)`,
+    );
   }
   // RFC 9449 §4.1: `jwk` MUST be the public key — no private parts.
   const jwk = header.jwk as Record<string, unknown> | undefined;
   if (!jwk || typeof jwk !== 'object') {
-    throw new Error('DPoP proof: missing or non-object jwk header (RFC 9449 §4.1)');
+    throw new Error(
+      'DPoP proof: missing or non-object jwk header (RFC 9449 §4.1)',
+    );
   }
   for (const privateField of ['d', 'p', 'q', 'dp', 'dq', 'qi', 'oth', 'k']) {
     if (privateField in jwk) {

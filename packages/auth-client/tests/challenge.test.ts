@@ -1,8 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import {
-  buildBearerChallenge,
-  buildDPoPChallenge,
-} from '../src/index';
+import { buildBearerChallenge, buildDPoPChallenge } from '../src/index';
 
 describe('buildBearerChallenge', () => {
   test('emits scheme + realm auth-param', () => {
@@ -63,9 +60,7 @@ describe('buildBearerChallenge', () => {
 
 describe('buildDPoPChallenge', () => {
   test('emits scheme + algs as a space-delimited quoted auth-param (RFC 9449 §7.1)', () => {
-    expect(buildDPoPChallenge({ algs: ['EdDSA'] })).toBe(
-      'DPoP algs="EdDSA"',
-    );
+    expect(buildDPoPChallenge({ algs: ['EdDSA'] })).toBe('DPoP algs="EdDSA"');
   });
 
   test('emits multiple algs space-delimited inside one auth-param', () => {

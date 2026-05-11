@@ -260,8 +260,10 @@ describe('AuthClient tests', () => {
     // ATs as EdDSA (single-string aud=providerAddress). The /oauth/jwks endpoint
     // publishes both keys; jose picks by `kid`. This test exercises the EdDSA leg
     // explicitly so the legacy flow has the same coverage as the OAuth path.
-    const { publicKey: edPub, privateKey: edPriv } =
-      await jose.generateKeyPair('EdDSA', { crv: 'Ed25519' });
+    const { publicKey: edPub, privateKey: edPriv } = await jose.generateKeyPair(
+      'EdDSA',
+      { crv: 'Ed25519' },
+    );
     const edPubJwk = await jose.exportJWK(edPub);
     edPubJwk.alg = 'EdDSA';
     edPubJwk.use = 'sig';
@@ -365,8 +367,10 @@ describe('AuthClient tests', () => {
   });
 
   test('RFC 7515 §4.1.11: legacy EdDSA token with unsupported crit header is rejected', async () => {
-    const { publicKey: edPub, privateKey: edPriv } =
-      await jose.generateKeyPair('EdDSA', { crv: 'Ed25519' });
+    const { publicKey: edPub, privateKey: edPriv } = await jose.generateKeyPair(
+      'EdDSA',
+      { crv: 'Ed25519' },
+    );
     const edPubJwk = await jose.exportJWK(edPub);
     edPubJwk.alg = 'EdDSA';
     edPubJwk.use = 'sig';
@@ -400,8 +404,10 @@ describe('AuthClient tests', () => {
   });
 
   test('RFC 8037 §2: OKP JWK missing crv is rejected at verification', async () => {
-    const { publicKey: edPub, privateKey: edPriv } =
-      await jose.generateKeyPair('EdDSA', { crv: 'Ed25519' });
+    const { publicKey: edPub, privateKey: edPriv } = await jose.generateKeyPair(
+      'EdDSA',
+      { crv: 'Ed25519' },
+    );
     const edPubJwk = await jose.exportJWK(edPub);
     edPubJwk.alg = 'EdDSA';
     edPubJwk.use = 'sig';
@@ -431,8 +437,10 @@ describe('AuthClient tests', () => {
   });
 
   test('RFC 8037 §2: OKP JWK missing x is rejected at verification', async () => {
-    const { publicKey: edPub, privateKey: edPriv } =
-      await jose.generateKeyPair('EdDSA', { crv: 'Ed25519' });
+    const { publicKey: edPub, privateKey: edPriv } = await jose.generateKeyPair(
+      'EdDSA',
+      { crv: 'Ed25519' },
+    );
     const edPubJwk = await jose.exportJWK(edPub);
     edPubJwk.alg = 'EdDSA';
     edPubJwk.use = 'sig';
@@ -465,18 +473,25 @@ describe('AuthClient tests', () => {
     // misconfiguration. The verifier still only trusts the public material;
     // a token signed by a *different* key with the same kid must be rejected
     // because verification uses only the public x coordinate.
-    const { publicKey: edPub, privateKey: edPriv } =
-      await jose.generateKeyPair('EdDSA', {
+    const { publicKey: edPub, privateKey: edPriv } = await jose.generateKeyPair(
+      'EdDSA',
+      {
         crv: 'Ed25519',
         extractable: true,
-      });
+      },
+    );
     const edPrivJwk = await jose.exportJWK(edPriv);
     const edPubJwk = await jose.exportJWK(edPub);
     // Sanity: confirm we actually pulled out a private JWK with `d`.
     expect((edPrivJwk as { d?: string }).d).toBeDefined();
     expect((edPubJwk as { d?: string }).d).toBeUndefined();
 
-    const leakyJwk = { ...edPrivJwk, alg: 'EdDSA', use: 'sig', kid: 'okp-leaky' };
+    const leakyJwk = {
+      ...edPrivJwk,
+      alg: 'EdDSA',
+      use: 'sig',
+      kid: 'okp-leaky',
+    };
     const leakyJwks = jose.createLocalJWKSet({ keys: [leakyJwk] });
     const leakyClient = createAuthClient({
       jwks: leakyJwks,
@@ -486,8 +501,9 @@ describe('AuthClient tests', () => {
 
     // Sign with an unrelated key but claim the leaky kid: must be rejected
     // because the public material (x) does not match the signing key.
-    const { privateKey: otherPriv } =
-      await jose.generateKeyPair('EdDSA', { crv: 'Ed25519' });
+    const { privateKey: otherPriv } = await jose.generateKeyPair('EdDSA', {
+      crv: 'Ed25519',
+    });
     const token = await new jose.SignJWT({
       sub: '00000001010000000000000200000000',
       iss: issuer,
@@ -595,7 +611,12 @@ describe('AuthClient tests', () => {
   // misconfiguration; jose's resolver MUST refuse to use it.
   test('RFC 7518 §6 / RFC 8037 §2: JWK with alg/kty mismatch is rejected', async () => {
     // Take the working RS256 public key but mutate kty to OKP.
-    const mutated = { ...publicKeyJwk, kid: 'kty-mut', kty: 'OKP', crv: 'Ed25519' } as jose.JWK;
+    const mutated = {
+      ...publicKeyJwk,
+      kid: 'kty-mut',
+      kty: 'OKP',
+      crv: 'Ed25519',
+    } as jose.JWK;
     const mutatedJwks = jose.createLocalJWKSet({ keys: [mutated] });
     const mutatedClient = createAuthClient({
       jwks: mutatedJwks,
@@ -626,7 +647,11 @@ describe('AuthClient tests', () => {
   // signature.
   test('RFC 7515 §10.12: header that decodes to non-JSON bytes is rejected at decode (not signature)', async () => {
     const b64url = (b: Buffer) =>
-      b.toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+      b
+        .toString('base64')
+        .replace(/=/g, '')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_');
     const garbage = b64url(Buffer.from([0xff, 0xfe, 0xfd, 0x00, 0x01]));
     const payload = b64url(Buffer.from(JSON.stringify({ sub: 'x' })));
     const token = `${garbage}.${payload}.sig`;
@@ -640,7 +665,11 @@ describe('AuthClient tests', () => {
   // be rejected at decode.
   test('RFC 7515 §10.12: header that decodes to a JSON array is rejected at decode (not signature)', async () => {
     const b64url = (s: string) =>
-      Buffer.from(s).toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+      Buffer.from(s)
+        .toString('base64')
+        .replace(/=/g, '')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_');
     const header = b64url(JSON.stringify(['alg', 'RS256']));
     const payload = b64url(JSON.stringify({ sub: 'x' }));
     const token = `${header}.${payload}.sig`;
@@ -651,7 +680,11 @@ describe('AuthClient tests', () => {
 
   test('RFC 7515 §10.12: header that decodes to a JSON string is rejected at decode (not signature)', async () => {
     const b64url = (s: string) =>
-      Buffer.from(s).toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+      Buffer.from(s)
+        .toString('base64')
+        .replace(/=/g, '')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_');
     const header = b64url(JSON.stringify('not-a-header'));
     const payload = b64url(JSON.stringify({ sub: 'x' }));
     const token = `${header}.${payload}.sig`;
@@ -667,8 +700,6 @@ describe('AuthClient tests', () => {
   // signature check, otherwise input validation depends on cryptographic
   // failure paths.
   test('RFC 7515 §2: header containing whitespace in the base64url segment is rejected at decode (not signature)', async () => {
-    const b64url = (s: string) =>
-      Buffer.from(s).toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
     // Sign a real token then taint the header segment.
     const real = await new jose.SignJWT({
       sub: '00000001010000000000000200000000',
@@ -692,15 +723,15 @@ describe('AuthClient tests', () => {
 
   test("RFC 7515 §2: header containing '+' (standard base64) is rejected at decode (not signature)", async () => {
     const b64url = (s: string) =>
-      Buffer.from(s).toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+      Buffer.from(s)
+        .toString('base64')
+        .replace(/=/g, '')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_');
     const headerJson = JSON.stringify({ alg: 'RS256', typ: 'at+jwt' });
     let stdB64 = Buffer.from(headerJson).toString('base64').replace(/=/g, '');
     if (!stdB64.includes('+')) {
-      stdB64 = Buffer.from([
-        ...Buffer.from(headerJson),
-        0xfb,
-        0xff,
-      ])
+      stdB64 = Buffer.from([...Buffer.from(headerJson), 0xfb, 0xff])
         .toString('base64')
         .replace(/=/g, '');
     }
@@ -714,7 +745,11 @@ describe('AuthClient tests', () => {
 
   test("RFC 7515 §2: header containing '=' padding is rejected at decode (not signature)", async () => {
     const b64url = (s: string) =>
-      Buffer.from(s).toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+      Buffer.from(s)
+        .toString('base64')
+        .replace(/=/g, '')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_');
     const validHeader = b64url(JSON.stringify({ alg: 'RS256', typ: 'at+jwt' }));
     const padded = `${validHeader}==`;
     const payload = b64url(JSON.stringify({ sub: 'x' }));
@@ -771,7 +806,9 @@ describe('AuthClient tests', () => {
   });
 
   test('RFC 7519 §4.1.3: createAuthClient rejects audience array containing empty string', () => {
-    expect(() => createAuthClient({ audience: ['valid', ''] })).toThrow(/audience/i);
+    expect(() => createAuthClient({ audience: ['valid', ''] })).toThrow(
+      /audience/i,
+    );
   });
 
   test('RFC 9068 §2.2 / OIDC §2: TokenInfoSchema surfaces acr and amr instead of stripping them', async () => {

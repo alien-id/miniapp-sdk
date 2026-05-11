@@ -119,7 +119,9 @@ describe('verifyDPoPProof (RFC 9449 §7.5)', () => {
   });
 
   test('RFC 9449 §4.3: rejects a proof whose htu does not match the request URI', async () => {
-    const proof = await makeProof(keys, { htu: 'https://attacker.example/resource' });
+    const proof = await makeProof(keys, {
+      htu: 'https://attacker.example/resource',
+    });
     await expect(
       verifyDPoPProof(proof, { expectedJkt: keys.jkt, htm: HTM, htu: HTU }),
     ).rejects.toThrow(/htu/i);
