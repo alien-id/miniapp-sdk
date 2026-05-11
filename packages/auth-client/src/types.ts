@@ -8,18 +8,6 @@ import { z } from 'zod';
  * schema because the legacy EdDSA `/sso/access_token/exchange` ATs predate
  * RFC 9068 and do not carry them.
  */
-/**
- * RFC 7800 §3.1 confirmation claim. When the AS issues a DPoP-bound AT
- * (RFC 9449 §6) it includes `cnf.jkt` set to the JWK thumbprint that
- * MUST match the DPoP proof's key. This verifier does not itself validate
- * the proof — it surfaces `cnf` so callers can perform the resource-side
- * check against the inbound `DPoP` header on their request.
- */
-export const ConfirmationSchema = z.object({
-  jkt: z.optional(z.string()),
-});
-export type Confirmation = z.infer<typeof ConfirmationSchema>;
-
 export const TokenInfoSchema = z.object({
   iss: z.string(),
   sub: z.string(),
@@ -36,6 +24,5 @@ export const TokenInfoSchema = z.object({
   // on AAL or specific authentication factors can read them.
   acr: z.optional(z.string()),
   amr: z.optional(z.array(z.string())),
-  cnf: z.optional(ConfirmationSchema),
 });
 export type TokenInfo = z.infer<typeof TokenInfoSchema>;
