@@ -6,9 +6,6 @@
   },
   "devDependencies": {
     "@alien-id/miniapps-bridge": "workspace:*",
-    "@biomejs/biome": "2.4.10"
-  },
-  "overrides": {
-    "unrun": "0.2.37"
+    "@biomejs/biome": "2.4.15"
   }
 }

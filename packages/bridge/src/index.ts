@@ -40,9 +40,9 @@ export type { SafeRequestOptions } from './request-safe';
 export type { AvailabilityOptions, SafeResult } from './safe-result';
 // Safe execution
 export { isAvailable } from './safe-result';
-export { requestIfAvailable, sendIfAvailable };
 export type { EventMessage, Message, MethodMessage } from './transport';
 export { isBridgeAvailable } from './utils';
+export { requestIfAvailable, sendIfAvailable };
 
 /**
  * Sends a one-way method to the host app.
