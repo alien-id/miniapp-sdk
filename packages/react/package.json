@@ -1,6 +1,6 @@
 {
   "name": "@alien-id/miniapps-react",
-  "version": "1.6.0-alpha",
+  "version": "1.6.0-alpha.1",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

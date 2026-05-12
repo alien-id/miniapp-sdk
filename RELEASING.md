@@ -30,11 +30,11 @@ version. Otherwise users installing an upstream package get a stale dependency.
 
 | Package | Name | Current Version |
 | --- | --- | --- |
-| contract | @alien-id/miniapps-contract | 1.5.0-alpha |
-| bridge | @alien-id/miniapps-bridge | 1.4.1-alpha |
-| react | @alien-id/miniapps-react | 1.6.0-alpha |
-| auth-client | @alien-id/miniapps-auth-client | 1.5.0-alpha.3 |
-| solana-provider | @alien-id/miniapps-solana-provider | 1.4.1-alpha |
+| contract | @alien-id/miniapps-contract | 1.5.0-alpha.1 |
+| bridge | @alien-id/miniapps-bridge | 1.4.1-alpha.1 |
+| react | @alien-id/miniapps-react | 1.6.0-alpha.1 |
+| auth-client | @alien-id/miniapps-auth-client | 1.5.0-alpha.4 |
+| solana-provider | @alien-id/miniapps-solana-provider | 1.4.1-alpha.1 |
 
 ## Steps
 
