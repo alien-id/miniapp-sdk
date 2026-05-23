@@ -6,11 +6,15 @@ import type {
   MethodResponseEvent,
   RequestMethodName,
 } from '@alien-id/miniapps-contract';
-import { callability, callabilityError } from './callability';
+import {
+  callability,
+  type CallabilityOptions,
+  callabilityError,
+} from './callability';
 import { BridgeError, BridgeTimeoutError } from './errors';
 import { off, on } from './events';
 import { getLaunchParams } from './launch-params';
-import type { AvailabilityOptions, SafeResult } from './safe-result';
+import type { SafeResult } from './safe-result';
 import { sendMessage } from './transport';
 
 const DEFAULT_TIMEOUT = 30000; // 30 seconds
@@ -22,7 +26,7 @@ export interface RequestOptions {
 
 export interface SafeRequestOptions
   extends RequestOptions,
-    AvailabilityOptions {}
+    CallabilityOptions {}
 
 function generateReqId(): string {
   return typeof crypto !== 'undefined' && crypto.randomUUID

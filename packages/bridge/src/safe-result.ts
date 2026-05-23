@@ -1,4 +1,4 @@
-import type { Version } from '@alien-id/miniapps-contract';
+import type { CallabilityOptions } from './callability';
 
 /**
  * Discriminated union for safe execution results.
@@ -13,10 +13,11 @@ export type SafeResult<T, E extends Error = Error> =
   | { ok: false; error: E };
 
 /**
- * Options for the Safe Track functions to override the Host's Contract
- * Version. When omitted, launch params are used.
+ * @deprecated Use {@link CallabilityOptions} from `./callability` instead.
+ *
+ * Compatibility shim — `AvailabilityOptions` and `CallabilityOptions` were
+ * both `{ version?: Version }`. Kept as an alias so the public re-export in
+ * `index.ts` continues to work until Agent #2 prunes it. Remove once that
+ * re-export is gone.
  */
-export interface AvailabilityOptions {
-  /** Contract Version to gate on. Defaults to launch params if unset. */
-  version?: Version;
-}
+export type AvailabilityOptions = CallabilityOptions;

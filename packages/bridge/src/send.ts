@@ -1,8 +1,12 @@
 import type { MethodName, MethodPayload } from '@alien-id/miniapps-contract';
-import { callability, callabilityError } from './callability';
+import {
+  callability,
+  type CallabilityOptions,
+  callabilityError,
+} from './callability';
 import { BridgeError } from './errors';
 import { getLaunchParams } from './launch-params';
-import type { AvailabilityOptions, SafeResult } from './safe-result';
+import type { SafeResult } from './safe-result';
 import { sendMessage } from './transport';
 
 /**
@@ -45,7 +49,7 @@ export const send = Object.assign(_send, {
   ifAvailable<M extends MethodName>(
     method: M,
     payload: MethodPayload<M>,
-    options?: AvailabilityOptions,
+    options?: CallabilityOptions,
   ): SafeResult<void, BridgeError> {
     const gateError = callabilityError(
       method,
