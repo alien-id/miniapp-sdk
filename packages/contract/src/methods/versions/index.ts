@@ -6,32 +6,87 @@ export { getReleaseVersion } from './get-release-version';
 export { releases } from './releases';
 
 /**
- * Compare two semver versions.
+ * Compare two semver versions on their major.minor.patch numbers only.
+ *
+ * Pre-release identifiers (`1.0.0-rc.1`, `0.2.0-alpha.3`, build metadata
+ * after `+`) are intentionally ignored: each component is parsed with
+ * `Number(part)`, and any non-numeric remainder (e.g. `'0-rc'`) collapses
+ * to `0` via the `isFinite` guard. The net effect is that `1.0.0-rc.1`
+ * compares equal to `1.0.0`.
+ *
+ * Rationale: the host injects a single Contract Version string
+ * (`window.__ALIEN_CONTRACT_VERSION__`). Method support is a property of
+ * the *released* contract surface, not of the tag spelling — a host on
+ * `1.0.0-rc.1` ships the same methods as `1.0.0`. Honouring the
+ * pre-release suffix would deny callers methods their host already
+ * declares.
+ *
+ * If stricter semver ordering is ever required (e.g. for a host that
+ * exposes draft methods only on RC builds), add a dedicated comparator
+ * rather than overloading this one.
+ *
  * @returns negative if a < b, 0 if a === b, positive if a > b
  */
 function compareVersions(a: Version, b: Version): number {
-  const [aMajor, aMinor, aPatch] = a.split('.').map(Number);
-  const [bMajor, bMinor, bPatch] = b.split('.').map(Number);
-  if (aMajor !== bMajor) return (aMajor ?? 0) - (bMajor ?? 0);
-  if (aMinor !== bMinor) return (aMinor ?? 0) - (bMinor ?? 0);
-  return (aPatch ?? 0) - (bPatch ?? 0);
+  const parse = (v: Version): [number, number, number] => {
+    const [maj, min, pat] = v.split('.').map((p) => {
+      const n = Number(p);
+      return Number.isFinite(n) ? n : 0;
+    });
+    return [maj ?? 0, min ?? 0, pat ?? 0];
+  };
+  const [aMajor, aMinor, aPatch] = parse(a);
+  const [bMajor, bMinor, bPatch] = parse(b);
+  if (aMajor !== bMajor) return aMajor - bMajor;
+  if (aMinor !== bMinor) return aMinor - bMinor;
+  return aPatch - bPatch;
 }
 
+// Build a direct `MethodName → minimum Version` lookup at module load.
+// The release table is static, so a single ascending pass yields the
+// earliest version that registers each method. `getMethodMinVersion`
+// then resolves a method in O(1) instead of rescanning every release.
+const METHOD_MIN_VERSION: ReadonlyMap<MethodName, Version> = (() => {
+  const map = new Map<MethodName, Version>();
+  const ascending = (Object.keys(releases) as Version[]).sort(compareVersions);
+  for (const version of ascending) {
+    const methods = releases[version];
+    if (!methods) continue;
+    for (const entry of methods) {
+      const name = (
+        typeof entry === 'string' ? entry : entry.method
+      ) as MethodName;
+      if (!map.has(name)) map.set(name, version);
+    }
+  }
+  return map;
+})();
+
 /**
- * Check if a method is supported in a given version.
+ * Check whether the contract declares a method at the given version.
  *
- * Uses the minimum version that introduced the method and returns true if
- * the given version is >= that minimum (semver comparison). This supports
- * versions not explicitly listed in releases (e.g. 0.1.4 when method was
- * added in 0.1.1).
+ * Returns `true` if the host's contract version is at or above the
+ * minimum release that introduced the method. This is the **Method
+ * Support** question from `CONTEXT.md` — pure protocol, no runtime
+ * state. It does *not* answer **Bridge Availability** or **Callability**
+ * (see `bridge/callability` for those).
+ *
+ * In particular, a `true` here does not mean the method can be invoked
+ * right now: the bridge might be absent (Dev Mode). Callers that need
+ * "can I call this right now?" should consume the bridge's `callability`
+ * function instead of composing this check manually.
+ *
+ * Pre-release identifiers on the version are stripped — see
+ * `compareVersions` for the rationale.
  *
  * @param method - The method name to check.
  * @param version - The contract version (must be a valid version string, not undefined).
- * @returns `true` if the method is supported in the given version, `false` otherwise.
+ * @returns `true` if the method is declared at or before the given version, `false` otherwise.
  *
  * @remarks
- * This function only accepts valid version strings. Version existence checks should be
- * handled at a higher level before calling this function.
+ * This function only accepts valid version strings. Version existence
+ * checks should be handled at a higher level before calling this
+ * function.
  */
 export function isMethodSupported(
   method: MethodName,
@@ -44,22 +99,10 @@ export function isMethodSupported(
 }
 
 /**
- * Get the minimum version that supports a method.
- * Returns undefined if method not found in any version.
+ * Get the minimum contract version that declares a method, or
+ * `undefined` if the method is not in any release. Backed by a
+ * module-load-time `Map` lookup — O(1) per call.
  */
 export function getMethodMinVersion(method: MethodName): Version | undefined {
-  const versions = Object.keys(releases) as Version[];
-  const sorted = versions.sort(compareVersions);
-
-  for (const version of sorted) {
-    const methods = releases[version];
-    if (!methods) continue;
-
-    const found = methods.some((m) =>
-      typeof m === 'string' ? m === method : m.method === method,
-    );
-    if (found) return version;
-  }
-
-  return undefined;
+  return METHOD_MIN_VERSION.get(method);
 }

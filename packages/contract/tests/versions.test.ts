@@ -214,6 +214,43 @@ describe('isMethodSupported', () => {
       ).toBe(true);
     });
   });
+
+  describe('pre-release version handling', () => {
+    // Decision (see compareVersions docstring): pre-release identifiers
+    // (`-rc.1`, `-alpha.2`, …) are stripped before numeric comparison, so
+    // `1.0.0-rc.1` is treated as equal to `1.0.0`. The host injects a
+    // single Contract Version string; honouring its release-candidate
+    // suffix would make method support depend on tag spelling rather than
+    // on the published methods, which is not the question
+    // `isMethodSupported` answers.
+    test('rc tag on the minimum version counts as supported (treated equal)', () => {
+      expect(
+        isMethodSupported(
+          'payment:init' as unknown as MethodName,
+          '1.0.0-rc.1' as unknown as Parameters<typeof isMethodSupported>[1],
+        ),
+      ).toBe(true);
+    });
+
+    test('alpha tag on a version below the minimum still fails', () => {
+      // 0.0.9-alpha.1 strips to 0.0.9; payment:init needs 1.0.0.
+      expect(
+        isMethodSupported(
+          'payment:init' as unknown as MethodName,
+          '0.0.9-alpha.1' as unknown as Parameters<typeof isMethodSupported>[1],
+        ),
+      ).toBe(false);
+    });
+
+    test('beta tag on a future major version counts as supported', () => {
+      expect(
+        isMethodSupported(
+          'auth:request' as unknown as MethodName,
+          '2.0.0-beta.3' as unknown as Parameters<typeof isMethodSupported>[1],
+        ),
+      ).toBe(true);
+    });
+  });
 });
 
 describe('getMethodMinVersion', () => {
