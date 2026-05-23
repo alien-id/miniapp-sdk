@@ -156,7 +156,9 @@ export const request = Object.assign(_request, {
     } catch (error) {
       // Strict Track only throws BridgeError subclasses; non-bridge throws
       // from `sendMessage` (e.g., `JSON.stringify` on a cyclic payload) get
-      // wrapped so the channel stays pinned to BridgeError.
+      // wrapped so the channel stays pinned to BridgeError. The original
+      // error is preserved on `.cause` (ES2022 Error option) so post-mortem
+      // debugging doesn't lose the root cause.
       return {
         ok: false,
         error:
@@ -164,6 +166,7 @@ export const request = Object.assign(_request, {
             ? error
             : new BridgeError(
                 error instanceof Error ? error.message : String(error),
+                { cause: error },
               ),
       };
     }

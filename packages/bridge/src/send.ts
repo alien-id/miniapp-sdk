@@ -61,7 +61,9 @@ export const send = Object.assign(_send, {
     } catch (error) {
       // sendMessage throws BridgeUnavailable/Window errors; anything else
       // (e.g., JSON.stringify on a cyclic payload) gets wrapped so callers
-      // can rely on the channel being a BridgeError.
+      // can rely on the channel being a BridgeError. The original error is
+      // preserved on `.cause` (ES2022 Error option) so post-mortem debugging
+      // doesn't lose the root cause.
       return {
         ok: false,
         error:
@@ -69,6 +71,7 @@ export const send = Object.assign(_send, {
             ? error
             : new BridgeError(
                 error instanceof Error ? error.message : String(error),
+                { cause: error },
               ),
       };
     }

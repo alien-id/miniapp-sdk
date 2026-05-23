@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, expect, test } from 'bun:test';
 import {
+  BridgeError,
   BridgeMethodUnsupportedError,
   BridgeTimeoutError,
   BridgeUnavailableError,
@@ -150,6 +151,43 @@ test('request.ifAvailable - should never throw', async () => {
   );
 
   expect(result.ok).toBe(false);
+});
+
+test('request.ifAvailable - wraps non-BridgeError transport throws with cause propagation', async () => {
+  // When transport.sendMessage throws a non-BridgeError (e.g., JSON.stringify
+  // on a cyclic payload), the Safe Track must wrap it in BridgeError but
+  // keep the original error reachable via `.cause`.
+  //
+  // Cross-package contract: this depends on Agent #2's `BridgeError`
+  // constructor accepting `{ cause }` as a second arg (ES2022 Error option).
+  // If Agent #2 hasn't shipped that yet, this test fails on the cause
+  // assertion — that's the intended signal to coordinate the merge.
+  const originalError = new TypeError('cyclic');
+  mockWindow.__miniAppsBridge__ = {
+    postMessage: () => {
+      throw originalError;
+    },
+  };
+  (globalThis as { window: typeof mockWindow }).window = mockWindow;
+
+  const result = await request.ifAvailable(
+    'payment:request',
+    {
+      recipient: 'wallet-123',
+      amount: '100',
+      token: 'SOL',
+      network: 'solana',
+      invoice: 'inv-123',
+    },
+    'payment:response',
+    { timeout: 50 },
+  );
+
+  expect(result.ok).toBe(false);
+  if (!result.ok) {
+    expect(result.error).toBeInstanceOf(BridgeError);
+    expect(result.error.cause).toBe(originalError);
+  }
 });
 
 test('request.ifAvailable - version override flows through to the request execution', async () => {

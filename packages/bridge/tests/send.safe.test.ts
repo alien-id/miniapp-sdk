@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, expect, test } from 'bun:test';
 import {
+  BridgeError,
   BridgeMethodUnsupportedError,
   BridgeUnavailableError,
 } from '../src/errors';
@@ -140,6 +141,32 @@ test('send.ifAvailable - should default version to launchParams contractVersion'
     expect(result.error).toBeInstanceOf(BridgeMethodUnsupportedError);
   }
   expect(bridgePostMessageCalls.length).toBe(0);
+});
+
+test('send.ifAvailable - wraps non-BridgeError transport throws with cause propagation', () => {
+  // When transport.sendMessage throws a non-BridgeError (e.g., JSON.stringify
+  // on a cyclic payload), the Safe Track must wrap it in BridgeError but
+  // keep the original error reachable via `.cause` for post-mortem debugging.
+  //
+  // Cross-package contract: this depends on Agent #2's `BridgeError`
+  // constructor accepting `{ cause }` as a second arg (ES2022 Error option).
+  // If Agent #2 hasn't shipped that yet, this test fails on the cause
+  // assertion — that's the intended signal to coordinate the merge.
+  const originalError = new TypeError('cyclic');
+  mockWindow.__miniAppsBridge__ = {
+    postMessage: () => {
+      throw originalError;
+    },
+  };
+  (globalThis as { window: typeof mockWindow }).window = mockWindow;
+
+  const result = send.ifAvailable('app:ready', {});
+
+  expect(result.ok).toBe(false);
+  if (!result.ok) {
+    expect(result.error).toBeInstanceOf(BridgeError);
+    expect(result.error.cause).toBe(originalError);
+  }
 });
 
 test('send.ifAvailable - should never throw', () => {
