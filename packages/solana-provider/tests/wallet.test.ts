@@ -368,4 +368,87 @@ describe('AlienSolanaWallet', () => {
 
     expect(output?.signature).toBeInstanceOf(Uint8Array);
   });
+
+  test('signTransaction wraps malformed host base64 as AlienWalletError', async () => {
+    const { WALLET_ERROR } = await import('@alien-id/miniapps-contract');
+    const { AlienSolanaWallet } = await import('../src/wallet');
+
+    const wallet = new AlienSolanaWallet();
+    const connectResult = await wallet.features['standard:connect'].connect();
+    const account = connectResult.accounts[0];
+    if (!account) throw new Error('Expected connected account');
+
+    // "!" is not valid base64. Without safeDecode, atob throws raw DOMException
+    // which leaks past .catch(normalizeWalletError) into the adapter.
+    requestMock.mockResolvedValueOnce({
+      signedTransaction: '!!!',
+      reqId: 'req-bad-b64',
+    });
+
+    await expect(
+      wallet.features['solana:signTransaction'].signTransaction({
+        account,
+        chain: 'solana:mainnet',
+        transaction: new Uint8Array([1]),
+      }),
+    ).rejects.toMatchObject({
+      code: WALLET_ERROR.INTERNAL_ERROR,
+      message: expect.stringContaining('signedTransaction'),
+    });
+  });
+
+  test('signAndSendTransaction wraps malformed host base58 as AlienWalletError', async () => {
+    const { WALLET_ERROR } = await import('@alien-id/miniapps-contract');
+    const { AlienSolanaWallet } = await import('../src/wallet');
+
+    const wallet = new AlienSolanaWallet();
+    const connectResult = await wallet.features['standard:connect'].connect();
+    const account = connectResult.accounts[0];
+    if (!account) throw new Error('Expected connected account');
+
+    // "0" is not in the base58 alphabet; bs58.decode throws.
+    requestMock.mockResolvedValueOnce({
+      signature: '0not-base58!',
+      reqId: 'req-bad-b58',
+    });
+
+    await expect(
+      wallet.features[
+        'solana:signAndSendTransaction'
+      ].signAndSendTransaction({
+        account,
+        chain: 'solana:devnet',
+        transaction: new Uint8Array([1]),
+      }),
+    ).rejects.toMatchObject({
+      code: WALLET_ERROR.INTERNAL_ERROR,
+      message: expect.stringContaining('signature'),
+    });
+  });
+
+  test('signMessage wraps malformed host base58 as AlienWalletError', async () => {
+    const { WALLET_ERROR } = await import('@alien-id/miniapps-contract');
+    const { AlienSolanaWallet } = await import('../src/wallet');
+
+    const wallet = new AlienSolanaWallet();
+    const connectResult = await wallet.features['standard:connect'].connect();
+    const account = connectResult.accounts[0];
+    if (!account) throw new Error('Expected connected account');
+
+    requestMock.mockResolvedValueOnce({
+      signature: '0not-base58!',
+      publicKey: account.address,
+      reqId: 'req-bad-b58-msg',
+    });
+
+    await expect(
+      wallet.features['solana:signMessage'].signMessage({
+        account,
+        message: new Uint8Array([1]),
+      }),
+    ).rejects.toMatchObject({
+      code: WALLET_ERROR.INTERNAL_ERROR,
+      message: expect.stringContaining('signature'),
+    });
+  });
 });

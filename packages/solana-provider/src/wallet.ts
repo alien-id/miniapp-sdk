@@ -193,47 +193,49 @@ export class AlienSolanaWallet implements Wallet {
       return { accounts: [] };
     }
 
-    const response = await request(
-      'wallet.solana:connect',
-      {},
-      'wallet.solana:connect.response',
-    ).catch((error) => {
-      throw normalizeWalletError(error);
-    });
-
-    if (response.errorCode) {
-      throw new AlienWalletError(response.errorCode, response.errorMessage);
-    }
-
-    if (!response.publicKey) {
-      throw new AlienWalletError(
-        WALLET_ERROR.INTERNAL_ERROR,
-        'No public key in connect response',
-      );
-    }
-
-    // base58Decode (via the account constructor) throws on malformed input.
-    // Map that to a typed wallet error so adapters get a coherent failure
-    // instead of a raw bs58 stack.
-    let account: AlienSolanaAccount;
     try {
-      account = new AlienSolanaAccount(response.publicKey);
-    } catch (err) {
-      throw new AlienWalletError(
-        WALLET_ERROR.INTERNAL_ERROR,
-        `Host returned invalid publicKey: ${err instanceof Error ? err.message : String(err)}`,
+      const response = await request(
+        'wallet.solana:connect',
+        {},
+        'wallet.solana:connect.response',
       );
-    }
-    this.#accounts = [account];
-    this.#emit('change', { accounts: this.accounts });
 
-    return { accounts: this.accounts };
+      if (response.errorCode) {
+        throw new AlienWalletError(response.errorCode, response.errorMessage);
+      }
+
+      if (!response.publicKey) {
+        throw new AlienWalletError(
+          WALLET_ERROR.INTERNAL_ERROR,
+          'No public key in connect response',
+        );
+      }
+
+      // Validate before construction so a malformed pubkey from the host
+      // surfaces as a typed wallet error, not a raw bs58 stack.
+      safeDecode('publicKey', base58Decode, response.publicKey);
+      const account = new AlienSolanaAccount(response.publicKey);
+      this.#accounts = [account];
+      this.#emit('change', { accounts: this.accounts });
+
+      return { accounts: this.accounts };
+    } catch (error) {
+      throw normalizeWalletError(error);
+    }
   };
 
   #disconnect: StandardDisconnectMethod = async () => {
     if (this.#accounts.length === 0) return;
 
-    send.ifAvailable('wallet.solana:disconnect', {});
+    // Best-effort notify the host; local state is the source of truth for
+    // wallet-standard so we always clear accounts regardless of the result.
+    const result = send.ifAvailable('wallet.solana:disconnect', {});
+    if (!result.ok) {
+      console.debug(
+        '[@alien-id/miniapps-solana-provider] disconnect not delivered to host:',
+        result.error,
+      );
+    }
     this.#accounts = [];
     this.#emit('change', { accounts: this.accounts });
   };
@@ -261,142 +263,151 @@ export class AlienSolanaWallet implements Wallet {
   }
 
   #signTransaction: SolanaSignTransactionMethod = async (...inputs) => {
-    const outputs: SolanaSignTransactionOutput[] = [];
+    try {
+      const outputs: SolanaSignTransactionOutput[] = [];
 
-    for (const input of inputs) {
-      this.#assertAccount(input.account);
+      for (const input of inputs) {
+        this.#assertAccount(input.account);
 
-      const transactionBase64 = base64Encode(input.transaction);
+        const transactionBase64 = base64Encode(input.transaction);
 
-      const response = await request(
-        'wallet.solana:sign.transaction',
-        { transaction: transactionBase64 },
-        'wallet.solana:sign.transaction.response',
-      ).catch((error) => {
-        throw normalizeWalletError(error);
-      });
-
-      if (response.errorCode) {
-        throw new AlienWalletError(response.errorCode, response.errorMessage);
-      }
-
-      if (!response.signedTransaction) {
-        throw new AlienWalletError(
-          WALLET_ERROR.INTERNAL_ERROR,
-          'No signed transaction in response',
+        const response = await request(
+          'wallet.solana:sign.transaction',
+          { transaction: transactionBase64 },
+          'wallet.solana:sign.transaction.response',
         );
+
+        if (response.errorCode) {
+          throw new AlienWalletError(response.errorCode, response.errorMessage);
+        }
+
+        if (!response.signedTransaction) {
+          throw new AlienWalletError(
+            WALLET_ERROR.INTERNAL_ERROR,
+            'No signed transaction in response',
+          );
+        }
+
+        outputs.push({
+          signedTransaction: safeDecode(
+            'signedTransaction',
+            base64Decode,
+            response.signedTransaction,
+          ),
+        });
       }
 
-      outputs.push({
-        signedTransaction: base64Decode(response.signedTransaction),
-      });
+      return outputs;
+    } catch (error) {
+      throw normalizeWalletError(error);
     }
-
-    return outputs;
   };
 
   #signAndSendTransaction: SolanaSignAndSendTransactionMethod = async (
     ...inputs
   ) => {
-    const outputs: SolanaSignAndSendTransactionOutput[] = [];
+    try {
+      const outputs: SolanaSignAndSendTransactionOutput[] = [];
 
-    for (const input of inputs) {
-      this.#assertAccount(input.account);
+      for (const input of inputs) {
+        this.#assertAccount(input.account);
 
-      if (!isSolanaChain(input.chain)) {
-        throw new AlienWalletError(
-          WALLET_ERROR.INVALID_PARAMS,
-          `Unsupported Solana chain "${input.chain}". Expected one of: ${SOLANA_CHAINS.join(', ')}.`,
+        if (!isSolanaChain(input.chain)) {
+          throw new AlienWalletError(
+            WALLET_ERROR.INVALID_PARAMS,
+            `Unsupported Solana chain "${input.chain}". Expected one of: ${SOLANA_CHAINS.join(', ')}.`,
+          );
+        }
+
+        const transactionBase64 = base64Encode(input.transaction);
+
+        const response = await request(
+          'wallet.solana:sign.send',
+          {
+            transaction: transactionBase64,
+            chain: input.chain,
+            options: input.options
+              ? {
+                  skipPreflight: input.options.skipPreflight,
+                  preflightCommitment: input.options.preflightCommitment,
+                  commitment: input.options.commitment,
+                  minContextSlot: input.options.minContextSlot,
+                  maxRetries: input.options.maxRetries,
+                }
+              : undefined,
+          },
+          'wallet.solana:sign.send.response',
         );
+
+        if (response.errorCode) {
+          throw new AlienWalletError(response.errorCode, response.errorMessage);
+        }
+
+        if (!response.signature) {
+          throw new AlienWalletError(
+            WALLET_ERROR.INTERNAL_ERROR,
+            'No signature in response',
+          );
+        }
+
+        outputs.push({
+          signature: safeDecode('signature', base58Decode, response.signature),
+        });
       }
 
-      const transactionBase64 = base64Encode(input.transaction);
-
-      const response = await request(
-        'wallet.solana:sign.send',
-        {
-          transaction: transactionBase64,
-          chain: input.chain,
-          options: input.options
-            ? {
-                skipPreflight: input.options.skipPreflight,
-                preflightCommitment: input.options.preflightCommitment,
-                commitment: input.options.commitment,
-                minContextSlot: input.options.minContextSlot,
-                maxRetries: input.options.maxRetries,
-              }
-            : undefined,
-        },
-        'wallet.solana:sign.send.response',
-      ).catch((error) => {
-        throw normalizeWalletError(error);
-      });
-
-      if (response.errorCode) {
-        throw new AlienWalletError(response.errorCode, response.errorMessage);
-      }
-
-      if (!response.signature) {
-        throw new AlienWalletError(
-          WALLET_ERROR.INTERNAL_ERROR,
-          'No signature in response',
-        );
-      }
-
-      // Response signature is base58-encoded, decode to bytes
-      outputs.push({
-        signature: base58Decode(response.signature),
-      });
+      return outputs;
+    } catch (error) {
+      throw normalizeWalletError(error);
     }
-
-    return outputs;
   };
 
   #signMessage: SolanaSignMessageMethod = async (...inputs) => {
-    const outputs: SolanaSignMessageOutput[] = [];
+    try {
+      const outputs: SolanaSignMessageOutput[] = [];
 
-    for (const input of inputs) {
-      this.#assertAccount(input.account);
+      for (const input of inputs) {
+        this.#assertAccount(input.account);
 
-      const messageBase58 = base58Encode(input.message);
+        const messageBase58 = base58Encode(input.message);
 
-      const response = await request(
-        'wallet.solana:sign.message',
-        { message: messageBase58 },
-        'wallet.solana:sign.message.response',
-      ).catch((error) => {
-        throw normalizeWalletError(error);
-      });
-
-      if (response.errorCode) {
-        throw new AlienWalletError(response.errorCode, response.errorMessage);
-      }
-
-      if (!response.signature || !response.publicKey) {
-        throw new AlienWalletError(
-          WALLET_ERROR.INTERNAL_ERROR,
-          'No signature or publicKey in response',
+        const response = await request(
+          'wallet.solana:sign.message',
+          { message: messageBase58 },
+          'wallet.solana:sign.message.response',
         );
+
+        if (response.errorCode) {
+          throw new AlienWalletError(response.errorCode, response.errorMessage);
+        }
+
+        if (!response.signature || !response.publicKey) {
+          throw new AlienWalletError(
+            WALLET_ERROR.INTERNAL_ERROR,
+            'No signature or publicKey in response',
+          );
+        }
+
+        // Guard against the host signing with a different key than the one
+        // the dapp requested. A mismatch breaks the wallet-standard contract
+        // and can silently route signatures to the wrong account.
+        if (response.publicKey !== input.account.address) {
+          throw new AlienWalletError(
+            WALLET_ERROR.INTERNAL_ERROR,
+            `Sign message responder publicKey ${response.publicKey} does not match requested account ${input.account.address}.`,
+          );
+        }
+
+        outputs.push({
+          signedMessage: input.message,
+          signature: safeDecode('signature', base58Decode, response.signature),
+          signatureType: 'ed25519',
+        });
       }
 
-      // Guard against the host signing with a different key than the one the
-      // dapp requested. A mismatch breaks the wallet-standard contract and can
-      // silently route signatures to the wrong account.
-      if (response.publicKey !== input.account.address) {
-        throw new AlienWalletError(
-          WALLET_ERROR.INTERNAL_ERROR,
-          `Sign message responder publicKey ${response.publicKey} does not match requested account ${input.account.address}.`,
-        );
-      }
-
-      outputs.push({
-        signedMessage: input.message,
-        signature: base58Decode(response.signature),
-        signatureType: 'ed25519',
-      });
+      return outputs;
+    } catch (error) {
+      throw normalizeWalletError(error);
     }
-
-    return outputs;
   };
 
   #emit<E extends StandardEventsNames>(
