@@ -1,11 +1,10 @@
 import { send } from '@alien-id/miniapps-bridge';
-import {
-  type HapticImpactStyle,
-  type HapticNotificationType,
-  isMethodSupported,
+import type {
+  HapticImpactStyle,
+  HapticNotificationType,
 } from '@alien-id/miniapps-contract';
 import { useCallback, useMemo } from 'react';
-import { useAlien } from './useAlien';
+import { useCallable } from './useCallable';
 
 export interface UseHapticReturn {
   /** Trigger impact feedback with the given style. */
@@ -14,8 +13,8 @@ export interface UseHapticReturn {
   notificationOccurred: (type: HapticNotificationType) => void;
   /** Trigger selection change feedback. */
   selectionChanged: () => void;
-  /** Whether haptic methods are supported by the host app. */
-  supported: boolean;
+  /** Whether haptic methods are Callable. */
+  callable: boolean;
 }
 
 /**
@@ -23,66 +22,50 @@ export interface UseHapticReturn {
  *
  * All methods are fire-and-forget — they send a message to the host app
  * and return immediately with no response.
- *
- * @example
- * ```tsx
- * function HapticDemo() {
- *   const { impactOccurred, notificationOccurred, selectionChanged, supported } = useHaptic();
- *
- *   if (!supported) return null;
- *
- *   return (
- *     <>
- *       <button onClick={() => impactOccurred('medium')}>Tap</button>
- *       <button onClick={() => notificationOccurred('success')}>Success</button>
- *       <button onClick={() => selectionChanged()}>Select</button>
- *     </>
- *   );
- * }
- * ```
  */
 export function useHaptic(): UseHapticReturn {
-  const { contractVersion } = useAlien();
+  const impactCallable = useCallable('haptic:impact').callable;
+  const notificationCallable = useCallable('haptic:notification').callable;
+  const selectionCallable = useCallable('haptic:selection').callable;
+  const callable = impactCallable && notificationCallable && selectionCallable;
 
-  const supported = contractVersion
-    ? isMethodSupported('haptic:impact', contractVersion) &&
-      isMethodSupported('haptic:notification', contractVersion) &&
-      isMethodSupported('haptic:selection', contractVersion)
-    : true;
-
-  const impactOccurred = useCallback(
-    (style: HapticImpactStyle) => {
-      send.ifAvailable(
-        'haptic:impact',
-        { style },
-        { version: contractVersion },
+  const impactOccurred = useCallback((style: HapticImpactStyle) => {
+    const result = send.ifAvailable('haptic:impact', { style });
+    if (!result.ok && process.env.NODE_ENV !== 'production') {
+      console.warn(
+        '[@alien-id/miniapps-react] haptic:impact not callable:',
+        result.error,
       );
-    },
-    [contractVersion],
-  );
+    }
+  }, []);
 
-  const notificationOccurred = useCallback(
-    (type: HapticNotificationType) => {
-      send.ifAvailable(
-        'haptic:notification',
-        { type },
-        { version: contractVersion },
+  const notificationOccurred = useCallback((type: HapticNotificationType) => {
+    const result = send.ifAvailable('haptic:notification', { type });
+    if (!result.ok && process.env.NODE_ENV !== 'production') {
+      console.warn(
+        '[@alien-id/miniapps-react] haptic:notification not callable:',
+        result.error,
       );
-    },
-    [contractVersion],
-  );
+    }
+  }, []);
 
   const selectionChanged = useCallback(() => {
-    send.ifAvailable('haptic:selection', {}, { version: contractVersion });
-  }, [contractVersion]);
+    const result = send.ifAvailable('haptic:selection', {});
+    if (!result.ok && process.env.NODE_ENV !== 'production') {
+      console.warn(
+        '[@alien-id/miniapps-react] haptic:selection not callable:',
+        result.error,
+      );
+    }
+  }, []);
 
   return useMemo(
     () => ({
       impactOccurred,
       notificationOccurred,
       selectionChanged,
-      supported,
+      callable,
     }),
-    [impactOccurred, notificationOccurred, selectionChanged, supported],
+    [impactOccurred, notificationOccurred, selectionChanged, callable],
   );
 }
