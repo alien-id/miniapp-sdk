@@ -115,6 +115,8 @@ Supported transaction versions: `legacy`, `0` (versioned transactions)
 
 ## Without React
 
+> **Avoid mixing this with `initAlienWallet()`.** If you have already called `initAlienWallet()` at app entry, a wallet-standard registered instance already exists and any wallet adapter will use it. Constructing `AlienSolanaWallet` directly is only for non-React, non-adapter codepaths — do not combine the two in the same app or wallet adapters will surface two competing Alien wallets.
+
 You can use `AlienSolanaWallet` directly if you're not using React:
 
 ```ts
