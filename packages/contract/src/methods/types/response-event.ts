@@ -29,7 +29,11 @@ const METHOD_RESPONSE_EVENTS = {
   'wallet.solana:sign.message': 'wallet.solana:sign.message.response',
   'wallet.solana:sign.send': 'wallet.solana:sign.send.response',
   'notifications:permission.request': 'notifications:permission.response',
-} as const satisfies { [M in MethodName]: EventName | never };
+  // The value type is `EventName` for request-response methods and
+  // `never` for fire-and-forget ones. `never` is assignable to
+  // `EventName`, so the satisfies constraint accepts both without
+  // needing an explicit `| never` (which collapses to `EventName`).
+} as const satisfies { [M in MethodName]: EventName };
 
 /**
  * Static map from request methods to their response event. Derived from
