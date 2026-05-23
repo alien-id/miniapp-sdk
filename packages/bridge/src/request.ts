@@ -150,11 +150,14 @@ export const request = Object.assign(_request, {
     if (gateError) return { ok: false, error: gateError };
 
     try {
+      // Explicit destructure: only forward the request-shaped fields so a
+      // future option on `SafeRequestOptions` (like `version`) can't leak
+      // into the wire payload through `_requestUnchecked`'s pass-through.
       const data = (await _requestUnchecked(
         method,
         params,
         responseEvent as EventName,
-        options,
+        { reqId: options.reqId, timeout: options.timeout },
       )) as EventPayload<MethodResponseEvent<M>>;
       return { ok: true, data };
     } catch (error) {
