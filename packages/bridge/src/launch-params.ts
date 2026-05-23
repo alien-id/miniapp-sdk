@@ -104,17 +104,37 @@ function persistToSessionStorage(params: LaunchParams): void {
 }
 
 /**
- * Parse launch params from JSON string.
+ * Parse launch params from a JSON string.
+ *
+ * Throws `LaunchParamsError` if the input is not valid JSON, or if
+ * `authToken` is missing or not a string. Other fields are best-effort —
+ * invalid values are coerced to `undefined`/defaults via the field
+ * validators above.
  */
 export function parseLaunchParams(raw: string): LaunchParams {
-  const parsed = JSON.parse(raw);
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = JSON.parse(raw) as Record<string, unknown>;
+  } catch (cause) {
+    throw new LaunchParamsError(
+      'Failed to parse launch params: invalid JSON',
+      { cause },
+    );
+  }
+
+  if (typeof parsed?.authToken !== 'string') {
+    throw new LaunchParamsError(
+      'Invalid launch params: "authToken" must be a string',
+    );
+  }
+
   return {
     authToken: parsed.authToken,
-    contractVersion: validateVersion(parsed.contractVersion),
-    hostAppVersion: parsed.hostAppVersion,
-    platform: validatePlatform(parsed.platform),
+    contractVersion: validateVersion(parsed.contractVersion as string),
+    hostAppVersion: parsed.hostAppVersion as string | undefined,
+    platform: validatePlatform(parsed.platform as string),
     safeAreaInsets: validateSafeAreaInsets(parsed.safeAreaInsets),
-    startParam: parsed.startParam,
+    startParam: parsed.startParam as string | undefined,
     displayMode: validateDisplayMode(parsed.displayMode),
   };
 }
