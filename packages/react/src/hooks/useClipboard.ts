@@ -1,13 +1,15 @@
 import {
   BridgeBusyError,
   BridgeError,
-  BridgeMethodUnsupportedError,
-  BridgeUnavailableError,
   request,
   send,
 } from '@alien-id/miniapps-bridge';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { useCallable, withSupportedAlias } from './useCallable';
+import {
+  callabilityError,
+  useCallable,
+  withSupportedAlias,
+} from './useCallable';
 import { useMounted } from './useMounted';
 
 /** Clipboard error codes from the host app. */
@@ -95,18 +97,11 @@ export function useClipboard(
 
     // Short-circuit pre-call refusal so `isReading` doesn't flicker and
     // callers see the typed bridge error directly.
-    if (!readCallability.callable) {
-      const bridgeError: BridgeError =
-        readCallability.reason === 'no-bridge'
-          ? new BridgeUnavailableError()
-          : new BridgeMethodUnsupportedError(
-              'clipboard:read',
-              readCallability.has,
-              readCallability.needs,
-            );
+    const refusal = callabilityError('clipboard:read', readCallability);
+    if (refusal) {
       setErrorCode(null);
-      setError(bridgeError);
-      return { ok: false, error: bridgeError };
+      setError(refusal);
+      return { ok: false, error: refusal };
     }
 
     readingRef.current = true;
