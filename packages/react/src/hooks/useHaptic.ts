@@ -4,7 +4,7 @@ import type {
   HapticNotificationType,
 } from '@alien-id/miniapps-contract';
 import { useCallback, useMemo } from 'react';
-import { useCallable } from './useCallable';
+import { useCallable, withSupportedAlias } from './useCallable';
 
 export interface UseHapticReturn {
   /** Trigger impact feedback with the given style. */
@@ -60,12 +60,13 @@ export function useHaptic(): UseHapticReturn {
   }, []);
 
   return useMemo(
-    () => ({
-      impactOccurred,
-      notificationOccurred,
-      selectionChanged,
-      callable,
-    }),
+    () =>
+      withSupportedAlias({
+        impactOccurred,
+        notificationOccurred,
+        selectionChanged,
+        callable,
+      }),
     [impactOccurred, notificationOccurred, selectionChanged, callable],
   );
 }

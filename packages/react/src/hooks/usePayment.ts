@@ -5,7 +5,7 @@ import {
 } from '@alien-id/miniapps-bridge';
 import type { EventPayload, MethodPayload } from '@alien-id/miniapps-contract';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useCallable } from './useCallable';
+import { useCallable, withSupportedAlias } from './useCallable';
 import { useMounted } from './useMounted';
 
 // Derive types from contract - single source of truth
@@ -267,19 +267,20 @@ export function usePayment(options: UsePaymentOptions = {}): UsePaymentReturn {
   }, [updateState]);
 
   return useMemo(
-    () => ({
-      status: state.status,
-      isLoading: state.status === 'loading',
-      isPaid: state.status === 'paid',
-      isCancelled: state.status === 'cancelled',
-      isFailed: state.status === 'failed',
-      txHash: state.txHash,
-      errorCode: state.errorCode,
-      error: state.error ?? null,
-      pay,
-      reset,
-      callable: callability.callable,
-    }),
+    () =>
+      withSupportedAlias({
+        status: state.status,
+        isLoading: state.status === 'loading',
+        isPaid: state.status === 'paid',
+        isCancelled: state.status === 'cancelled',
+        isFailed: state.status === 'failed',
+        txHash: state.txHash,
+        errorCode: state.errorCode,
+        error: state.error ?? null,
+        pay,
+        reset,
+        callable: callability.callable,
+      }),
     [state, pay, reset, callability.callable],
   );
 }

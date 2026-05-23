@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, test } from 'bun:test';
+import { afterEach, beforeEach, expect, spyOn, test } from 'bun:test';
 import {
   BridgeBusyError,
   BridgeUnavailableError,
@@ -227,6 +227,49 @@ test('useMethod - overlapping execute() returns BridgeBusyError without disturbi
   expect(firstResolved.error).toBeNull();
   expect(firstResolved.data).toMatchObject({ status: 'paid', txHash: 'tx-first' });
   expect(result.current.isLoading).toBe(false);
+});
+
+test('useMethod - reading `supported` returns the same value as `callable` and warns once', () => {
+  // Migration aid: `supported` was the pre-1.0 name for `callable`. Make
+  // the rename visible at runtime by logging a deprecation warning the
+  // first time a consumer reads the old field, and ensure the value is
+  // identical so existing branches keep working until they upgrade.
+  setBridgeEnvironment({ bridge: true, contractVersion: '1.0.0' });
+  const warn = spyOn(console, 'warn').mockImplementation(() => {});
+  try {
+    const { result } = renderHook(
+      () => useMethod('payment:request', 'payment:response'),
+      { wrapper: BridgeTestWrapper },
+    );
+
+    // @ts-expect-error `supported` was removed from the typed return shape
+    // — but the deprecated runtime getter still returns the same value as
+    // `callable` so destructuring keeps compiling against the migration aid.
+    const value = result.current.supported;
+    expect(value).toBe(result.current.callable);
+
+    const deprecationCalls = warn.mock.calls.filter(
+      (args) =>
+        typeof args[0] === 'string' &&
+        args[0].includes('@alien-id/miniapps-react') &&
+        args[0].includes('supported') &&
+        args[0].includes('deprecated'),
+    );
+    expect(deprecationCalls.length).toBe(1);
+
+    // @ts-expect-error see above — second read must not log again.
+    void result.current.supported;
+    const deprecationCallsAfterSecondRead = warn.mock.calls.filter(
+      (args) =>
+        typeof args[0] === 'string' &&
+        args[0].includes('@alien-id/miniapps-react') &&
+        args[0].includes('supported') &&
+        args[0].includes('deprecated'),
+    );
+    expect(deprecationCallsAfterSecondRead.length).toBe(1);
+  } finally {
+    warn.mockRestore();
+  }
 });
 
 test('useCallable - re-evaluates when provider Contract Version changes', () => {

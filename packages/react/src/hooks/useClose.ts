@@ -1,6 +1,6 @@
 import { send } from '@alien-id/miniapps-bridge';
 import { useCallback, useMemo } from 'react';
-import { useCallable } from './useCallable';
+import { useCallable, withSupportedAlias } from './useCallable';
 
 export interface UseCloseReturn {
   /** Close the miniapp. Fire-and-forget. */
@@ -28,5 +28,5 @@ export function useClose(): UseCloseReturn {
     }
   }, []);
 
-  return useMemo(() => ({ close, callable }), [close, callable]);
+  return useMemo(() => withSupportedAlias({ close, callable }), [close, callable]);
 }

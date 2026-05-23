@@ -7,7 +7,7 @@ import {
   send,
 } from '@alien-id/miniapps-bridge';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { useCallable } from './useCallable';
+import { useCallable, withSupportedAlias } from './useCallable';
 import { useMounted } from './useMounted';
 
 /** Clipboard error codes from the host app. */
@@ -149,14 +149,15 @@ export function useClipboard(
   }, [readCallability, timeout, mounted]);
 
   return useMemo(
-    () => ({
-      writeText,
-      readText,
-      isReading,
-      errorCode,
-      error,
-      callable,
-    }),
+    () =>
+      withSupportedAlias({
+        writeText,
+        readText,
+        isReading,
+        errorCode,
+        error,
+        callable,
+      }),
     [writeText, readText, isReading, errorCode, error, callable],
   );
 }

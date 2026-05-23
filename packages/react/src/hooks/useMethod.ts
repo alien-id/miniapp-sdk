@@ -14,7 +14,7 @@ import type {
   RequestMethodName,
 } from '@alien-id/miniapps-contract';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { useCallable } from './useCallable';
+import { useCallable, withSupportedAlias } from './useCallable';
 import { useMounted } from './useMounted';
 
 export interface UseMethodExecuteResult<M extends RequestMethodName> {
@@ -174,12 +174,13 @@ export function useMethod<M extends RequestMethodName>(
   }, []);
 
   return useMemo(
-    () => ({
-      ...state,
-      execute,
-      reset,
-      callable: contextCallability.callable,
-    }),
+    () =>
+      withSupportedAlias({
+        ...state,
+        execute,
+        reset,
+        callable: contextCallability.callable,
+      }),
     [state, execute, reset, contextCallability.callable],
   );
 }

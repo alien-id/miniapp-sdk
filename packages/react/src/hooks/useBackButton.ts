@@ -8,7 +8,7 @@ import {
   useState,
 } from 'react';
 import { useAlien } from './useAlien';
-import { useCallable } from './useCallable';
+import { useCallable, withSupportedAlias } from './useCallable';
 
 export interface UseBackButtonReturn {
   /** Whether the back button is currently visible. */
@@ -99,7 +99,7 @@ export function useBackButton(onPress?: () => void): UseBackButtonReturn {
   }, []);
 
   return useMemo(
-    () => ({ isVisible, show, hide, callable }),
+    () => withSupportedAlias({ isVisible, show, hide, callable }),
     [isVisible, show, hide, callable],
   );
 }
