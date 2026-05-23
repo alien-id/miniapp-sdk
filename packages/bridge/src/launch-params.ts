@@ -116,10 +116,9 @@ export function parseLaunchParams(raw: string): LaunchParams {
   try {
     parsed = JSON.parse(raw) as Record<string, unknown>;
   } catch (cause) {
-    throw new LaunchParamsError(
-      'Failed to parse launch params: invalid JSON',
-      { cause },
-    );
+    throw new LaunchParamsError('Failed to parse launch params: invalid JSON', {
+      cause,
+    });
   }
 
   if (typeof parsed?.authToken !== 'string') {

@@ -178,7 +178,7 @@ test('transport listener - stays attached across full subscribe/unsubscribe cycl
 });
 
 test('on - async listeners are supported and their promise is awaited', async () => {
-  let order: string[] = [];
+  const order: string[] = [];
 
   on('payment:response', async (_payload) => {
     await Promise.resolve();
