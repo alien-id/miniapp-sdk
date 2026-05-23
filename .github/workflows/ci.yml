@@ -49,6 +49,9 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Build packages
+        run: bun run build
+
       - name: Typecheck packages
         run: bun run --filter './packages/*' typecheck
 
