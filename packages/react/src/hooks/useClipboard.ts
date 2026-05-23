@@ -1,6 +1,6 @@
 import {
   BridgeBusyError,
-  type BridgeError,
+  BridgeError,
   BridgeMethodUnsupportedError,
   BridgeUnavailableError,
   request,
@@ -130,7 +130,18 @@ export function useClipboard(
         if (mounted.current) setErrorCode(result.data.errorCode);
         return { ok: false, errorCode: result.data.errorCode };
       }
-      return { ok: true, text: result.data.text ?? '' };
+      // Protocol violation: host returned ok (no errorCode) but a null
+      // text. Surface as a typed BridgeError instead of silently coercing
+      // to '' — empty string is a legitimate clipboard payload that the
+      // caller would otherwise be unable to distinguish from a bug.
+      if (result.data.text == null) {
+        const protoError = new BridgeError(
+          "Host returned clipboard:response without a text or errorCode.",
+        );
+        if (mounted.current) setError(protoError);
+        return { ok: false, error: protoError };
+      }
+      return { ok: true, text: result.data.text };
     } finally {
       readingRef.current = false;
       if (mounted.current) setIsReading(false);
