@@ -49,6 +49,12 @@ describe('initAlienWallet', () => {
     getLaunchParamsMock.mockReturnValue(undefined);
     callabilityMock.mockReturnValue({ callable: false, reason: 'no-bridge' });
 
+    // Bun's test runtime does not define `window` by default. The provider
+    // gates on `typeof window === 'undefined'` for SSR-safety, so every test
+    // that exercises the bridge path needs a stand-in window. Tests that
+    // explicitly check the SSR branch delete it again.
+    (globalThis as { window?: unknown }).window = globalThis;
+
     const { _resetRegistration } = await import('../src/register');
     _resetRegistration();
   });
@@ -134,6 +140,21 @@ describe('initAlienWallet', () => {
       expect(registerWalletMock).toHaveBeenCalledTimes(0);
     } finally {
       console.warn = originalWarn;
+    }
+  });
+
+  test('does not throw or register when called in SSR (no window)', async () => {
+    // Simulate SSR: no window global. The provider must short-circuit so
+    // server-rendered apps that ship `initAlienWallet()` in their entry do
+    // not crash before the bridge can ever exist.
+    const originalWindow = (globalThis as { window?: unknown }).window;
+    delete (globalThis as { window?: unknown }).window;
+    try {
+      const { initAlienWallet } = await import('../src/register');
+      expect(() => initAlienWallet()).not.toThrow();
+      expect(registerWalletMock).toHaveBeenCalledTimes(0);
+    } finally {
+      (globalThis as { window?: unknown }).window = originalWindow;
     }
   });
 });
