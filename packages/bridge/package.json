@@ -2,6 +2,7 @@
   "name": "@alien-id/miniapps-bridge",
   "version": "1.4.2",
   "type": "module",
+  "sideEffects": false,
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
@@ -52,8 +53,5 @@
     "@types/bun": "^1.3.13",
     "happy-dom": "^20.9.0",
     "tsdown": "^0.22.0"
-  },
-  "peerDependencies": {
-    "typescript": "^6.0.3"
   }
 }
