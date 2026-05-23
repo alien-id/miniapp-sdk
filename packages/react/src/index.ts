@@ -1,4 +1,7 @@
-// Re-export Callability + Safe Track + types from the bridge
+// Re-export Callability + Safe Track + types + errors from the bridge.
+// React never throws its own SDK errors — it surfaces the bridge's typed
+// errors directly so a single `instanceof BridgeUnavailableError` check
+// works across hook state, direct calls, and any future framework binding.
 export type {
   AvailabilityOptions,
   Callability,
@@ -8,7 +11,16 @@ export type {
   SafeRequestOptions,
   SafeResult,
 } from '@alien-id/miniapps-bridge';
-export { callability, request, send } from '@alien-id/miniapps-bridge';
+export {
+  BridgeBusyError,
+  BridgeError,
+  BridgeMethodUnsupportedError,
+  BridgeTimeoutError,
+  BridgeUnavailableError,
+  callability,
+  request,
+  send,
+} from '@alien-id/miniapps-bridge';
 // Re-export mock bridge from dedicated entrypoint
 export type {
   MethodCall,
@@ -28,14 +40,6 @@ export type {
 } from '@alien-id/miniapps-contract';
 // Provider
 export { AlienProvider, type AlienProviderProps } from './context';
-// Errors — bridge errors re-exported for convenience
-export {
-  BridgeBusyError,
-  BridgeError,
-  BridgeMethodUnsupportedError,
-  BridgeTimeoutError,
-  BridgeUnavailableError,
-} from './errors';
 // Hooks
 export {
   type ClipboardErrorCode,
