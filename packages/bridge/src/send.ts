@@ -1,7 +1,7 @@
 import type { MethodName, MethodPayload } from '@alien-id/miniapps-contract';
 import {
-  callability,
   type CallabilityOptions,
+  callability,
   callabilityError,
 } from './callability';
 import { BridgeError } from './errors';

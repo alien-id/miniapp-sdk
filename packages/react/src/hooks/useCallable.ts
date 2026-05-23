@@ -37,9 +37,9 @@ export function callabilityError(
  * the hook produces a fresh object and can warn again, but a single render
  * cannot trigger more than one warn no matter how many reads happen.
  */
-export function withSupportedAlias<
-  T extends { callable: boolean },
->(value: T): T {
+export function withSupportedAlias<T extends { callable: boolean }>(
+  value: T,
+): T {
   let warned = false;
   Object.defineProperty(value, 'supported', {
     configurable: true,

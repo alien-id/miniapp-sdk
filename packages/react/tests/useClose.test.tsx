@@ -44,7 +44,11 @@ test('useClose - close() posts an app:close method message when callable', () =>
   const sent: string[] = [];
   setBridgeEnvironment({ bridge: true, contractVersion: '1.0.0' });
   // Override the bridge stub with a capturing implementation.
-  (window as unknown as { __miniAppsBridge__: { postMessage: (data: string) => void } }).__miniAppsBridge__ = {
+  (
+    window as unknown as {
+      __miniAppsBridge__: { postMessage: (data: string) => void };
+    }
+  ).__miniAppsBridge__ = {
     postMessage: (data: string) => {
       sent.push(data);
     },

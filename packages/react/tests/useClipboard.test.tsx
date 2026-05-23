@@ -119,7 +119,9 @@ test('useClipboard - readText resolves with text on successful host response', a
     wrapper: BridgeTestWrapper,
   });
 
-  let readPromise!: Promise<Awaited<ReturnType<typeof result.current.readText>>>;
+  let readPromise!: Promise<
+    Awaited<ReturnType<typeof result.current.readText>>
+  >;
   act(() => {
     readPromise = result.current.readText();
   });
@@ -155,7 +157,9 @@ test('useClipboard - readText exposes host-domain errorCode without a bridge err
     wrapper: BridgeTestWrapper,
   });
 
-  let readPromise!: Promise<Awaited<ReturnType<typeof result.current.readText>>>;
+  let readPromise!: Promise<
+    Awaited<ReturnType<typeof result.current.readText>>
+  >;
   act(() => {
     readPromise = result.current.readText();
   });
@@ -189,7 +193,9 @@ test('useClipboard - overlapping readText() rejects the second call with BridgeB
     wrapper: BridgeTestWrapper,
   });
 
-  let firstPromise!: Promise<Awaited<ReturnType<typeof result.current.readText>>>;
+  let firstPromise!: Promise<
+    Awaited<ReturnType<typeof result.current.readText>>
+  >;
   act(() => {
     firstPromise = result.current.readText();
   });
@@ -255,7 +261,9 @@ test('useClipboard - readText surfaces a BridgeError when host returns null text
     wrapper: BridgeTestWrapper,
   });
 
-  let readPromise!: Promise<Awaited<ReturnType<typeof result.current.readText>>>;
+  let readPromise!: Promise<
+    Awaited<ReturnType<typeof result.current.readText>>
+  >;
   act(() => {
     readPromise = result.current.readText();
   });

@@ -62,8 +62,9 @@ describe('MethodResponseEvents — exported surface', () => {
   // RequestMethodName, and every value matches MethodResponseEvents[key].
   // The block below has no runtime effect — TypeScript erases it.
   test('static map satisfies MethodResponseEvents', () => {
-    type _CheckKeys =
-      (typeof REQUEST_METHODS)[number] extends RequestMethodName ? true : never;
+    type _CheckKeys = (typeof REQUEST_METHODS)[number] extends RequestMethodName
+      ? true
+      : never;
     type _CheckValues = {
       [M in (typeof REQUEST_METHODS)[number]]: (typeof RESPONSE_MAP)[M] extends MethodResponseEvents[M]
         ? true

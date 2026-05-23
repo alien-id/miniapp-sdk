@@ -39,9 +39,7 @@ test('AlienProvider - does not set safe-area CSS vars when launch params have no
   // not `0px`. CSS `env(safe-area-inset-top, 0px)` already provides the
   // fallback; writing `0px` here would clobber a useful default.
   expect(root.style.getPropertyValue('--alien-safe-area-inset-top')).toBe('');
-  expect(root.style.getPropertyValue('--alien-safe-area-inset-right')).toBe(
-    '',
-  );
+  expect(root.style.getPropertyValue('--alien-safe-area-inset-right')).toBe('');
   expect(root.style.getPropertyValue('--alien-safe-area-inset-bottom')).toBe(
     '',
   );

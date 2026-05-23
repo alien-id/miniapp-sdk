@@ -28,5 +28,8 @@ export function useClose(): UseCloseReturn {
     }
   }, []);
 
-  return useMemo(() => withSupportedAlias({ close, callable }), [close, callable]);
+  return useMemo(
+    () => withSupportedAlias({ close, callable }),
+    [close, callable],
+  );
 }

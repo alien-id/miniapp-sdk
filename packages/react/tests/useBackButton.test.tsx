@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, expect, spyOn, test } from 'bun:test';
+import { emit } from '@alien-id/miniapps-bridge';
 import { act, renderHook } from '@testing-library/react';
 import { useLayoutEffect } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { emit } from '@alien-id/miniapps-bridge';
 import { useBackButton } from '../src/hooks/useBackButton';
 import {
   BridgeTestWrapper,
@@ -106,9 +106,15 @@ test('useBackButton - hide() posts toggle visible:false and updates isVisible', 
 test('useBackButton - invokes onPress when host emits host.back.button:clicked', async () => {
   setBridgeEnvironment({ bridge: true, contractVersion: '1.0.0' });
   let pressed = 0;
-  renderHook(() => useBackButton(() => { pressed += 1; }), {
-    wrapper: BridgeTestWrapper,
-  });
+  renderHook(
+    () =>
+      useBackButton(() => {
+        pressed += 1;
+      }),
+    {
+      wrapper: BridgeTestWrapper,
+    },
+  );
 
   await act(async () => {
     await emit('host.back.button:clicked', {});

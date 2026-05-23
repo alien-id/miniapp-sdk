@@ -7,8 +7,8 @@ import type {
   RequestMethodName,
 } from '@alien-id/miniapps-contract';
 import {
-  callability,
   type CallabilityOptions,
+  callability,
   callabilityError,
 } from './callability';
 import { BridgeError, BridgeTimeoutError } from './errors';

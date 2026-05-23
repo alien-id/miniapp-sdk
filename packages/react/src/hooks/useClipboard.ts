@@ -131,7 +131,7 @@ export function useClipboard(
       // caller would otherwise be unable to distinguish from a bug.
       if (result.data.text == null) {
         const protoError = new BridgeError(
-          "Host returned clipboard:response without a text or errorCode.",
+          'Host returned clipboard:response without a text or errorCode.',
         );
         if (mounted.current) setError(protoError);
         return { ok: false, error: protoError };

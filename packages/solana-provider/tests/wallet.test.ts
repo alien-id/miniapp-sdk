@@ -413,9 +413,7 @@ describe('AlienSolanaWallet', () => {
     });
 
     await expect(
-      wallet.features[
-        'solana:signAndSendTransaction'
-      ].signAndSendTransaction({
+      wallet.features['solana:signAndSendTransaction'].signAndSendTransaction({
         account,
         chain: 'solana:devnet',
         transaction: new Uint8Array([1]),

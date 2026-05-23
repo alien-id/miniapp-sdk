@@ -128,6 +128,12 @@ export function useNotificationPermission(
         requestPermission,
         callable: permissionCallability.callable,
       }),
-    [status, isLoading, error, requestPermission, permissionCallability.callable],
+    [
+      status,
+      isLoading,
+      error,
+      requestPermission,
+      permissionCallability.callable,
+    ],
   );
 }

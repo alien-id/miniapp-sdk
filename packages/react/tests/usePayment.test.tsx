@@ -140,7 +140,7 @@ test('usePayment - pay() resolves with paid + txHash when host responds with pai
 test('usePayment - pay() exposes errorCode without bridge error when host returns failed', async () => {
   setBridgeEnvironment({ bridge: true, contractVersion: '1.0.0' });
   const sent = setCapturingBridge();
-  let failedCalls: string[] = [];
+  const failedCalls: string[] = [];
   const { result } = renderHook(
     () =>
       usePayment({

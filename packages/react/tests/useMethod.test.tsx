@@ -156,7 +156,10 @@ test('useMethod - requestOptions.version override succeeds even when context Con
 
   const resolved = await executePromise;
   expect(resolved.error).toBeNull();
-  expect(resolved.data).toMatchObject({ status: 'paid', txHash: 'override-tx' });
+  expect(resolved.data).toMatchObject({
+    status: 'paid',
+    txHash: 'override-tx',
+  });
 });
 
 test('useMethod - overlapping execute() returns BridgeBusyError without disturbing the in-flight call', async () => {
@@ -192,9 +195,7 @@ test('useMethod - overlapping execute() returns BridgeBusyError without disturbi
 
   // Second execute() while the first is unresolved — must reject with
   // BridgeBusyError, not the ambiguous undefined/undefined shape.
-  let busyResolved:
-    | { data: unknown; error: Error | null }
-    | undefined;
+  let busyResolved: { data: unknown; error: Error | null } | undefined;
   await act(async () => {
     busyResolved = await result.current.execute({
       recipient: 'wallet-123',
@@ -223,7 +224,10 @@ test('useMethod - overlapping execute() returns BridgeBusyError without disturbi
 
   const firstResolved = await firstPromise;
   expect(firstResolved.error).toBeNull();
-  expect(firstResolved.data).toMatchObject({ status: 'paid', txHash: 'tx-first' });
+  expect(firstResolved.data).toMatchObject({
+    status: 'paid',
+    txHash: 'tx-first',
+  });
   expect(result.current.isLoading).toBe(false);
 });
 
@@ -269,4 +273,3 @@ test('useMethod - reading `supported` returns the same value as `callable` and w
     warn.mockRestore();
   }
 });
-

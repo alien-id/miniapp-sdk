@@ -66,7 +66,8 @@ test('useNotificationPermission - returns BridgeUnavailableError when bridge is 
     wrapper: BridgeTestWrapper,
   });
 
-  let res: Awaited<ReturnType<typeof result.current.requestPermission>>
+  let res:
+    | Awaited<ReturnType<typeof result.current.requestPermission>>
     | undefined;
   await act(async () => {
     res = await result.current.requestPermission();
@@ -85,7 +86,8 @@ test('useNotificationPermission - returns BridgeMethodUnsupportedError when host
     wrapper: BridgeTestWrapper,
   });
 
-  let res: Awaited<ReturnType<typeof result.current.requestPermission>>
+  let res:
+    | Awaited<ReturnType<typeof result.current.requestPermission>>
     | undefined;
   await act(async () => {
     res = await result.current.requestPermission();
@@ -116,8 +118,7 @@ test('useNotificationPermission - resolves with host status on success and updat
   });
 
   const outgoing = sent.find(
-    (m) =>
-      m.type === 'method' && m.name === 'notifications:permission.request',
+    (m) => m.type === 'method' && m.name === 'notifications:permission.request',
   );
   const reqId = outgoing?.payload?.reqId as string;
 
@@ -169,8 +170,7 @@ test('useNotificationPermission - overlapping requestPermission() rejects the se
 
   // First call must still resolve normally.
   const outgoing = sent.find(
-    (m) =>
-      m.type === 'method' && m.name === 'notifications:permission.request',
+    (m) => m.type === 'method' && m.name === 'notifications:permission.request',
   );
   const reqId = outgoing?.payload?.reqId as string;
 
@@ -193,7 +193,8 @@ test('useNotificationPermission - surfaces BridgeTimeoutError when host never re
     { wrapper: BridgeTestWrapper },
   );
 
-  let res: Awaited<ReturnType<typeof result.current.requestPermission>>
+  let res:
+    | Awaited<ReturnType<typeof result.current.requestPermission>>
     | undefined;
   await act(async () => {
     res = await result.current.requestPermission();

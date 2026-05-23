@@ -58,8 +58,6 @@ test('every Bridge*Error subclass returned by hooks is a function', () => {
   ];
   for (const name of HOOK_SURFACED_ERRORS) {
     expect(ReactPkg).toHaveProperty(name);
-    expect(typeof (ReactPkg as Record<string, unknown>)[name]).toBe(
-      'function',
-    );
+    expect(typeof (ReactPkg as Record<string, unknown>)[name]).toBe('function');
   }
 });

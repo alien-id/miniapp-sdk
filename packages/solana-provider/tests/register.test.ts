@@ -118,8 +118,8 @@ describe('initAlienWallet', () => {
       const { initAlienWallet } = await import('../src/register');
       initAlienWallet();
       expect(warnSpy).toHaveBeenCalledTimes(1);
-      const message =
-        ((warnSpy.mock.calls[0] as unknown[] | undefined)?.[0] ?? '') as string;
+      const message = ((warnSpy.mock.calls[0] as unknown[] | undefined)?.[0] ??
+        '') as string;
       expect(message).toContain('1.0.0');
       expect(message).toContain('0.2.4');
       expect(message).toContain('[@alien-id/miniapps-solana-provider]');

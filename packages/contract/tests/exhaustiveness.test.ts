@@ -64,30 +64,22 @@ async function tscFixture(fixture: string): Promise<{
 }
 
 describe('MethodResponseEvents — exhaustive coverage', () => {
-  test(
-    'fixture that covers every MethodName compiles',
-    async () => {
-      const result = await tscFixture('complete.fixture.ts');
-      if (!result.ok) {
-        throw new Error(
-          `Expected complete fixture to compile but tsc failed:\n${result.stdout}\n${result.stderr}`,
-        );
-      }
-      expect(result.ok).toBe(true);
-    },
-    30_000,
-  );
+  test('fixture that covers every MethodName compiles', async () => {
+    const result = await tscFixture('complete.fixture.ts');
+    if (!result.ok) {
+      throw new Error(
+        `Expected complete fixture to compile but tsc failed:\n${result.stdout}\n${result.stderr}`,
+      );
+    }
+    expect(result.ok).toBe(true);
+  }, 30_000);
 
-  test(
-    'fixture that omits a MethodName entry fails to compile',
-    async () => {
-      const result = await tscFixture('missing-key.fixture.ts');
-      expect(result.ok).toBe(false);
-      // Confirm the error references the missing method, not some unrelated
-      // type mismatch (which would mean the test is passing by accident).
-      const combined = `${result.stdout}\n${result.stderr}`;
-      expect(combined).toMatch(/app:close|missing|not assignable/i);
-    },
-    30_000,
-  );
+  test('fixture that omits a MethodName entry fails to compile', async () => {
+    const result = await tscFixture('missing-key.fixture.ts');
+    expect(result.ok).toBe(false);
+    // Confirm the error references the missing method, not some unrelated
+    // type mismatch (which would mean the test is passing by accident).
+    const combined = `${result.stdout}\n${result.stderr}`;
+    expect(combined).toMatch(/app:close|missing|not assignable/i);
+  }, 30_000);
 });

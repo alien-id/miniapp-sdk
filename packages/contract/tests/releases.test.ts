@@ -51,9 +51,7 @@ interface ParsedRelease {
  *      inside the block.
  */
 function parseReleases(source: string): ParsedRelease[] {
-  const blocks = [
-    ...source.matchAll(/'(\d+\.\d+\.\d+)':\s*\[([\s\S]*?)\]/g),
-  ];
+  const blocks = [...source.matchAll(/'(\d+\.\d+\.\d+)':\s*\[([\s\S]*?)\]/g)];
   return blocks.map((block) => {
     const version = block[1] as Version;
     const body = block[2] ?? '';

@@ -3,8 +3,8 @@ import { renderHook } from '@testing-library/react';
 import { useCallable } from '../src/hooks/useCallable';
 import {
   BridgeTestWrapper,
-  clearBridgeEnvironment,
   ControllableAlienProvider,
+  clearBridgeEnvironment,
   setBridgeEnvironment,
 } from './test-utils';
 

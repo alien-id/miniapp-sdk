@@ -4,9 +4,7 @@ import { base58Encode } from '../src/utils';
 
 describe('AlienSolanaAccount', () => {
   test('accepts a 32-byte (Solana-pubkey-sized) base58 string', () => {
-    const account = new AlienSolanaAccount(
-      '11111111111111111111111111111111',
-    );
+    const account = new AlienSolanaAccount('11111111111111111111111111111111');
     expect(account.publicKey.length).toBe(32);
     expect(account.address).toBe('11111111111111111111111111111111');
   });
@@ -25,9 +23,7 @@ describe('AlienSolanaAccount', () => {
   });
 
   test('exposes wallet-standard required fields', () => {
-    const account = new AlienSolanaAccount(
-      '11111111111111111111111111111111',
-    );
+    const account = new AlienSolanaAccount('11111111111111111111111111111111');
     expect(account.chains).toEqual([
       'solana:mainnet',
       'solana:devnet',
