@@ -6,6 +6,7 @@ import type {
   Version,
 } from '@alien-id/miniapps-contract';
 import { DISPLAY_MODES, PLATFORMS } from '@alien-id/miniapps-contract';
+import { BridgeError } from './errors';
 
 declare global {
   interface Window {
@@ -22,11 +23,14 @@ declare global {
 const SESSION_STORAGE_KEY = 'alien/launchParams';
 
 /**
- * Error thrown when launch params cannot be retrieved.
+ * Error thrown when launch params cannot be retrieved or parsed.
+ *
+ * Extends `BridgeError` so a single `catch (e: BridgeError)` block handles
+ * both transport-level and launch-param failures.
  */
-export class LaunchParamsError extends Error {
-  constructor(message: string) {
-    super(message);
+export class LaunchParamsError extends BridgeError {
+  constructor(message: string, options?: { cause?: unknown }) {
+    super(message, options);
     this.name = 'LaunchParamsError';
   }
 }
