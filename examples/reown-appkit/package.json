@@ -13,6 +13,7 @@
     "react-dom": "^19.2.0",
     "@alien-id/miniapps-react": "workspace:*",
     "@alien-id/miniapps-bridge": "workspace:*",
+    "@alien-id/miniapps-contract": "workspace:*",
     "@alien-id/miniapps-solana-provider": "workspace:*",
     "@reown/appkit": "^1.8.19",
     "@reown/appkit-adapter-solana": "^1.8.19",
