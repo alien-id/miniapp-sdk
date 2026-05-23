@@ -4,7 +4,6 @@ import {
   BridgeMethodUnsupportedError,
   BridgeTimeoutError,
   BridgeUnavailableError,
-  BridgeWindowUnavailableError,
 } from '../src/errors';
 
 test('BridgeError - accepts and exposes cause via options', () => {
@@ -26,10 +25,6 @@ test('BridgeError subclasses - keep their existing constructors working', () => 
   const unavailable = new BridgeUnavailableError();
   expect(unavailable).toBeInstanceOf(BridgeError);
   expect(unavailable.name).toBe('BridgeUnavailableError');
-
-  const windowUnavailable = new BridgeWindowUnavailableError();
-  expect(windowUnavailable).toBeInstanceOf(BridgeError);
-  expect(windowUnavailable.name).toBe('BridgeWindowUnavailableError');
 
   const timeout = new BridgeTimeoutError('payment:request', 5000);
   expect(timeout).toBeInstanceOf(BridgeError);
