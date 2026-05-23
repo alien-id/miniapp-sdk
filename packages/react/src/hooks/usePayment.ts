@@ -1,11 +1,11 @@
-import {
-  BridgeMethodUnsupportedError,
-  BridgeUnavailableError,
-  request,
-} from '@alien-id/miniapps-bridge';
+import { request } from '@alien-id/miniapps-bridge';
 import type { EventPayload, MethodPayload } from '@alien-id/miniapps-contract';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useCallable, withSupportedAlias } from './useCallable';
+import {
+  callabilityError,
+  useCallable,
+  withSupportedAlias,
+} from './useCallable';
 import { useMounted } from './useMounted';
 
 // Derive types from contract - single source of truth
@@ -128,7 +128,7 @@ export function usePayment(options: UsePaymentOptions = {}): UsePaymentReturn {
     onFailed,
     onStatusChange,
   } = options;
-  const callability = useCallable('payment:request');
+  const paymentCallability = useCallable('payment:request');
 
   const callbacksRef = useRef({
     onPaid,
@@ -163,22 +163,15 @@ export function usePayment(options: UsePaymentOptions = {}): UsePaymentReturn {
 
       // Short-circuit pre-call refusal so onStatusChange/state doesn't
       // briefly observe `loading` before resolving to `failed`.
-      if (!callability.callable) {
-        const error =
-          callability.reason === 'no-bridge'
-            ? new BridgeUnavailableError()
-            : new BridgeMethodUnsupportedError(
-                'payment:request',
-                callability.has,
-                callability.needs,
-              );
+      const refusal = callabilityError('payment:request', paymentCallability);
+      if (refusal) {
         const result = {
           status: 'failed' as const,
           errorCode: 'unknown' as const,
-          error,
+          error: refusal,
         };
         updateState(result);
-        callbacksRef.current.onFailed?.('unknown', error);
+        callbacksRef.current.onFailed?.('unknown', refusal);
         return result;
       }
 
@@ -259,7 +252,7 @@ export function usePayment(options: UsePaymentOptions = {}): UsePaymentReturn {
         loadingRef.current = false;
       }
     },
-    [callability, timeout, updateState],
+    [paymentCallability, timeout, updateState],
   );
 
   const reset = useCallback(() => {
@@ -279,8 +272,8 @@ export function usePayment(options: UsePaymentOptions = {}): UsePaymentReturn {
         error: state.error ?? null,
         pay,
         reset,
-        callable: callability.callable,
+        callable: paymentCallability.callable,
       }),
-    [state, pay, reset, callability.callable],
+    [state, pay, reset, paymentCallability.callable],
   );
 }
