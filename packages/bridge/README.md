@@ -4,7 +4,17 @@
 
 Type-safe bridge for miniapp (webview) to host app communication.
 
-**Strict Mode**: Throws errors when bridge is unavailable. For React apps, use `@alien-id/miniapps-react` which handles errors gracefully.
+This package exposes two parallel tracks:
+
+- **Strict Track** (`send`, `request`) — throws a typed `BridgeError`
+  subclass on any failure (bridge missing, method unsupported, timeout).
+  Use when you want exceptions to bubble up to your error boundary.
+- **Safe Track** (`sendIfAvailable`, `requestIfAvailable`) — never
+  throws; returns a `SafeResult<T>` discriminated union. Use when you
+  want to branch on the result instead of catching.
+
+The React bindings (`@alien-id/miniapps-react`) build on the Safe Track
+so hooks never throw during render.
 
 ## Installation
 
