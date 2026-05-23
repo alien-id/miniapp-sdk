@@ -1,72 +1,73 @@
-import { type RequestOptions, request } from '@alien-id/miniapps-bridge';
 import {
-  type EventName,
-  type EventPayload,
-  getMethodMinVersion,
-  isMethodSupported,
-  type MethodName,
-  type MethodPayload,
+  BridgeBusyError,
+  type BridgeError,
+  BridgeMethodUnsupportedError,
+  BridgeUnavailableError,
+  callability,
+  request,
+  type SafeRequestOptions,
+} from '@alien-id/miniapps-bridge';
+import type {
+  EventPayload,
+  MethodPayload,
+  MethodResponseEvent,
+  RequestMethodName,
 } from '@alien-id/miniapps-contract';
-import { useCallback, useMemo, useState } from 'react';
-import { BridgeError, MethodNotSupportedError } from '../errors';
-import { useAlien } from './useAlien';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallable } from './useCallable';
+import { useMounted } from './useMounted';
 
-export interface UseMethodExecuteResult<E extends EventName> {
-  data: EventPayload<E> | undefined;
-  error: Error | undefined;
+export interface UseMethodExecuteResult<M extends RequestMethodName> {
+  data: EventPayload<MethodResponseEvent<M>> | undefined;
+  /**
+   * Bridge error from the last attempted call, or `null` if there is no
+   * error. `null` (not `undefined`) so consumers can distinguish "cleared"
+   * from "not yet set" with a single equality check.
+   */
+  error: BridgeError | null;
 }
 
-interface UseMethodState<E extends EventName>
-  extends UseMethodExecuteResult<E> {
+interface UseMethodState<M extends RequestMethodName>
+  extends UseMethodExecuteResult<M> {
   isLoading: boolean;
 }
 
-export interface UseMethodOptions {
-  /**
-   * Whether to check if the method is supported before executing.
-   * If unsupported, sets error state with `MethodNotSupportedError`.
-   * @default true
-   */
-  checkVersion?: boolean;
-}
-
-interface UseMethodResult<M extends MethodName, E extends EventName>
-  extends UseMethodState<E> {
+interface UseMethodResult<M extends RequestMethodName>
+  extends UseMethodState<M> {
   execute: (
     params: Omit<MethodPayload<M>, 'reqId'>,
-    options?: RequestOptions,
-  ) => Promise<UseMethodExecuteResult<E>>;
+    options?: SafeRequestOptions,
+  ) => Promise<UseMethodExecuteResult<M>>;
   reset: () => void;
   /**
-   * Whether the method is supported by the current contract version.
+   * Whether the Method is Callable in the current host — bridge present
+   * AND the host's Contract Version declares this Method.
    */
-  supported: boolean;
+  callable: boolean;
 }
 
 /**
  * Hook for making bridge requests with loading/error state management.
  *
- * @param method - The method name to call.
- * @param responseEvent - The event name to listen for the response.
- * @param options - Hook options including version checking.
- * @returns Object with `execute`, `reset`, `data`, `error`, `isLoading`, and `supported`.
+ * The `responseEvent` parameter is constrained by the contract — only the
+ * response event registered against `method` in `MethodResponseEvents`
+ * type-checks. Errors surface as {@link BridgeError} subclasses
+ * (`BridgeUnavailableError`, `BridgeMethodUnsupportedError`,
+ * `BridgeTimeoutError`) so callers can narrow on `instanceof`.
  *
  * @example
  * ```tsx
  * import { useMethod } from '@alien-id/miniapps-react';
  *
  * function PayButton() {
- *   const { execute, data, error, isLoading, supported } = useMethod(
+ *   const { execute, data, error, isLoading, callable } = useMethod(
  *     'payment:request',
  *     'payment:response',
  *   );
  *
- *   if (!supported) {
- *     return <div>This feature is not available</div>;
- *   }
+ *   if (!callable) return <div>This feature is not available</div>;
  *
  *   const handlePay = async () => {
- *     // Errors are automatically set in the `error` state - no try/catch needed!
  *     const { error, data } = await execute({
  *       recipient: 'wallet-123',
  *       amount: '100',
@@ -74,13 +75,8 @@ interface UseMethodResult<M extends MethodName, E extends EventName>
  *       network: 'solana',
  *       invoice: 'inv-123',
  *     });
- *     if (error) {
- *         console.error(error);
- *         return;
- *     }
- *     if (data) {
- *       console.log('Success:', data);
- *     }
+ *     if (error) return console.error(error);
+ *     if (data) console.log('Success:', data);
  *   };
  *
  *   if (isLoading) return <button disabled>Loading...</button>;
@@ -91,87 +87,99 @@ interface UseMethodResult<M extends MethodName, E extends EventName>
  * }
  * ```
  */
-export function useMethod<M extends MethodName, E extends EventName>(
+export function useMethod<M extends RequestMethodName>(
   method: M,
-  responseEvent: E,
-  options: UseMethodOptions = {},
-): UseMethodResult<M, E> {
-  const { checkVersion = true } = options;
-  const { contractVersion, isBridgeAvailable } = useAlien();
+  responseEvent: MethodResponseEvent<M>,
+): UseMethodResult<M> {
+  const contextCallability = useCallable(method);
 
-  const [state, setState] = useState<UseMethodState<E>>({
+  const [state, setState] = useState<UseMethodState<M>>({
     data: undefined,
-    error: undefined,
+    error: null,
     isLoading: false,
   });
-
-  // Check if method is supported - only check if version exists
-  const supported = contractVersion
-    ? isMethodSupported(method, contractVersion)
-    : true; // Fallback: assume supported if no version provided
+  // Reject re-entry so two overlapping `execute()` calls can't race the
+  // shared state slot — an older request resolving after a newer one
+  // would otherwise clobber the correct result.
+  const loadingRef = useRef(false);
+  const mounted = useMounted();
 
   const execute = useCallback(
     async (
       params: Omit<MethodPayload<M>, 'reqId'>,
-      requestOptions?: RequestOptions,
-    ): Promise<UseMethodExecuteResult<E>> => {
-      // Check if bridge is available
-      if (!isBridgeAvailable) {
-        const error = new Error(
-          'Bridge is not available. Running in dev mode? Bridge communication will not work.',
-        );
-        console.warn('[@alien-id/miniapps-react]', error.message);
+      requestOptions?: SafeRequestOptions,
+    ): Promise<UseMethodExecuteResult<M>> => {
+      // Reject re-entry with a typed busy error so the result shape stays
+      // unambiguous — `{ data: undefined, error: undefined }` would be
+      // indistinguishable from a successful response carrying no payload.
+      if (loadingRef.current) {
+        return {
+          data: undefined,
+          error: new BridgeBusyError(method),
+        };
+      }
+
+      // If the caller supplies a `version` override, the context-derived
+      // Callability snapshot is stale relative to the call. Re-evaluate
+      // against the override so pre-call refusal matches what Safe Track
+      // will do downstream.
+      const effectiveCallability =
+        requestOptions?.version !== undefined
+          ? callability(method, { version: requestOptions.version })
+          : contextCallability;
+
+      // Short-circuit pre-call refusal so consumers don't observe a
+      // transient `isLoading: true` before the immediate failure.
+      if (!effectiveCallability.callable) {
+        const error: BridgeError =
+          effectiveCallability.reason === 'no-bridge'
+            ? new BridgeUnavailableError()
+            : new BridgeMethodUnsupportedError(
+                method,
+                effectiveCallability.has,
+                effectiveCallability.needs,
+              );
         setState({ data: undefined, error, isLoading: false });
         return { data: undefined, error };
       }
 
-      // Check version support before executing
-      if (checkVersion) {
-        if (contractVersion && !isMethodSupported(method, contractVersion)) {
-          const error = new MethodNotSupportedError(
-            method,
-            contractVersion,
-            getMethodMinVersion(method),
-          );
-          setState({ data: undefined, error, isLoading: false });
-          return { data: undefined, error };
-        }
-      }
-
-      setState({ data: undefined, error: undefined, isLoading: true });
-
+      loadingRef.current = true;
+      setState({ data: undefined, error: null, isLoading: true });
       try {
-        const response = await request(
+        const result = await request.ifAvailable(
           method,
           params,
           responseEvent,
           requestOptions,
         );
-        setState({ data: response, error: undefined, isLoading: false });
-        return { data: response, error: undefined };
-      } catch (err) {
-        // Handle bridge errors gracefully
-        if (err instanceof BridgeError) {
-          console.warn('[@alien-id/miniapps-react] Bridge error:', err.message);
-          setState({ data: undefined, error: err, isLoading: false });
-          return { data: undefined, error: err };
+        if (result.ok) {
+          const { data } = result;
+          if (mounted.current)
+            setState({ data, error: null, isLoading: false });
+          return { data, error: null };
         }
-
-        // Handle other errors
-        const error = err instanceof Error ? err : new Error(String(err));
-        setState({ data: undefined, error, isLoading: false });
+        const { error } = result;
+        if (mounted.current)
+          setState({ data: undefined, error, isLoading: false });
         return { data: undefined, error };
+      } finally {
+        loadingRef.current = false;
       }
     },
-    [method, responseEvent, checkVersion, contractVersion, isBridgeAvailable],
+    [method, responseEvent, contextCallability, mounted],
   );
 
   const reset = useCallback(() => {
-    setState({ data: undefined, error: undefined, isLoading: false });
+    setState({ data: undefined, error: null, isLoading: false });
   }, []);
 
   return useMemo(
-    () => ({ ...state, execute, reset, supported }),
-    [state, execute, reset, supported],
+    () => ({
+      ...state,
+      execute,
+      reset,
+      callable: contextCallability.callable,
+    }),
+    [state, execute, reset, contextCallability.callable],
   );
 }

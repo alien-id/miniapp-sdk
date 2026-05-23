@@ -1,15 +1,12 @@
-import { request } from '@alien-id/miniapps-bridge';
 import {
-  type EventPayload,
-  getMethodMinVersion,
-  isMethodSupported,
-  type MethodPayload,
-} from '@alien-id/miniapps-contract';
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { BridgeError, MethodNotSupportedError } from '../errors';
-import { useAlien } from './useAlien';
-
-const ALREADY_LOADING_RESULT: PaymentResult = { status: 'loading' };
+  BridgeMethodUnsupportedError,
+  BridgeUnavailableError,
+  request,
+} from '@alien-id/miniapps-bridge';
+import type { EventPayload, MethodPayload } from '@alien-id/miniapps-contract';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallable } from './useCallable';
+import { useMounted } from './useMounted';
 
 // Derive types from contract - single source of truth
 type PaymentRequestPayload = MethodPayload<'payment:request'>;
@@ -45,7 +42,17 @@ export interface PaymentCallbacks {
   onPaid?: (txHash: string) => void;
   /** Called when user cancels the payment. */
   onCancelled?: () => void;
-  /** Called when payment fails. */
+  /**
+   * Called when payment fails.
+   *
+   * `errorCode` is the host's payment-domain code (`'insufficient_balance'`,
+   * `'network_error'`, `'unknown'`). Pre-call refusals — bridge missing,
+   * host's Contract Version below the method's min — also surface here
+   * with `errorCode: 'unknown'`; in that case `error` is a typed
+   * {@link BridgeError} subclass (`BridgeUnavailableError` or
+   * `BridgeMethodUnsupportedError`). Branch on `error instanceof` to
+   * tell pre-call refusals apart from real payment failures.
+   */
   onFailed?: (errorCode: PaymentErrorCode, error?: Error) => void;
   /** Called on any status change. */
   onStatusChange?: (status: PaymentStatus) => void;
@@ -80,14 +87,18 @@ export interface UsePaymentReturn {
   txHash?: string;
   /** Error code (present when failed). */
   errorCode?: PaymentErrorCode;
-  /** Error object if an error occurred. */
-  error?: Error;
+  /**
+   * Error object if an error occurred, or `null` if there is no error.
+   * `null` (not `undefined`) so consumers can distinguish "cleared" from
+   * "not yet set" with a single equality check.
+   */
+  error: Error | null;
   /** Initiate a payment. */
   pay: (params: PaymentParams) => Promise<PaymentResult>;
   /** Reset the payment state to idle. */
   reset: () => void;
-  /** Whether the payment method is supported by the host app. */
-  supported: boolean;
+  /** Whether the payment method is Callable. */
+  callable: boolean;
 }
 
 interface PaymentState {
@@ -101,47 +112,13 @@ interface PaymentState {
  * Hook for handling payments with full state management.
  *
  * Provides an easy-to-use interface for initiating payments and reacting
- * to status changes. Automatically handles loading states, errors, and
- * version checking.
+ * to status changes. Automatically handles loading states and errors.
  *
- * @param options - Optional configuration and callbacks.
- * @returns Payment state and methods.
- *
- * @example
- * ```tsx
- * import { usePayment } from '@alien-id/miniapps-react';
- *
- * function BuyButton({ orderId }: { orderId: string }) {
- *   const {
- *     pay,
- *     isLoading,
- *     isPaid,
- *     txHash,
- *     error,
- *   } = usePayment({
- *     onPaid: (txHash) => console.log('Paid!', txHash),
- *     onCancelled: () => console.log('Cancelled'),
- *     onFailed: (code) => console.log('Failed:', code),
- *   });
- *
- *   const handleBuy = () => pay({
- *     recipient: 'wallet-address',
- *     amount: '1000000',
- *     token: 'SOL',
- *     network: 'solana',
- *     invoice: orderId,
- *     item: { title: 'Premium Plan', iconUrl: 'https://example.com/icon.png', quantity: 1 },
- *   });
- *
- *   if (isPaid) return <div>Thank you! TX: {txHash}</div>;
- *
- *   return (
- *     <button onClick={handleBuy} disabled={isLoading}>
- *       {isLoading ? 'Processing...' : 'Buy Now'}
- *     </button>
- *   );
- * }
- * ```
+ * Pre-call refusal (bridge missing, host Contract Version too low) does
+ * NOT transition through `'loading'` — `pay()` writes the typed bridge
+ * error straight to `error`/`isFailed` state. `errorCode` is `'unknown'`
+ * in that case; check `error instanceof BridgeMethodUnsupportedError`
+ * (or `BridgeUnavailableError`) to distinguish from a real payment failure.
  */
 export function usePayment(options: UsePaymentOptions = {}): UsePaymentReturn {
   const {
@@ -151,7 +128,7 @@ export function usePayment(options: UsePaymentOptions = {}): UsePaymentReturn {
     onFailed,
     onStatusChange,
   } = options;
-  const { contractVersion, isBridgeAvailable } = useAlien();
+  const callability = useCallable('payment:request');
 
   const callbacksRef = useRef({
     onPaid,
@@ -159,52 +136,42 @@ export function usePayment(options: UsePaymentOptions = {}): UsePaymentReturn {
     onFailed,
     onStatusChange,
   });
-  callbacksRef.current = { onPaid, onCancelled, onFailed, onStatusChange };
+  // Sync callbacks via effect so updates land at commit time, not mid-render.
+  // Avoids torn-render hazards under React 18 concurrent mode.
+  useEffect(() => {
+    callbacksRef.current = { onPaid, onCancelled, onFailed, onStatusChange };
+  });
 
   const [state, setState] = useState<PaymentState>({ status: 'idle' });
+  const mounted = useMounted();
 
-  const supported = contractVersion
-    ? isMethodSupported('payment:request', contractVersion)
-    : true;
-
-  const updateState = useCallback((newState: PaymentState) => {
-    setState(newState);
-    callbacksRef.current.onStatusChange?.(newState.status);
-  }, []);
+  const updateState = useCallback(
+    (newState: PaymentState) => {
+      if (!mounted.current) return;
+      setState(newState);
+      callbacksRef.current.onStatusChange?.(newState.status);
+    },
+    [mounted],
+  );
 
   const loadingRef = useRef(false);
 
   const pay = useCallback(
     async (params: PaymentParams): Promise<PaymentResult> => {
       // Prevent concurrent payment calls
-      if (loadingRef.current) return ALREADY_LOADING_RESULT;
+      if (loadingRef.current) return { status: 'loading' };
 
-      // Check bridge availability
-      if (!isBridgeAvailable) {
-        const error = new Error(
-          'Bridge is not available. Running in dev mode?',
-        );
-        console.warn('[@alien-id/miniapps-react]', error.message);
-        const result = {
-          status: 'failed' as const,
-          errorCode: 'unknown' as const,
-          error,
-        };
-        updateState(result);
-        callbacksRef.current.onFailed?.('unknown', error);
-        return result;
-      }
-
-      // Check version support
-      if (
-        contractVersion &&
-        !isMethodSupported('payment:request', contractVersion)
-      ) {
-        const error = new MethodNotSupportedError(
-          'payment:request',
-          contractVersion,
-          getMethodMinVersion('payment:request'),
-        );
+      // Short-circuit pre-call refusal so onStatusChange/state doesn't
+      // briefly observe `loading` before resolving to `failed`.
+      if (!callability.callable) {
+        const error =
+          callability.reason === 'no-bridge'
+            ? new BridgeUnavailableError()
+            : new BridgeMethodUnsupportedError(
+                'payment:request',
+                callability.has,
+                callability.needs,
+              );
         const result = {
           status: 'failed' as const,
           errorCode: 'unknown' as const,
@@ -234,52 +201,65 @@ export function usePayment(options: UsePaymentOptions = {}): UsePaymentReturn {
       updateState({ status: 'loading' });
 
       try {
-        const response = await request(
+        const response = await request.ifAvailable(
           'payment:request',
           params,
           'payment:response',
           { timeout },
         );
 
-        if (response.status === 'paid') {
-          const txHash = response.txHash ?? '';
-          const result = { status: 'paid' as const, txHash };
+        if (!response.ok) {
+          const result = {
+            status: 'failed' as const,
+            errorCode: 'unknown' as const,
+            error: response.error,
+          };
           updateState(result);
-          callbacksRef.current.onPaid?.(txHash);
+          callbacksRef.current.onFailed?.('unknown', response.error);
           return result;
         }
 
-        if (response.status === 'cancelled') {
+        const data = response.data;
+        if (data.status === 'paid') {
+          if (!data.txHash) {
+            // Protocol violation: host claimed `paid` without a txHash.
+            // Fail closed instead of treating empty string as success.
+            const error = new Error(
+              "Host returned status 'paid' without a txHash.",
+            );
+            const result = {
+              status: 'failed' as const,
+              errorCode: 'unknown' as const,
+              error,
+            };
+            updateState(result);
+            callbacksRef.current.onFailed?.('unknown', error);
+            return result;
+          }
+          const result = { status: 'paid' as const, txHash: data.txHash };
+          updateState(result);
+          callbacksRef.current.onPaid?.(data.txHash);
+          return result;
+        }
+
+        if (data.status === 'cancelled') {
           const result = { status: 'cancelled' as const };
           updateState(result);
           callbacksRef.current.onCancelled?.();
           return result;
         }
 
-        // status === 'failed'
-        const errorCode = response.errorCode ?? 'unknown';
+        // data.status === 'failed'
+        const errorCode = data.errorCode ?? 'unknown';
         const result = { status: 'failed' as const, errorCode };
         updateState(result);
         callbacksRef.current.onFailed?.(errorCode);
-        return result;
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err));
-        if (err instanceof BridgeError) {
-          console.warn('[@alien-id/miniapps-react] Bridge error:', err.message);
-        }
-        const result = {
-          status: 'failed' as const,
-          errorCode: 'unknown' as const,
-          error,
-        };
-        updateState(result);
-        callbacksRef.current.onFailed?.('unknown', error);
         return result;
       } finally {
         loadingRef.current = false;
       }
     },
-    [isBridgeAvailable, contractVersion, timeout, updateState],
+    [callability, timeout, updateState],
   );
 
   const reset = useCallback(() => {
@@ -295,11 +275,11 @@ export function usePayment(options: UsePaymentOptions = {}): UsePaymentReturn {
       isFailed: state.status === 'failed',
       txHash: state.txHash,
       errorCode: state.errorCode,
-      error: state.error,
+      error: state.error ?? null,
       pay,
       reset,
-      supported,
+      callable: callability.callable,
     }),
-    [state, pay, reset, supported],
+    [state, pay, reset, callability.callable],
   );
 }
