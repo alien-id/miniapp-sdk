@@ -307,6 +307,15 @@ describe('AlienSolanaWallet', () => {
     });
   });
 
+  test('features is memoized (reference-stable across accesses)', async () => {
+    const { AlienSolanaWallet } = await import('../src/wallet');
+    const wallet = new AlienSolanaWallet();
+    // Wallet adapters compare feature objects by reference to decide whether
+    // capabilities have changed. A fresh object each access would force
+    // adapters to re-bind every render.
+    expect(wallet.features).toBe(wallet.features);
+  });
+
   test('signAndSendTransaction rejects unknown CAIP chain identifiers', async () => {
     const { WALLET_ERROR } = await import('@alien-id/miniapps-contract');
     const { AlienSolanaWallet } = await import('../src/wallet');

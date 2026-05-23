@@ -99,6 +99,35 @@ function normalizeWalletError(error: unknown): AlienWalletError {
   return new AlienWalletError(WALLET_ERROR.INTERNAL_ERROR, String(error));
 }
 
+/**
+ * Wrap a host-provided string decode (base58 or base64) so malformed input
+ * from the native side surfaces as a typed `AlienWalletError` instead of a
+ * raw `Error` / `RangeError` leaking the underlying codec stack.
+ */
+function safeDecode(
+  kind: 'publicKey' | 'signedTransaction' | 'signature',
+  decoder: (str: string) => Uint8Array,
+  str: string,
+): Uint8Array {
+  try {
+    return decoder(str);
+  } catch (err) {
+    throw new AlienWalletError(
+      WALLET_ERROR.INTERNAL_ERROR,
+      `Host returned invalid ${kind}: ${
+        err instanceof Error ? err.message : String(err)
+      }`,
+    );
+  }
+}
+
+type AlienSolanaWalletFeatures = StandardConnectFeature &
+  StandardDisconnectFeature &
+  StandardEventsFeature &
+  SolanaSignTransactionFeature &
+  SolanaSignAndSendTransactionFeature &
+  SolanaSignMessageFeature;
+
 export class AlienSolanaWallet implements Wallet {
   readonly version = '1.0.0' as const;
   readonly name = 'Alien' as const;
@@ -110,17 +139,14 @@ export class AlienSolanaWallet implements Wallet {
     [E in StandardEventsNames]?: Set<StandardEventsListeners[E]>;
   } = {};
 
-  get accounts(): readonly WalletAccount[] {
-    return this.#accounts;
-  }
+  // Reference-stable features object. Wallet adapters compare features by
+  // reference to decide whether capabilities have changed; rebuilding the
+  // object on every getter access would force adapters to re-bind every
+  // render.
+  readonly #features: AlienSolanaWalletFeatures;
 
-  get features(): StandardConnectFeature &
-    StandardDisconnectFeature &
-    StandardEventsFeature &
-    SolanaSignTransactionFeature &
-    SolanaSignAndSendTransactionFeature &
-    SolanaSignMessageFeature {
-    return {
+  constructor() {
+    this.#features = {
       'standard:connect': {
         version: '1.0.0',
         connect: this.#connect,
@@ -148,6 +174,14 @@ export class AlienSolanaWallet implements Wallet {
         signMessage: this.#signMessage,
       },
     };
+  }
+
+  get accounts(): readonly WalletAccount[] {
+    return this.#accounts;
+  }
+
+  get features(): AlienSolanaWalletFeatures {
+    return this.#features;
   }
 
   #connect: StandardConnectMethod = async ({ silent } = {}) => {
