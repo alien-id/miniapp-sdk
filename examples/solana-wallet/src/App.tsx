@@ -10,6 +10,7 @@ import {
 } from '@solana/wallet-adapter-react-ui';
 import { clusterApiUrl } from '@solana/web3.js';
 import { useMemo, useState } from 'react';
+import { CallabilityBanner } from './CallabilityBanner';
 
 import '@solana/wallet-adapter-react-ui/styles.css';
 
@@ -34,6 +35,8 @@ function WalletContent() {
         {connecting && <p className="status-text">Connecting...</p>}
         {disconnecting && <p className="status-text">Disconnecting...</p>}
       </section>
+
+      <CallabilityBanner method="wallet.solana:connect" />
 
       {connected && publicKey && (
         <section className="card wallet-card">
@@ -64,7 +67,7 @@ function WalletContent() {
         <div className="info-row">
           <span className="label">Auth Token</span>
           <span className={`badge ${authToken ? 'badge-ok' : 'badge-muted'}`}>
-            {authToken ? `${authToken.slice(0, 12)}...` : 'None'}
+            {authToken ? 'Present' : 'None'}
           </span>
         </div>
         <div className="info-row">

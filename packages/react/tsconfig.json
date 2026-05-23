@@ -7,12 +7,12 @@
     "jsx": "react-jsx",
     "allowJs": true,
 
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "noEmit": true,
+    "types": ["bun"],
 
-    "baseUrl": ".",
     "paths": {
       "@alien-id/miniapps-bridge": ["../bridge/src"],
       "@alien-id/miniapps-bridge/*": ["../bridge/src/*"],

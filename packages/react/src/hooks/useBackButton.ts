@@ -41,22 +41,15 @@ export function useBackButton(onPress?: () => void): UseBackButtonReturn {
     onPressRef.current = onPress;
   });
 
-  // Subscribe to back button click events.
-  // Uses ref so the subscription is stable regardless of
-  // whether the consumer passes an inline function.
+  // Subscribe to back button click events. Emittery's `on` is total — it
+  // doesn't throw — so a try/catch here would only swallow errors that
+  // the SDK itself wouldn't surface. Uses a ref so the subscription is
+  // stable regardless of whether the consumer passes an inline function.
   useEffect(() => {
     if (!isBridgeAvailable) return;
-    try {
-      return on('host.back.button:clicked', () => {
-        onPressRef.current?.();
-      });
-    } catch (error) {
-      console.warn(
-        '[@alien-id/miniapps-react] Failed to subscribe to host.back.button:clicked:',
-        error instanceof Error ? error.message : String(error),
-      );
-      return;
-    }
+    return on('host.back.button:clicked', () => {
+      onPressRef.current?.();
+    });
   }, [isBridgeAvailable]);
 
   const show = useCallback(() => {

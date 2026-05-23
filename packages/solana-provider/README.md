@@ -191,25 +191,25 @@ The provider encodes all data (transactions, messages) as **base64** for the bri
 
 ## Contract Version
 
-The wallet methods require contract version **1.0.0** or higher. Use `useIsMethodSupported` from `@alien-id/miniapps-react` to check compatibility before using wallet features:
+The wallet Methods require Contract Version **1.0.0** or higher. Use `useCallable` from `@alien-id/miniapps-react` to check Callability before rendering wallet UI — the discriminated union lets you distinguish "open in Alien App" from "update Alien App":
 
 ```tsx
-import { useIsMethodSupported } from '@alien-id/miniapps-react';
+import { useCallable } from '@alien-id/miniapps-react';
 
 function WalletFeature() {
-  const { supported, minVersion } = useIsMethodSupported('wallet.solana:connect');
+  const result = useCallable('wallet.solana:connect');
 
-  if (!supported) {
-    return <p>Please update Alien App to v{minVersion} or later.</p>;
+  if (result.callable) return <WalletUI />;
+  if (result.reason === 'no-bridge') {
+    return <p>Please open this miniapp inside Alien App.</p>;
   }
-
-  return <WalletUI />;
+  return <p>Please update Alien App to v{result.needs} (you have v{result.has}).</p>;
 }
 ```
 
-If the bridge is unavailable, `initAlienWallet()` returns without
-registering. If the contract version is too old, it logs a warning and
-does not register.
+If the Bridge is unavailable, `initAlienWallet()` returns without
+registering. If the Host's Contract Version is too old, it logs a warning
+and does not register.
 
 ## API Reference
 

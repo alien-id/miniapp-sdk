@@ -25,16 +25,6 @@ export class BridgeUnavailableError extends BridgeError {
 }
 
 /**
- * Thrown when window is undefined (e.g., SSR scenarios).
- */
-export class BridgeWindowUnavailableError extends BridgeError {
-  constructor() {
-    super('Window is not available. This SDK requires a browser environment.');
-    this.name = 'BridgeWindowUnavailableError';
-  }
-}
-
-/**
  * Thrown when a request times out.
  */
 export class BridgeTimeoutError extends BridgeError {
@@ -50,7 +40,22 @@ export class BridgeTimeoutError extends BridgeError {
 }
 
 /**
- * Thrown when a method is not supported by the current contract version.
+ * Thrown when a hook-level call is rejected because an identical request is
+ * already in flight. Distinct from {@link BridgeUnavailableError} so UI can
+ * branch on "wait for the active call" vs. "bridge missing".
+ */
+export class BridgeBusyError extends BridgeError {
+  readonly method: string;
+
+  constructor(method: string) {
+    super(`A "${method}" call is already in flight.`);
+    this.name = 'BridgeBusyError';
+    this.method = method;
+  }
+}
+
+/**
+ * Thrown when a Method is not Callable in the Host's current Contract Version.
  */
 export class BridgeMethodUnsupportedError extends BridgeError {
   readonly method: string;

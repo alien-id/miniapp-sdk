@@ -9,6 +9,7 @@
     "verbatimModuleSyntax": true,
     "noEmit": true,
     "outDir": "./dist",
+    "types": ["bun"],
     "strict": true,
     "skipLibCheck": true,
     "noFallthroughCasesInSwitch": true,

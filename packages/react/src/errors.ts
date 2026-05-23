@@ -1,51 +1,16 @@
-import {
-  BridgeError,
-  BridgeMethodUnsupportedError,
-  BridgeTimeoutError,
-  BridgeUnavailableError,
-  BridgeWindowUnavailableError,
-} from '@alien-id/miniapps-bridge';
-import type { MethodName, Version } from '@alien-id/miniapps-contract';
-
-/**
- * Base class for all React SDK errors.
- */
-export class ReactSDKError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ReactSDKError';
-  }
-}
-
-/**
- * Error thrown when a method is not supported by the current contract version.
- */
-export class MethodNotSupportedError extends ReactSDKError {
-  readonly method: MethodName;
-  readonly contractVersion: Version | undefined;
-  readonly minVersion: Version | undefined;
-
-  constructor(
-    method: MethodName,
-    contractVersion: Version | undefined,
-    minVersion: Version | undefined,
-  ) {
-    const message = minVersion
-      ? `Method "${method}" requires version ${minVersion}, but host provides ${contractVersion ?? 'unknown'}`
-      : `Method "${method}" is not supported`;
-    super(message);
-    this.name = 'MethodNotSupportedError';
-    this.method = method;
-    this.contractVersion = contractVersion;
-    this.minVersion = minVersion;
-  }
-}
-
-// Re-export bridge errors for convenience
+// Transitional convenience for back-compat imports: when the React
+// package used to ship its own `ReactSDKError`/`MethodNotSupportedError`
+// classes, consumers reached for them from `@alien-id/miniapps-react`.
+// Those classes are gone (PRD-0001 collapsed all errors into bridge
+// errors), but this module keeps the same import path working so
+// existing app code that does
+// `import { BridgeTimeoutError } from '@alien-id/miniapps-react'` (via
+// this file or via the root) doesn't need a same-PR rewrite. New code
+// should import from the root barrel, not from `./errors`.
 export {
+  BridgeBusyError,
   BridgeError,
   BridgeMethodUnsupportedError,
   BridgeTimeoutError,
   BridgeUnavailableError,
-  BridgeWindowUnavailableError,
-};
+} from '@alien-id/miniapps-bridge';

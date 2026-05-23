@@ -1,8 +1,5 @@
 import { afterEach, beforeEach, expect, test } from 'bun:test';
-import {
-  BridgeUnavailableError,
-  BridgeWindowUnavailableError,
-} from '../src/errors';
+import { BridgeUnavailableError } from '../src/errors';
 import type { Message } from '../src/transport';
 import { sendMessage, setupMessageListener } from '../src/transport';
 
@@ -120,7 +117,7 @@ test('sendMessage - should throw BridgeUnavailableError if bridge not available'
   expect(bridgePostMessageCalls.length).toBe(0);
 });
 
-test('sendMessage - should throw BridgeWindowUnavailableError if window is undefined (SSR)', () => {
+test('sendMessage - should throw BridgeUnavailableError if window is undefined (SSR)', () => {
   // Delete window to simulate SSR environment
   delete (globalThis as { window?: unknown }).window;
 
@@ -130,8 +127,8 @@ test('sendMessage - should throw BridgeWindowUnavailableError if window is undef
     payload: { status: 'paid', txHash: 'tx123', reqId: '123' },
   };
 
-  // Should throw BridgeWindowUnavailableError when window is undefined
-  expect(() => sendMessage(message)).toThrow(BridgeWindowUnavailableError);
+  // SSR and no-bridge both surface as BridgeUnavailableError via getBridge().
+  expect(() => sendMessage(message)).toThrow(BridgeUnavailableError);
 
   // Verify message was not sent
   expect(postMessageCalls.length).toBe(0);

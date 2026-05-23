@@ -13,6 +13,7 @@
     "react-dom": "^19.2.0",
     "@alien-id/miniapps-react": "workspace:*",
     "@alien-id/miniapps-bridge": "workspace:*",
+    "@alien-id/miniapps-contract": "workspace:*",
     "@alien-id/miniapps-solana-provider": "workspace:*",
     "@solana/wallet-adapter-base": "^0.9.23",
     "@solana/wallet-adapter-react": "^0.15.35",

@@ -28,7 +28,8 @@ const unsubscribe = on('payment:response', (payload) => {
 unsubscribe();
 // or: off('payment:response', listener);
 
-// Emit event to host app (also triggers local listeners)
+// Emit event locally (does NOT send to the host app — use `send()` for that).
+// Useful for tests, mocks, and replaying host events into local listeners.
 await emit('payment:response', { status: 'paid', txHash: '...', reqId: '...' });
 ```
 
@@ -59,21 +60,15 @@ send('app:ready', {});
 
 ### Safe execution
 
-Use the safe variants when you want bridge calls to return structured
-results instead of throwing.
+Use `send.ifAvailable(...)` and `request.ifAvailable(...)` when you want
+bridge calls to return structured results instead of throwing.
 
 ```typescript
-import {
-  requestIfAvailable,
-  sendIfAvailable,
-} from '@alien-id/miniapps-bridge';
+import { request, send } from '@alien-id/miniapps-bridge';
 
-const hapticResult = sendIfAvailable(
-  'haptic:impact',
-  { style: 'medium' },
-);
+const hapticResult = send.ifAvailable('haptic:impact', { style: 'medium' });
 
-const paymentResult = await requestIfAvailable(
+const paymentResult = await request.ifAvailable(
   'payment:request',
   {
     recipient: 'wallet-123',
@@ -86,25 +81,29 @@ const paymentResult = await requestIfAvailable(
 );
 ```
 
-The same helpers are also available as `send.ifAvailable(...)` and
-`request.ifAvailable(...)`.
+### Callability
 
-### Bridge Availability
+`callability()` is the single canonical answer to "can I call this Method right now?". It returns a discriminated union that tells you both *whether* the Method is Callable and *why* it isn't when it isn't.
 
 ```typescript
-import {
-  isAvailable,
-  isBridgeAvailable,
-} from '@alien-id/miniapps-bridge';
+import { callability, isBridgeAvailable } from '@alien-id/miniapps-bridge';
 
 if (isBridgeAvailable()) {
-  // Bridge is ready
+  // Bridge is ready (cheap, just checks `window.__miniAppsBridge__`)
 }
 
-if (isAvailable('payment:request', { version: '1.0.0' })) {
-  // Method is supported by the current host version
+const result = callability('payment:request', { version: '1.0.0' });
+if (result.callable) {
+  // Bridge present AND Host's Contract Version supports the Method
+} else if (result.reason === 'no-bridge') {
+  // Miniapp is running outside the Alien App (e.g. a browser tab)
+} else {
+  // Host is on `result.has`, this Method needs `result.needs`
+  console.warn(`Update Alien App to v${result.needs} (host is v${result.has})`);
 }
 ```
+
+Strict Track (`send`/`request`) gates on `callability()` automatically and throws the matching `BridgeError` subclass. Safe Track (`send.ifAvailable`/`request.ifAvailable`) returns the same errors via `SafeResult.error`.
 
 ### Launch Params
 
@@ -185,7 +184,6 @@ import {
   BridgeError,
   BridgeMethodUnsupportedError,
   BridgeUnavailableError,
-  BridgeWindowUnavailableError,
   BridgeTimeoutError,
   LaunchParamsError,
 } from '@alien-id/miniapps-bridge';
@@ -200,11 +198,11 @@ try {
   if (error instanceof BridgeTimeoutError) {
     console.error(`Timeout: ${error.method} after ${error.timeout}ms`);
   } else if (error instanceof BridgeMethodUnsupportedError) {
-    console.error(`Unsupported method: ${error.method}`);
+    console.error(
+      `${error.method} requires v${error.minVersion} (host is v${error.contractVersion})`,
+    );
   } else if (error instanceof BridgeUnavailableError) {
     console.error('Not running in Alien App');
-  } else if (error instanceof BridgeWindowUnavailableError) {
-    console.error('Window unavailable (SSR?)');
   } else if (error instanceof BridgeError) {
     console.error('Bridge error:', error.message);
   }
@@ -214,10 +212,9 @@ try {
 | Error | When |
 |-------|------|
 | `BridgeError` | Base class for all bridge errors |
-| `BridgeUnavailableError` | `window.__miniAppsBridge__` not found |
-| `BridgeWindowUnavailableError` | `window` is undefined (SSR) |
+| `BridgeUnavailableError` | Bridge not present (SSR, browser tab, or `window.__miniAppsBridge__` not injected) |
+| `BridgeMethodUnsupportedError` | Method requires a newer Contract Version (has `method`, `contractVersion`, `minVersion`) |
 | `BridgeTimeoutError` | Request timed out (has `method` and `timeout` properties) |
-| `BridgeMethodUnsupportedError` | Method requires a newer contract version |
 | `LaunchParamsError` | Launch params unavailable |
 
 ## How It Works

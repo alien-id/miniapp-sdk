@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, expect, test } from 'bun:test';
+import {
+  BridgeMethodUnsupportedError,
+  BridgeUnavailableError,
+} from '../src/errors';
 import { emit } from '../src/events';
+import { clearMockLaunchParams } from '../src/launch-params';
 import { request } from '../src/request';
 
 // Mock window for tests - only mock what's actually needed
@@ -43,6 +48,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  clearMockLaunchParams();
   delete (globalThis as { window?: unknown }).window;
 });
 
@@ -117,6 +123,56 @@ test('request - should timeout if no response', async () => {
 
   expect(promise).rejects.toThrow('Request timeout');
 }, 100);
+
+test('request - should reject with BridgeUnavailableError when bridge missing', async () => {
+  delete mockWindow.__miniAppsBridge__;
+  (globalThis as { window: typeof mockWindow }).window = mockWindow;
+
+  await expect(
+    request(
+      'payment:request',
+      {
+        recipient: '',
+        amount: '',
+        token: '',
+        network: '',
+        invoice: '',
+      },
+      'payment:response',
+      { timeout: 50 },
+    ),
+  ).rejects.toBeInstanceOf(BridgeUnavailableError);
+});
+
+test('request - should reject with BridgeMethodUnsupportedError when host contract version is below method min', async () => {
+  (mockWindow as Record<string, unknown>).__ALIEN_AUTH_TOKEN__ = 'token';
+  (mockWindow as Record<string, unknown>).__ALIEN_CONTRACT_VERSION__ = '0.0.9';
+  (globalThis as { window: typeof mockWindow }).window = mockWindow;
+
+  let thrown: unknown;
+  try {
+    await request(
+      'payment:request',
+      {
+        recipient: '',
+        amount: '',
+        token: '',
+        network: '',
+        invoice: '',
+      },
+      'payment:response',
+      { timeout: 50 },
+    );
+  } catch (e) {
+    thrown = e;
+  }
+  expect(thrown).toBeInstanceOf(BridgeMethodUnsupportedError);
+  if (thrown instanceof BridgeMethodUnsupportedError) {
+    expect(thrown.method).toBe('payment:request');
+    expect(thrown.contractVersion).toBe('0.0.9');
+    expect(thrown.minVersion).toBe('0.1.1');
+  }
+});
 
 test('request - should ignore responses with different reqId', async () => {
   const promise = request(

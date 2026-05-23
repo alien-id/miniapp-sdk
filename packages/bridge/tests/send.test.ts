@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, expect, test } from 'bun:test';
 import {
+  BridgeMethodUnsupportedError,
   BridgeUnavailableError,
-  BridgeWindowUnavailableError,
 } from '../src/errors';
+import { clearMockLaunchParams } from '../src/launch-params';
 import { send } from '../src/send';
 
 // Mock window object
@@ -26,6 +27,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  clearMockLaunchParams();
   delete (globalThis as { window?: unknown }).window;
 });
 
@@ -75,14 +77,50 @@ test('send - should throw BridgeUnavailableError if bridge not available', () =>
   expect(bridgePostMessageCalls.length).toBe(0);
 });
 
-test('send - should throw BridgeWindowUnavailableError if window is undefined (SSR)', () => {
+test('send - should throw BridgeUnavailableError if window is undefined (SSR)', () => {
   delete (globalThis as { window?: unknown }).window;
 
-  expect(() => send('app:ready', {})).toThrow(BridgeWindowUnavailableError);
+  // No-window and no-bridge both surface as BridgeUnavailableError via the
+  // Callability check.
+  expect(() => send('app:ready', {})).toThrow(BridgeUnavailableError);
   expect(bridgePostMessageCalls.length).toBe(0);
 
   // Restore window for other tests
   (globalThis as { window: typeof mockWindow }).window = mockWindow;
+});
+
+test('send - should throw BridgeMethodUnsupportedError when host contract version is below method min', () => {
+  const bridge = {
+    postMessage: (data: string) => {
+      bridgePostMessageCalls.push(data);
+    },
+  };
+  mockWindow.__miniAppsBridge__ = bridge;
+  (mockWindow as Record<string, unknown>).__ALIEN_AUTH_TOKEN__ = 'token';
+  (mockWindow as Record<string, unknown>).__ALIEN_CONTRACT_VERSION__ = '0.0.9';
+  (globalThis as { window: typeof mockWindow }).window = mockWindow;
+
+  // payment:request requires 0.1.1; host advertises 0.0.9
+  let thrown: unknown;
+  try {
+    send('payment:request', {
+      recipient: '',
+      amount: '',
+      token: '',
+      network: '',
+      invoice: '',
+      reqId: '',
+    });
+  } catch (e) {
+    thrown = e;
+  }
+  expect(thrown).toBeInstanceOf(BridgeMethodUnsupportedError);
+  if (thrown instanceof BridgeMethodUnsupportedError) {
+    expect(thrown.method).toBe('payment:request');
+    expect(thrown.contractVersion).toBe('0.0.9');
+    expect(thrown.minVersion).toBe('0.1.1');
+  }
+  expect(bridgePostMessageCalls.length).toBe(0);
 });
 
 test('send - should send method with correct message format', () => {

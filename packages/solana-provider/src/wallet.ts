@@ -1,4 +1,10 @@
-import { request, send } from '@alien-id/miniapps-bridge';
+import {
+  BridgeMethodUnsupportedError,
+  BridgeTimeoutError,
+  BridgeUnavailableError,
+  request,
+  send,
+} from '@alien-id/miniapps-bridge';
 import {
   type SolanaChain,
   WALLET_ERROR,
@@ -42,6 +48,10 @@ const SOLANA_CHAINS = [
   'solana:testnet',
 ] as const;
 
+function isSolanaChain(chain: string): chain is SolanaChain {
+  return (SOLANA_CHAINS as readonly string[]).includes(chain);
+}
+
 export class AlienWalletError extends Error {
   readonly code: WalletSolanaErrorCode;
 
@@ -55,6 +65,31 @@ export class AlienWalletError extends Error {
 function normalizeWalletError(error: unknown): AlienWalletError {
   if (error instanceof AlienWalletError) {
     return error;
+  }
+
+  // Strict Track now gates on Callability and throws typed bridge errors
+  // immediately. Map them to wallet-standard codes with actionable messages
+  // so wallet adapters can surface "open in Alien App" / "update Alien App"
+  // UI instead of a generic "Internal error".
+  if (error instanceof BridgeMethodUnsupportedError) {
+    return new AlienWalletError(
+      WALLET_ERROR.INTERNAL_ERROR,
+      `Alien App needs to be updated to v${error.minVersion} to use this wallet feature (host is v${error.contractVersion}).`,
+    );
+  }
+
+  if (error instanceof BridgeUnavailableError) {
+    return new AlienWalletError(
+      WALLET_ERROR.INTERNAL_ERROR,
+      'Alien App bridge is not available. Open this miniapp inside Alien App.',
+    );
+  }
+
+  if (error instanceof BridgeTimeoutError) {
+    return new AlienWalletError(
+      WALLET_ERROR.REQUEST_EXPIRED,
+      `Alien App did not respond to ${error.method} within ${error.timeout}ms.`,
+    );
   }
 
   if (error instanceof Error) {
@@ -143,7 +178,18 @@ export class AlienSolanaWallet implements Wallet {
       );
     }
 
-    const account = new AlienSolanaAccount(response.publicKey);
+    // base58Decode (via the account constructor) throws on malformed input.
+    // Map that to a typed wallet error so adapters get a coherent failure
+    // instead of a raw bs58 stack.
+    let account: AlienSolanaAccount;
+    try {
+      account = new AlienSolanaAccount(response.publicKey);
+    } catch (err) {
+      throw new AlienWalletError(
+        WALLET_ERROR.INTERNAL_ERROR,
+        `Host returned invalid publicKey: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
     this.#accounts = [account];
     this.#emit('change', { accounts: this.accounts });
 
@@ -223,13 +269,20 @@ export class AlienSolanaWallet implements Wallet {
     for (const input of inputs) {
       this.#assertAccount(input.account);
 
+      if (!isSolanaChain(input.chain)) {
+        throw new AlienWalletError(
+          WALLET_ERROR.INVALID_PARAMS,
+          `Unsupported Solana chain "${input.chain}". Expected one of: ${SOLANA_CHAINS.join(', ')}.`,
+        );
+      }
+
       const transactionBase64 = base64Encode(input.transaction);
 
       const response = await request(
         'wallet.solana:sign.send',
         {
           transaction: transactionBase64,
-          chain: input.chain as SolanaChain,
+          chain: input.chain,
           options: input.options
             ? {
                 skipPreflight: input.options.skipPreflight,
@@ -289,6 +342,16 @@ export class AlienSolanaWallet implements Wallet {
         throw new AlienWalletError(
           WALLET_ERROR.INTERNAL_ERROR,
           'No signature or publicKey in response',
+        );
+      }
+
+      // Guard against the host signing with a different key than the one the
+      // dapp requested. A mismatch breaks the wallet-standard contract and can
+      // silently route signatures to the wrong account.
+      if (response.publicKey !== input.account.address) {
+        throw new AlienWalletError(
+          WALLET_ERROR.INTERNAL_ERROR,
+          `Sign message responder publicKey ${response.publicKey} does not match requested account ${input.account.address}.`,
         );
       }
 

@@ -1,10 +1,16 @@
 import { getLaunchParams } from '@alien-id/miniapps-bridge';
 import type { LaunchParams } from '@alien-id/miniapps-contract';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 /**
  * Hook to get launch params.
  * Returns undefined if params unavailable (use mockLaunchParamsForDev in dev).
+ *
+ * Reads window globals **after mount**, so SSR renders match between server
+ * and client (both produce `undefined`), and the client picks up the real
+ * params on the first effect tick. Launch params are injected once at boot
+ * and never change at runtime; if you need a live signal (e.g.
+ * `contractVersion`), read it from `useAlien()` instead.
  *
  * @example
  * ```tsx
@@ -22,7 +28,11 @@ import { useState } from 'react';
  * ```
  */
 export function useLaunchParams(): LaunchParams | undefined {
-  const [params] = useState(() => getLaunchParams());
+  const [params, setParams] = useState<LaunchParams | undefined>(undefined);
+
+  useEffect(() => {
+    setParams(getLaunchParams());
+  }, []);
 
   return params;
 }
