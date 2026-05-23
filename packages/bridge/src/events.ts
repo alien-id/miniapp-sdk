@@ -6,9 +6,14 @@ import type {
 import Emittery from 'emittery';
 import { setupMessageListener } from './transport';
 
+/**
+ * Listener for a bridge event. May be synchronous or return a promise —
+ * `emit()` awaits each listener (Emittery semantics), so async handlers
+ * are safe to use without unhandled-rejection risk.
+ */
 export type EventListener<T extends EventName = EventName> = (
   payload: EventPayload<T>,
-) => void;
+) => void | Promise<void>;
 
 // Create Emittery-compatible event map from Events type
 type EmitteryEventMap = {
