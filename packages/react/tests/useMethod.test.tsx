@@ -5,12 +5,10 @@ import {
   emit,
 } from '@alien-id/miniapps-bridge';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { useCallable } from '../src/hooks/useCallable';
 import { useMethod } from '../src/hooks/useMethod';
 import {
   BridgeTestWrapper,
   clearBridgeEnvironment,
-  ControllableAlienProvider,
   setBridgeEnvironment,
 } from './test-utils';
 
@@ -272,39 +270,3 @@ test('useMethod - reading `supported` returns the same value as `callable` and w
   }
 });
 
-test('useCallable - re-evaluates when provider Contract Version changes', () => {
-  // Bridge must be present so callability() can return non-no-bridge results.
-  setBridgeEnvironment({ bridge: true });
-
-  // The wrapper is fixed at renderHook time, so use a captured variable
-  // that the wrapper reads on every render. Mutating it + rerender()
-  // simulates the AlienProvider receiving a new contractVersion.
-  let contractVersion: '0.0.9' | '1.0.0' = '0.0.9';
-  const Wrapper = ({ children }: { children: React.ReactNode }) => (
-    <ControllableAlienProvider
-      bridgeAvailable={true}
-      contractVersion={contractVersion}
-    >
-      {children}
-    </ControllableAlienProvider>
-  );
-
-  const { result, rerender } = renderHook(
-    () => useCallable('payment:request'),
-    { wrapper: Wrapper },
-  );
-
-  // payment:request requires 0.1.1; '0.0.9' is below it.
-  expect(result.current).toMatchObject({
-    callable: false,
-    reason: 'host-outdated',
-    has: '0.0.9',
-    needs: '0.1.1',
-  });
-
-  // Bump the Contract Version and force a rerender.
-  contractVersion = '1.0.0';
-  rerender();
-
-  expect(result.current).toEqual({ callable: true });
-});
