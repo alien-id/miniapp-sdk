@@ -1,8 +1,6 @@
 import {
   BridgeBusyError,
   type BridgeError,
-  BridgeMethodUnsupportedError,
-  BridgeUnavailableError,
   callability,
   request,
   type SafeRequestOptions,
@@ -14,7 +12,11 @@ import type {
   RequestMethodName,
 } from '@alien-id/miniapps-contract';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { useCallable, withSupportedAlias } from './useCallable';
+import {
+  callabilityError,
+  useCallable,
+  withSupportedAlias,
+} from './useCallable';
 import { useMounted } from './useMounted';
 
 export interface UseMethodExecuteResult<M extends RequestMethodName> {
@@ -130,17 +132,10 @@ export function useMethod<M extends RequestMethodName>(
 
       // Short-circuit pre-call refusal so consumers don't observe a
       // transient `isLoading: true` before the immediate failure.
-      if (!effectiveCallability.callable) {
-        const error: BridgeError =
-          effectiveCallability.reason === 'no-bridge'
-            ? new BridgeUnavailableError()
-            : new BridgeMethodUnsupportedError(
-                method,
-                effectiveCallability.has,
-                effectiveCallability.needs,
-              );
-        setState({ data: undefined, error, isLoading: false });
-        return { data: undefined, error };
+      const refusal = callabilityError(method, effectiveCallability);
+      if (refusal) {
+        setState({ data: undefined, error: refusal, isLoading: false });
+        return { data: undefined, error: refusal };
       }
 
       loadingRef.current = true;

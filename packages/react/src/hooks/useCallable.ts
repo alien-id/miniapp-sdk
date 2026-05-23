@@ -1,7 +1,31 @@
-import { type Callability, callability } from '@alien-id/miniapps-bridge';
+import {
+  BridgeMethodUnsupportedError,
+  BridgeUnavailableError,
+  type Callability,
+  callability,
+} from '@alien-id/miniapps-bridge';
 import type { MethodName } from '@alien-id/miniapps-contract';
 import { useMemo } from 'react';
 import { useAlien } from './useAlien';
+
+/**
+ * Translate a refusing {@link Callability} into the appropriate
+ * `BridgeError` subclass — `BridgeUnavailableError` when no bridge is
+ * present, `BridgeMethodUnsupportedError` when the Host's Contract Version
+ * is below the Method's minimum. Returns `undefined` when the Method is
+ * Callable so consumers can branch with `if (error) ...`.
+ *
+ * Mirrors the bridge package's internal `callabilityError` helper; kept
+ * locally because the bridge does not re-export it yet.
+ */
+export function callabilityError(
+  method: MethodName,
+  c: Callability,
+): BridgeUnavailableError | BridgeMethodUnsupportedError | undefined {
+  if (c.callable) return undefined;
+  if (c.reason === 'no-bridge') return new BridgeUnavailableError();
+  return new BridgeMethodUnsupportedError(method, c.has, c.needs);
+}
 
 /**
  * Decorate a hook's return object with a deprecated `supported` accessor
