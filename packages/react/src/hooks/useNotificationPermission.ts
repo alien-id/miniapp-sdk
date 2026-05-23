@@ -1,13 +1,15 @@
 import {
   BridgeBusyError,
   type BridgeError,
-  BridgeMethodUnsupportedError,
-  BridgeUnavailableError,
   request,
 } from '@alien-id/miniapps-bridge';
 import type { NotificationPermissionStatus } from '@alien-id/miniapps-contract';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { useCallable, withSupportedAlias } from './useCallable';
+import {
+  callabilityError,
+  useCallable,
+  withSupportedAlias,
+} from './useCallable';
 import { useMounted } from './useMounted';
 
 export type { NotificationPermissionStatus };
@@ -63,7 +65,7 @@ export function useNotificationPermission(
   options: UseNotificationPermissionOptions = {},
 ): UseNotificationPermissionReturn {
   const { timeout = 120000 } = options;
-  const callability = useCallable('notifications:permission.request');
+  const permissionCallability = useCallable('notifications:permission.request');
 
   const [status, setStatus] = useState<NotificationPermissionStatus | null>(
     null,
@@ -84,17 +86,13 @@ export function useNotificationPermission(
 
       // Short-circuit pre-call refusal so `isLoading` doesn't flicker and
       // callers see the typed bridge error directly.
-      if (!callability.callable) {
-        const bridgeError: BridgeError =
-          callability.reason === 'no-bridge'
-            ? new BridgeUnavailableError()
-            : new BridgeMethodUnsupportedError(
-                'notifications:permission.request',
-                callability.has,
-                callability.needs,
-              );
-        setError(bridgeError);
-        return { ok: false, error: bridgeError };
+      const refusal = callabilityError(
+        'notifications:permission.request',
+        permissionCallability,
+      );
+      if (refusal) {
+        setError(refusal);
+        return { ok: false, error: refusal };
       }
 
       loadingRef.current = true;
@@ -119,7 +117,7 @@ export function useNotificationPermission(
         loadingRef.current = false;
         if (mounted.current) setIsLoading(false);
       }
-    }, [callability, timeout, mounted]);
+    }, [permissionCallability, timeout, mounted]);
 
   return useMemo(
     () =>
@@ -128,8 +126,8 @@ export function useNotificationPermission(
         isLoading,
         error,
         requestPermission,
-        callable: callability.callable,
+        callable: permissionCallability.callable,
       }),
-    [status, isLoading, error, requestPermission, callability.callable],
+    [status, isLoading, error, requestPermission, permissionCallability.callable],
   );
 }
