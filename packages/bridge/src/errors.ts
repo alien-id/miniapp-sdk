@@ -1,15 +1,19 @@
 /**
  * Base class for all bridge-related errors.
  * Allows catching all bridge errors with a single catch block.
+ *
+ * Forwards `options.cause` to `Error` (ES2022) so callers can chain the
+ * underlying error without losing context:
+ *
+ * ```ts
+ * try { JSON.parse(raw); }
+ * catch (e) { throw new BridgeError('bad payload', { cause: e }); }
+ * ```
  */
 export class BridgeError extends Error {
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, options?: { cause?: unknown }) {
+    super(message, options);
     this.name = 'BridgeError';
-    // Maintains proper stack trace for where our error was thrown (only available on V8)
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, BridgeError);
-    }
   }
 }
 
