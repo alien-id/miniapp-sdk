@@ -40,14 +40,12 @@ react  ─►  bridge  ─►  contract
 ```
 
 - **[`CONTEXT.md`](./CONTEXT.md)** — the project's domain vocabulary. Read this first if you're new to the codebase; the rest of the docs use these terms exactly.
-- **[`docs/prd/0001-unified-callability.md`](./docs/prd/0001-unified-callability.md)** — the PRD that drove the current `Callability` design (the SDK's "can I call this Method right now?" answer).
-- **[`docs/adr/`](./docs/adr/)** — Architecture Decision Records. Each ADR pins one decision: see the [ADR index](./docs/adr/README.md) for the catalogue.
 
-The canonical "can I call this Method?" answer is the `Callability` discriminated union, owned by the bridge package, surfaced to React as `useCallable(method)`. The three branches (`callable: true`, `'no-bridge'`, `'host-outdated'`) are exhaustive and TypeScript-narrowable — see [ADR-0003](./docs/adr/0003-callability-as-discriminated-union.md).
+The canonical "can I call this Method?" answer is the `Callability` discriminated union, owned by the bridge package, surfaced to React as `useCallable(method)`. The three branches (`callable: true`, `'no-bridge'`, `'host-outdated'`) are exhaustive and TypeScript-narrowable.
 
 ## Comparison to peer SDKs
 
-The Alien Miniapp SDK was designed alongside Telegram, Worldcoin, and Farcaster's mini-app SDKs. The deliberate divergences (recorded in [ADR-0003](./docs/adr/0003-callability-as-discriminated-union.md)):
+The Alien Miniapp SDK was designed alongside Telegram, Worldcoin, and Farcaster's mini-app SDKs. The deliberate divergences:
 
 | SDK | Capability answer | Reason on unavailable? |
 | --- | --- | --- |

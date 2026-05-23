@@ -14,7 +14,7 @@ import { sendMessage } from './transport';
  * like 'app:ready'.
  *
  * Strict Track: gates on {@link callability} and throws if the Method
- * isn't Callable. See ADR-0005.
+ * isn't Callable.
  *
  * Also exposes `send.ifAvailable(...)` — Safe Track variant that never
  * throws and returns a {@link SafeResult} instead.

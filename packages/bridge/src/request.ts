@@ -85,7 +85,7 @@ async function _requestUnchecked<M extends MethodName, E extends EventName>(
  * Sends a request to the host app and waits for a matching response event.
  *
  * Strict Track: gates on {@link callability} and throws if the Method
- * isn't Callable. See ADR-0005.
+ * isn't Callable.
  *
  * Also exposes `request.ifAvailable(...)` — Safe Track variant that never
  * throws and returns a `Promise<SafeResult>` instead. Post-callability
