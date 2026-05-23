@@ -20,7 +20,10 @@ export type {
   MethodName,
   MethodNameWithVersionedPayload,
   MethodPayload,
+  MethodResponseEvent,
+  MethodResponseEvents,
   MethodVersionedPayload,
+  RequestMethodName,
 } from './methods/types';
 export {
   getMethodMinVersion,

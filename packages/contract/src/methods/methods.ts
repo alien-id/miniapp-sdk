@@ -5,6 +5,9 @@ export type {
   MethodName,
   MethodNameWithVersionedPayload,
   MethodPayload,
+  MethodResponseEvent,
+  MethodResponseEvents,
   MethodVersionedPayload,
+  RequestMethodName,
 } from './types';
 export { getReleaseVersion, releases } from './versions';
