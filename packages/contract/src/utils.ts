@@ -208,3 +208,15 @@ export type NotificationPermissionStatus =
  * @schema
  */
 export type SolanaChain = 'solana:mainnet' | 'solana:devnet' | 'solana:testnet';
+
+/**
+ * Runtime tuple of every supported Solana chain. Single source of truth for
+ * both the contract type and any consumer that needs to enumerate or
+ * validate chains at runtime (e.g. wallet-standard providers).
+ * @since 1.0.0
+ */
+export const SOLANA_CHAINS = [
+  'solana:mainnet',
+  'solana:devnet',
+  'solana:testnet',
+] as const satisfies readonly SolanaChain[];

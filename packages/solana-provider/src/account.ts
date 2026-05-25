@@ -1,11 +1,6 @@
+import { SOLANA_CHAINS, WALLET_ERROR } from '@alien-id/miniapps-contract';
 import type { IdentifierString, WalletAccount } from '@wallet-standard/base';
-import { base58Decode } from './utils';
-
-const SOLANA_CHAINS = [
-  'solana:mainnet',
-  'solana:devnet',
-  'solana:testnet',
-] as const;
+import { AlienWalletError } from './errors';
 
 const ACCOUNT_FEATURES: readonly IdentifierString[] = [
   'solana:signTransaction',
@@ -27,16 +22,22 @@ export class AlienSolanaAccount implements WalletAccount {
   readonly label?: string;
   readonly icon?: WalletAccount['icon'];
 
-  constructor(publicKeyBase58: string) {
-    // Decode and validate length BEFORE setting `address` so a partially
-    // initialised account is never observable to callers.
-    const publicKey = base58Decode(publicKeyBase58);
+  /**
+   * Caller is responsible for decoding `address` (base58) into `publicKey`
+   * before construction so codec failures surface as typed wallet errors
+   * at the bridge boundary instead of generic decode exceptions thrown
+   * from inside a half-built account.
+   */
+  constructor(publicKey: Uint8Array, address: string) {
+    // Validate length BEFORE assigning fields so a partially initialised
+    // account is never observable to callers.
     if (publicKey.length !== SOLANA_PUBKEY_BYTE_LENGTH) {
-      throw new Error(
+      throw new AlienWalletError(
+        WALLET_ERROR.INTERNAL_ERROR,
         `Invalid Solana public key length: expected ${SOLANA_PUBKEY_BYTE_LENGTH} bytes, got ${publicKey.length}.`,
       );
     }
     this.publicKey = publicKey;
-    this.address = publicKeyBase58;
+    this.address = address;
   }
 }

@@ -6,9 +6,9 @@ import {
   send,
 } from '@alien-id/miniapps-bridge';
 import {
+  SOLANA_CHAINS,
   type SolanaChain,
   WALLET_ERROR,
-  type WalletSolanaErrorCode,
 } from '@alien-id/miniapps-contract';
 import type {
   SolanaSignAndSendTransactionFeature,
@@ -34,6 +34,7 @@ import type {
 } from '@wallet-standard/features';
 
 import { AlienSolanaAccount } from './account';
+import { AlienWalletError } from './errors';
 import { icon } from './icon';
 import {
   base58Decode,
@@ -42,24 +43,12 @@ import {
   base64Encode,
 } from './utils';
 
-const SOLANA_CHAINS = [
-  'solana:mainnet',
-  'solana:devnet',
-  'solana:testnet',
-] as const;
-
+// `.includes(string)` against a tuple of literals fails typecheck because
+// the tuple's element type is the narrow union, not `string`. Widening for
+// the call only is the standard idiom — narrower than asserting the
+// argument at the call site.
 function isSolanaChain(chain: string): chain is SolanaChain {
   return (SOLANA_CHAINS as readonly string[]).includes(chain);
-}
-
-export class AlienWalletError extends Error {
-  readonly code: WalletSolanaErrorCode;
-
-  constructor(code: WalletSolanaErrorCode, message?: string) {
-    super(message ?? `Wallet error: ${code}`);
-    this.name = 'AlienWalletError';
-    this.code = code;
-  }
 }
 
 function normalizeWalletError(error: unknown): AlienWalletError {
@@ -139,10 +128,11 @@ export class AlienSolanaWallet implements Wallet {
     [E in StandardEventsNames]?: Set<StandardEventsListeners[E]>;
   } = {};
 
-  // Reference-stable features object. Wallet adapters compare features by
-  // reference to decide whether capabilities have changed; rebuilding the
-  // object on every getter access would force adapters to re-bind every
-  // render.
+  // Built once for reference-stability. Wallet adapters often memoize
+  // derived state keyed on the features object; rebuilding it on every
+  // access would defeat that caching. The wallet-standard spec doesn't
+  // strictly require stability (reference impls like Ghost rebuild each
+  // access) — this is a defensive perf win, not a correctness fix.
   readonly #features: AlienSolanaWalletFeatures;
 
   constructor() {
@@ -190,6 +180,14 @@ export class AlienSolanaWallet implements Wallet {
     }
 
     if (silent) {
+      // Deliberate divergence from reference impls (e.g. Ghost) that forward
+      // `silent` to the host as `onlyIfTrusted`, letting a returning user
+      // silently reconnect a previously-authorised session. The
+      // `wallet.solana:connect` contract method has no field to carry this
+      // flag yet — until it does, we short-circuit to "no cached accounts"
+      // instead of round-tripping the bridge and risking a UI prompt the
+      // caller asked us to suppress. TODO: forward `silent` once the
+      // contract gains the field.
       return { accounts: [] };
     }
 
@@ -211,10 +209,15 @@ export class AlienSolanaWallet implements Wallet {
         );
       }
 
-      // Validate before construction so a malformed pubkey from the host
-      // surfaces as a typed wallet error, not a raw bs58 stack.
-      safeDecode('publicKey', base58Decode, response.publicKey);
-      const account = new AlienSolanaAccount(response.publicKey);
+      // Decode once at the bridge boundary so codec failures surface as
+      // typed wallet errors; the account constructor then validates the
+      // 32-byte length on the decoded bytes.
+      const publicKey = safeDecode(
+        'publicKey',
+        base58Decode,
+        response.publicKey,
+      );
+      const account = new AlienSolanaAccount(publicKey, response.publicKey);
       this.#accounts = [account];
       this.#emit('change', { accounts: this.accounts });
 
@@ -268,6 +271,17 @@ export class AlienSolanaWallet implements Wallet {
 
       for (const input of inputs) {
         this.#assertAccount(input.account);
+
+        // `chain` is optional in wallet-standard's SolanaSignTransactionInput,
+        // but when callers pass it we still defend against runtime CAIP
+        // values that aren't on Solana — mirrors the unconditional guard in
+        // signAndSendTransaction.
+        if (input.chain && !isSolanaChain(input.chain)) {
+          throw new AlienWalletError(
+            WALLET_ERROR.INVALID_PARAMS,
+            `Unsupported Solana chain "${input.chain}". Expected one of: ${SOLANA_CHAINS.join(', ')}.`,
+          );
+        }
 
         const transactionBase64 = base64Encode(input.transaction);
 
