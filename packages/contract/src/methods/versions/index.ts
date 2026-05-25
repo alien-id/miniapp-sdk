@@ -8,16 +8,14 @@ export { releases } from './releases';
 /**
  * Compare two semver versions on their major.minor.patch numbers only.
  *
- * Pre-release identifiers (`1.0.0-rc.1`, `0.2.0-alpha.3`, build metadata
- * after `+`) are intentionally ignored: each component is parsed with
- * `Number(part)`, and any non-numeric remainder (e.g. `'0-rc'`) collapses
- * to `0` via the `isFinite` guard. The net effect is that `1.0.0-rc.1`
- * compares equal to `1.0.0`.
+ * Pre-release identifiers (`-rc.1`, `-alpha.3`) and build metadata
+ * (`+sha`) are stripped before parsing, so `1.5.3-rc.1` compares equal
+ * to `1.5.3` regardless of which component carries the suffix.
  *
  * Rationale: the host injects a single Contract Version string
  * (`window.__ALIEN_CONTRACT_VERSION__`). Method support is a property of
  * the *released* contract surface, not of the tag spelling — a host on
- * `1.0.0-rc.1` ships the same methods as `1.0.0`. Honouring the
+ * `1.5.3-rc.1` ships the same methods as `1.5.3`. Honouring the
  * pre-release suffix would deny callers methods their host already
  * declares.
  *
@@ -27,13 +25,15 @@ export { releases } from './releases';
  *
  * @returns negative if a < b, 0 if a === b, positive if a > b
  */
-function compareVersions(a: Version, b: Version): number {
+const SEMVER_RE =
+  /^(\d+)\.(\d+)\.(\d+)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
+
+export function compareVersions(a: Version, b: Version): number {
   const parse = (v: Version): [number, number, number] => {
-    const [maj, min, pat] = v.split('.').map((p) => {
-      const n = Number(p);
-      return Number.isFinite(n) ? n : 0;
-    });
-    return [maj ?? 0, min ?? 0, pat ?? 0];
+    const m = SEMVER_RE.exec(v);
+    if (!m) throw new TypeError(`Invalid version string: ${JSON.stringify(v)}`);
+    // Indices 1–3 are guaranteed numeric by the regex.
+    return [Number(m[1]), Number(m[2]), Number(m[3])];
   };
   const [aMajor, aMinor, aPatch] = parse(a);
   const [bMajor, bMinor, bPatch] = parse(b);
