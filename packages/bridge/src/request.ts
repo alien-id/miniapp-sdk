@@ -128,12 +128,13 @@ export const request = Object.assign(_request, {
     if (error) return { ok: false, error };
 
     try {
-      const data = await _requestUnchecked(
-        method,
-        params,
-        responseEvent,
-        options,
-      );
+      // Explicit destructure: only forward the request-shaped fields so a
+      // future option on `SafeRequestOptions` (like `version`) can't leak
+      // into the wire payload through `_requestUnchecked`'s pass-through.
+      const data = await _requestUnchecked(method, params, responseEvent, {
+        reqId: options.reqId,
+        timeout: options.timeout,
+      });
       return { ok: true, data };
     } catch (err) {
       return { ok: false, error: toBridgeError(err) };
