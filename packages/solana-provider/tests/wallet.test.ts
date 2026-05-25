@@ -224,9 +224,8 @@ describe('AlienSolanaWallet', () => {
 
   test('features is memoized (reference-stable across accesses)', () => {
     const wallet = new AlienSolanaWallet();
-    // Wallet adapters compare feature objects by reference to decide whether
-    // capabilities have changed. A fresh object each access would force
-    // adapters to re-bind every render.
+    // Spec doesn't require stability, but adapters that memoize derived
+    // state on the features reference benefit from it. Cheap to keep.
     expect(wallet.features).toBe(wallet.features);
   });
 

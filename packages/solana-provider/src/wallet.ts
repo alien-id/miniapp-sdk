@@ -128,10 +128,11 @@ export class AlienSolanaWallet implements Wallet {
     [E in StandardEventsNames]?: Set<StandardEventsListeners[E]>;
   } = {};
 
-  // Reference-stable features object. Wallet adapters compare features by
-  // reference to decide whether capabilities have changed; rebuilding the
-  // object on every getter access would force adapters to re-bind every
-  // render.
+  // Built once for reference-stability. Wallet adapters often memoize
+  // derived state keyed on the features object; rebuilding it on every
+  // access would defeat that caching. The wallet-standard spec doesn't
+  // strictly require stability (reference impls like Ghost rebuild each
+  // access) — this is a defensive perf win, not a correctness fix.
   readonly #features: AlienSolanaWalletFeatures;
 
   constructor() {
