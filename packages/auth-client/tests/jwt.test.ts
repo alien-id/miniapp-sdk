@@ -360,7 +360,7 @@ describe('AuthClient tests', () => {
         typ: 'at+jwt',
         crit: ['custom-extension'],
         'custom-extension': true,
-      } as jose.JWSHeaderParameters)
+      })
       .sign(privateKey, { crit: { 'custom-extension': true } });
 
     expect(client.verifyToken(token)).rejects.toThrow();
@@ -397,7 +397,7 @@ describe('AuthClient tests', () => {
         kid: 'legacy-ed25519-crit',
         crit: ['custom-extension'],
         'custom-extension': true,
-      } as jose.JWSHeaderParameters)
+      })
       .sign(edPriv, { crit: { 'custom-extension': true } });
 
     expect(legacyClient.verifyToken(token)).rejects.toThrow();
@@ -713,6 +713,7 @@ describe('AuthClient tests', () => {
       .setProtectedHeader({ alg: 'RS256', typ: 'at+jwt' })
       .sign(privateKey);
     const [h, p, s] = real.split('.');
+    if (!h || !p || !s) throw new Error('expected JWT to have 3 segments');
     const tainted = `${h.slice(0, 4)} ${h.slice(4)}.${p}.${s}`;
     const err = await client.verifyToken(tainted).catch((e) => e);
     expect(err).toBeInstanceOf(Error);
