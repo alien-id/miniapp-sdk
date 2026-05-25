@@ -2,8 +2,8 @@ import {
   BridgeBusyError,
   type BridgeError,
   callability,
-  type RequestOptions,
   request,
+  type SafeRequestOptions,
 } from '@alien-id/miniapps-bridge';
 import type {
   EventName,
@@ -38,7 +38,7 @@ interface UseMethodResult<M extends MethodName, E extends EventName>
   extends UseMethodState<E> {
   execute: (
     params: Omit<MethodPayload<M>, 'reqId'>,
-    options?: RequestOptions,
+    options?: SafeRequestOptions,
   ) => Promise<UseMethodExecuteResult<E>>;
   reset: () => void;
   /**
@@ -109,7 +109,7 @@ export function useMethod<M extends MethodName, E extends EventName>(
   const execute = useCallback(
     async (
       params: Omit<MethodPayload<M>, 'reqId'>,
-      requestOptions?: RequestOptions,
+      requestOptions?: SafeRequestOptions,
     ): Promise<UseMethodExecuteResult<E>> => {
       // Reject re-entry with a typed busy error so the result shape stays
       // unambiguous — `{ data: undefined, error: undefined }` would be

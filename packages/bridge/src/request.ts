@@ -12,15 +12,65 @@ import { sendMessage } from './transport';
 
 const DEFAULT_TIMEOUT = 30000; // 30 seconds
 
-export interface RequestOptions extends CallabilityOptions {
+export interface RequestOptions {
   reqId?: string;
   timeout?: number;
 }
+
+export interface SafeRequestOptions
+  extends RequestOptions,
+    CallabilityOptions {}
 
 function generateReqId(): string {
   return typeof crypto !== 'undefined' && crypto.randomUUID
     ? crypto.randomUUID()
     : Math.random().toString(36).slice(2);
+}
+
+/**
+ * Dispatch a request and await its matching response — without the
+ * Callability gate. Callers (`request` and `request.ifAvailable`) gate
+ * first so each can use its own version semantics (launch params vs.
+ * `options.version` override) without re-gating downstream and
+ * clobbering the override.
+ */
+async function requestUnchecked<M extends MethodName, E extends EventName>(
+  method: M,
+  params: Omit<MethodPayload<M>, 'reqId'>,
+  responseEvent: E,
+  options: RequestOptions = {},
+): Promise<EventPayload<E>> {
+  const reqId = options.reqId || generateReqId();
+  const timeout = options.timeout ?? DEFAULT_TIMEOUT;
+  const payload = { ...params, reqId } as MethodPayload<M>;
+
+  return new Promise<EventPayload<E>>((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      cleanup();
+      reject(new BridgeTimeoutError(String(method), timeout));
+    }, timeout);
+
+    const cleanup = () => {
+      clearTimeout(timeoutId);
+      off(responseEvent, handleResponse);
+    };
+
+    const handleResponse = (response: EventPayload<E>) => {
+      if (response.reqId === reqId) {
+        cleanup();
+        resolve(response);
+      }
+    };
+
+    on(responseEvent, handleResponse);
+
+    try {
+      sendMessage({ type: 'method', name: method, payload });
+    } catch (err) {
+      cleanup();
+      reject(toBridgeError(err));
+    }
+  });
 }
 
 /**
@@ -62,40 +112,9 @@ async function _request<M extends MethodName, E extends EventName>(
   responseEvent: E,
   options: RequestOptions = {},
 ): Promise<EventPayload<E>> {
-  const error = gate(method, options);
+  const error = gate(method);
   if (error) throw error;
-
-  const reqId = options.reqId || generateReqId();
-  const timeout = options.timeout ?? DEFAULT_TIMEOUT;
-  const payload = { ...params, reqId } as MethodPayload<M>;
-
-  return new Promise<EventPayload<E>>((resolve, reject) => {
-    const timeoutId = setTimeout(() => {
-      cleanup();
-      reject(new BridgeTimeoutError(String(method), timeout));
-    }, timeout);
-
-    const cleanup = () => {
-      clearTimeout(timeoutId);
-      off(responseEvent, handleResponse);
-    };
-
-    const handleResponse = (response: EventPayload<E>) => {
-      if (response.reqId === reqId) {
-        cleanup();
-        resolve(response);
-      }
-    };
-
-    on(responseEvent, handleResponse);
-
-    try {
-      sendMessage({ type: 'method', name: method, payload });
-    } catch (err) {
-      cleanup();
-      reject(toBridgeError(err));
-    }
-  });
+  return requestUnchecked(method, params, responseEvent, options);
 }
 
 export const request = Object.assign(_request, {
@@ -103,10 +122,18 @@ export const request = Object.assign(_request, {
     method: M,
     params: Omit<MethodPayload<M>, 'reqId'>,
     responseEvent: E,
-    options: RequestOptions = {},
+    options: SafeRequestOptions = {},
   ): Promise<SafeResult<EventPayload<E>, BridgeError>> {
+    const error = gate(method, options);
+    if (error) return { ok: false, error };
+
     try {
-      const data = await _request(method, params, responseEvent, options);
+      const data = await requestUnchecked(
+        method,
+        params,
+        responseEvent,
+        options,
+      );
       return { ok: true, data };
     } catch (err) {
       return { ok: false, error: toBridgeError(err) };

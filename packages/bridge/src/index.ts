@@ -32,7 +32,7 @@ export {
 export type { LinkInterceptorOptions } from './link-interceptor';
 export { enableLinkInterceptor } from './link-interceptor';
 // Request — `request(...)` (throws) + `request.ifAvailable(...)` (SafeResult)
-export type { RequestOptions } from './request';
+export type { RequestOptions, SafeRequestOptions } from './request';
 export { request } from './request';
 // Safe result types
 export type { AvailabilityOptions, SafeResult } from './safe-result';
