@@ -122,6 +122,7 @@ jobs:
             github.com:443
             api.github.com:443
             objects.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
             uploads.github.com:443
 
       - name: Download tarball artifact
