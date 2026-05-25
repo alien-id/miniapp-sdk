@@ -1,6 +1,6 @@
 {
   "name": "@alien-id/miniapps-solana-provider",
-  "version": "1.4.2",
+  "version": "2.1.0-beta",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
