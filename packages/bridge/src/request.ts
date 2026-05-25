@@ -34,7 +34,7 @@ function generateReqId(): string {
  * `options.version` override) without re-gating downstream and
  * clobbering the override.
  */
-async function requestUnchecked<M extends MethodName, E extends EventName>(
+async function _requestUnchecked<M extends MethodName, E extends EventName>(
   method: M,
   params: Omit<MethodPayload<M>, 'reqId'>,
   responseEvent: E,
@@ -55,10 +55,10 @@ async function requestUnchecked<M extends MethodName, E extends EventName>(
       off(responseEvent, handleResponse);
     };
 
-    const handleResponse = (response: EventPayload<E>) => {
-      if (response.reqId === reqId) {
+    const handleResponse = (payload: EventPayload<E>) => {
+      if (payload.reqId === reqId) {
         cleanup();
-        resolve(response);
+        resolve(payload);
       }
     };
 
@@ -114,7 +114,7 @@ async function _request<M extends MethodName, E extends EventName>(
 ): Promise<EventPayload<E>> {
   const error = gate(method);
   if (error) throw error;
-  return requestUnchecked(method, params, responseEvent, options);
+  return _requestUnchecked(method, params, responseEvent, options);
 }
 
 export const request = Object.assign(_request, {
@@ -128,7 +128,7 @@ export const request = Object.assign(_request, {
     if (error) return { ok: false, error };
 
     try {
-      const data = await requestUnchecked(
+      const data = await _requestUnchecked(
         method,
         params,
         responseEvent,
