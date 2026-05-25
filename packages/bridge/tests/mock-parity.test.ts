@@ -1,8 +1,13 @@
 import { afterEach, beforeEach, expect, test } from 'bun:test';
 import type {
-  EventName,
-  MethodName,
+  FireAndForgetMethodName,
   MethodPayload,
+  RequestMethodName,
+} from '@alien-id/miniapps-contract';
+import {
+  FIRE_AND_FORGET_METHOD_NAMES,
+  getResponseEvent,
+  REQUEST_METHOD_NAMES,
 } from '@alien-id/miniapps-contract';
 import type { MockBridgeInstance } from '../src/mock';
 import { createMockBridge } from '../src/mock';
@@ -10,79 +15,43 @@ import { request } from '../src/request';
 import { send } from '../src/send';
 
 /**
- * Source-of-truth list of every contract method that expects a response
- * event. Keep this in sync with @alien-id/miniapps-contract's request
- * surface — once the contract package exports a `RequestMethodName`
- * literal union, this file can switch to that and drop the manual list.
+ * Minimum valid payloads for the request-response invocations exercised
+ * below. Methods whose payload only contains `reqId` (`Empty`) default to
+ * `{}` via the `Partial<...>` shape and don't need an entry here.
  *
- * The parity test below asserts that every method here has a response
- * mapping inside `createMockBridge` (otherwise calling the method in dev
- * would hang for 30 s instead of returning a mock payload).
+ * The `satisfies` clause keeps the override map honest: every required
+ * field on `MethodPayload<M> minus reqId` must be present, but adding
+ * a *new* request method to the contract whose payload is empty just
+ * works — no edit required here.
  */
-const REQUEST_METHODS: readonly {
-  method: MethodName;
-  responseEvent: EventName;
-  // Minimal request params (no reqId — the bridge stamps that in).
-  params: Record<string, unknown>;
-}[] = [
-  {
-    method: 'payment:request',
-    responseEvent: 'payment:response',
-    params: {
-      recipient: 'r',
-      amount: '1',
-      token: 'SOL',
-      network: 'solana',
-      invoice: 'inv',
-    },
+const REQUEST_PAYLOAD_OVERRIDES = {
+  'payment:request': {
+    recipient: 'r',
+    amount: '1',
+    token: 'SOL',
+    network: 'solana',
+    invoice: 'inv',
   },
-  {
-    method: 'clipboard:read',
-    responseEvent: 'clipboard:response',
-    params: {},
-  },
-  {
-    method: 'wallet.solana:connect',
-    responseEvent: 'wallet.solana:connect.response',
-    params: {},
-  },
-  {
-    method: 'wallet.solana:sign.transaction',
-    responseEvent: 'wallet.solana:sign.transaction.response',
-    params: { transaction: 'b64' },
-  },
-  {
-    method: 'wallet.solana:sign.message',
-    responseEvent: 'wallet.solana:sign.message.response',
-    params: { message: 'b58' },
-  },
-  {
-    method: 'wallet.solana:sign.send',
-    responseEvent: 'wallet.solana:sign.send.response',
-    params: { transaction: 'b64' },
-  },
-];
+  'wallet.solana:sign.transaction': { transaction: 'b64' },
+  'wallet.solana:sign.message': { message: 'b58' },
+  'wallet.solana:sign.send': { transaction: 'b64' },
+} as const satisfies {
+  [M in RequestMethodName]?: Omit<MethodPayload<M>, 'reqId'>;
+};
 
-const FIRE_AND_FORGET: readonly {
-  method: MethodName;
-  payload: Record<string, unknown>;
-}[] = [
-  { method: 'app:ready', payload: {} },
-  { method: 'app:close', payload: {} },
-  { method: 'host.back.button:toggle', payload: { visible: true } },
-  { method: 'clipboard:write', payload: { text: 'x' } },
-  { method: 'link:open', payload: { url: 'https://x' } },
-  { method: 'haptic:impact', payload: { style: 'light' } },
-  { method: 'haptic:notification', payload: { type: 'success' } },
-  { method: 'haptic:selection', payload: {} },
-  { method: 'wallet.solana:disconnect', payload: {} },
-];
+const FIRE_AND_FORGET_PAYLOADS = {
+  'host.back.button:toggle': { visible: true },
+  'clipboard:write': { text: 'x' },
+  'link:open': { url: 'https://x' },
+  'haptic:impact': { style: 'light' },
+  'haptic:notification': { type: 'success' },
+} as const satisfies {
+  [M in FireAndForgetMethodName]?: MethodPayload<M>;
+};
 
 let mock: MockBridgeInstance | undefined;
 
 beforeEach(() => {
-  // Bun test runs with happy-dom/jsdom-style window if configured;
-  // createMockBridge requires a real window object.
   const mockWindow = {
     addEventListener: () => {},
     removeEventListener: () => {},
@@ -101,44 +70,52 @@ afterEach(() => {
   delete (globalThis as { window?: unknown }).window;
 });
 
-test('mock bridge - every request method has a response mapping', async () => {
+test('mock bridge - every request method round-trips through its response event', async () => {
   mock = createMockBridge();
 
-  for (const { method, responseEvent, params } of REQUEST_METHODS) {
-    // 250 ms is plenty for the mock's queueMicrotask response — if the
-    // mapping is missing, this would hang for 30 s and the test would
-    // time out at the Bun runner level. We use an explicit timeout to
-    // make the failure mode clear.
+  for (const method of REQUEST_METHOD_NAMES) {
+    const params =
+      (
+        REQUEST_PAYLOAD_OVERRIDES as Partial<
+          Record<RequestMethodName, Record<string, unknown>>
+        >
+      )[method] ?? {};
+    // 250 ms is plenty for the mock's microtask response — if a request
+    // method is missing from the mock table the call would hang for
+    // 30 s and the test would time out at the Bun runner level.
     const response = await request(
       method,
       params as Omit<MethodPayload<typeof method>, 'reqId'>,
-      responseEvent,
+      getResponseEvent(method),
       { timeout: 250 },
     );
-    expect(response).toBeDefined();
-    expect(response.reqId).toBeDefined();
+    expect(response, `no response for ${method}`).toBeDefined();
+    expect(response.reqId, `${method} response missing reqId`).toBeDefined();
   }
 });
 
-test('mock bridge - every fire-and-forget method records a call', () => {
+test('mock bridge - every fire-and-forget method is recorded as a call', () => {
   mock = createMockBridge();
 
-  for (const { method, payload } of FIRE_AND_FORGET) {
+  for (const method of FIRE_AND_FORGET_METHOD_NAMES) {
+    const payload =
+      (
+        FIRE_AND_FORGET_PAYLOADS as Partial<
+          Record<FireAndForgetMethodName, Record<string, unknown>>
+        >
+      )[method] ?? {};
     send(method, payload as MethodPayload<typeof method>);
   }
 
-  const calls = mock.getCalls();
-  const recorded = new Set(calls.map((c) => c.method));
-
-  for (const { method } of FIRE_AND_FORGET) {
-    expect(recorded.has(method)).toBe(true);
+  const recorded = new Set(mock.getCalls().map((c) => c.method));
+  for (const method of FIRE_AND_FORGET_METHOD_NAMES) {
+    expect(recorded.has(method), `${method} was not recorded`).toBe(true);
   }
 });
 
-test('mock bridge - request methods and fire-and-forget sets are disjoint', () => {
-  const reqSet = new Set(REQUEST_METHODS.map((r) => r.method));
-  const ffSet = new Set(FIRE_AND_FORGET.map((f) => f.method));
-  for (const m of reqSet) {
-    expect(ffSet.has(m)).toBe(false);
+test('mock bridge - request and fire-and-forget partitions are disjoint', () => {
+  const requestSet = new Set<string>(REQUEST_METHOD_NAMES);
+  for (const method of FIRE_AND_FORGET_METHOD_NAMES) {
+    expect(requestSet.has(method)).toBe(false);
   }
 });

@@ -17,8 +17,15 @@ export type {
 } from './launch-params';
 export { DISPLAY_MODES, PLATFORMS } from './launch-params';
 export type { Methods } from './methods/methods';
+export {
+  FIRE_AND_FORGET_METHOD_NAMES,
+  getResponseEvent,
+  METHOD_NAMES,
+  REQUEST_METHOD_NAMES,
+} from './methods/types';
 export type {
   CreateMethodPayload,
+  FireAndForgetMethodName,
   MethodName,
   MethodNameWithVersionedPayload,
   MethodPayload,
@@ -31,6 +38,7 @@ export {
   getMethodMinVersion,
   getReleaseVersion,
   isMethodSupported,
+  LATEST_VERSION,
   releases,
 } from './methods/versions';
 export type {

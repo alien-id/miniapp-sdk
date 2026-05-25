@@ -1,72 +1,14 @@
 import { describe, expect, test } from 'bun:test';
-import type { MethodName } from '../src/methods/types/method-types';
-import type { Version } from '../src/utils';
+import { METHOD_NAMES, releases } from '../src';
+import type { MethodName, Version } from '../src';
 
 /**
- * Source-level assertions on the real releases table.
+ * Source-level guards on the real {@link releases} table.
  *
- * `versions.test.ts` calls `mock.module(...)` to inject a fake releases map
- * for its unit tests, and that mock leaks across the shared Bun test module
- * graph. Reading the file as raw text bypasses the cache entirely so we can
- * still validate the real release table.
+ * With `versions.test.ts` and `get-release-version.test.ts` no longer
+ * mocking the releases module, the import below picks up the real
+ * data directly — no regex parsing required.
  */
-const RELEASES_PATH = `${import.meta.dir}/../src/methods/versions/releases.ts`;
-const releasesSource = await Bun.file(RELEASES_PATH).text();
-
-/**
- * Every method that ships in the contract's `Methods` interface. Kept here
- * as a hand-maintained list so a forgotten release entry surfaces as a
- * failing test — TypeScript-only types are erased at runtime and cannot be
- * enumerated otherwise.
- */
-const EXPECTED_METHODS: ReadonlySet<MethodName> = new Set([
-  'app:ready',
-  'app:close',
-  'host.back.button:toggle',
-  'payment:request',
-  'clipboard:write',
-  'clipboard:read',
-  'link:open',
-  'haptic:impact',
-  'haptic:notification',
-  'haptic:selection',
-  'wallet.solana:connect',
-  'wallet.solana:disconnect',
-  'wallet.solana:sign.transaction',
-  'wallet.solana:sign.message',
-  'wallet.solana:sign.send',
-  'notifications:permission.request',
-]);
-
-interface ParsedRelease {
-  version: Version;
-  methods: MethodName[];
-}
-
-/**
- * Parse the releases.ts source into a list of {version, methods[]} entries
- * without evaluating it. We use a coarse two-step regex:
- *   1. Find each `'X.Y.Z': [ … ],` block.
- *   2. Extract every `'method:name'` or `{ method: 'name', ... }` from
- *      inside the block.
- */
-function parseReleases(source: string): ParsedRelease[] {
-  const blocks = [...source.matchAll(/'(\d+\.\d+\.\d+)':\s*\[([\s\S]*?)\]/g)];
-  return blocks.map((block) => {
-    const version = block[1] as Version;
-    const body = block[2] ?? '';
-    const methods: MethodName[] = [];
-    for (const m of body.matchAll(/'([^']+)'/g)) {
-      // Inside a release-array block, every quoted string is a method
-      // name (either bare or as the value of an object `method: '...'`
-      // field — there is no `param` key in the current source).
-      methods.push(m[1] as MethodName);
-    }
-    return { version, methods };
-  });
-}
-
-const parsed = parseReleases(releasesSource);
 
 function compareVersions(a: Version, b: Version): number {
   const [aMajor, aMinor, aPatch] = a.split('.').map(Number);
@@ -76,104 +18,82 @@ function compareVersions(a: Version, b: Version): number {
   return (aPatch ?? 0) - (bPatch ?? 0);
 }
 
-describe('real releases table — source-level guards', () => {
-  test('1.5.0 entry registers notifications:permission.request', () => {
-    const match = releasesSource.match(/'1\.5\.0':\s*\[([\s\S]*?)\]/);
-    expect(match).not.toBeNull();
-    expect(match?.[1]).toContain("'notifications:permission.request'");
+function entryName(entry: (typeof releases)[Version][number]): MethodName {
+  return (typeof entry === 'string' ? entry : entry.method) as MethodName;
+}
+
+const versions = Object.keys(releases) as Version[];
+
+describe('releases — structural guards', () => {
+  test('contains at least one release', () => {
+    expect(versions.length).toBeGreaterThan(0);
   });
 
-  test('parsed at least one release block', () => {
-    expect(parsed.length).toBeGreaterThan(0);
-  });
-
-  test('every release version is valid semver', () => {
+  test('every release version is valid semver (major.minor.patch)', () => {
     const semver = /^\d+\.\d+\.\d+$/;
-    for (const { version } of parsed) {
-      expect(version, `Invalid semver: ${version}`).toMatch(semver);
+    for (const v of versions) {
+      expect(v, `invalid semver: ${v}`).toMatch(semver);
     }
   });
 
-  test('every release has at least one method', () => {
-    for (const { version, methods } of parsed) {
-      expect(methods.length, `Release ${version} is empty`).toBeGreaterThan(0);
+  test('every release lists at least one method', () => {
+    for (const v of versions) {
+      expect(releases[v]?.length, `release ${v} is empty`).toBeGreaterThan(0);
     }
   });
 
-  test('no method is duplicated within a single release', () => {
-    for (const { version, methods } of parsed) {
-      const unique = new Set(methods);
-      expect(unique.size, `Duplicate method in release ${version}`).toBe(
-        methods.length,
+  test('release versions are stored in ascending source order', () => {
+    expect(versions).toEqual([...versions].sort(compareVersions));
+  });
+});
+
+describe('releases — method coverage', () => {
+  test('no method is listed twice within the same release', () => {
+    for (const v of versions) {
+      const names = (releases[v] ?? []).map(entryName);
+      expect(new Set(names).size, `duplicate method in release ${v}`).toBe(
+        names.length,
       );
-    }
-  });
-
-  test('every method declared in releases is in the expected set', () => {
-    for (const { version, methods } of parsed) {
-      for (const m of methods) {
-        expect(
-          EXPECTED_METHODS.has(m),
-          `Release ${version} declares "${m}", which is not in the expected registry`,
-        ).toBe(true);
-      }
-    }
-  });
-
-  test('every expected method has a release entry', () => {
-    const released = new Set<MethodName>();
-    for (const { methods } of parsed) {
-      for (const m of methods) released.add(m);
-    }
-    for (const name of EXPECTED_METHODS) {
-      expect(
-        released.has(name),
-        `Method "${name}" is declared in Methods but has no release entry`,
-      ).toBe(true);
     }
   });
 
   test('no method is declared in two different releases', () => {
     const firstSeen = new Map<MethodName, Version>();
-    for (const { version, methods } of parsed) {
-      for (const m of methods) {
-        if (firstSeen.has(m)) {
-          throw new Error(
-            `Method "${m}" appears in both ${firstSeen.get(m)} and ${version}`,
-          );
+    for (const v of versions) {
+      for (const entry of releases[v] ?? []) {
+        const name = entryName(entry);
+        const prior = firstSeen.get(name);
+        if (prior) {
+          throw new Error(`${name} appears in both ${prior} and ${v}`);
         }
-        firstSeen.set(m, version);
+        firstSeen.set(name, v);
       }
     }
   });
 
-  test('release versions are stored in ascending order in source', () => {
-    const versions = parsed.map((p) => p.version);
-    const sorted = [...versions].sort(compareVersions);
-    expect(versions).toEqual(sorted);
-  });
-
-  test('payment:request belongs to release 0.1.1', () => {
-    const release = parsed.find((p) => p.methods.includes('payment:request'));
-    expect(release?.version).toBe('0.1.1');
-  });
-
-  test('wallet.solana:* methods all live in release 1.0.0', () => {
-    const walletMethods = parsed.flatMap((p) =>
-      p.methods
-        .filter((m) => m.startsWith('wallet.solana:'))
-        .map((m) => ({ version: p.version, m })),
-    );
-    expect(walletMethods.length).toBeGreaterThan(0);
-    for (const { version, m } of walletMethods) {
-      expect(version, `${m} is in release ${version}, expected 1.0.0`).toBe(
-        '1.0.0',
-      );
+  test('every released method is declared in the contract', () => {
+    const contractMethods = new Set<MethodName>(METHOD_NAMES);
+    for (const v of versions) {
+      for (const entry of releases[v] ?? []) {
+        const name = entryName(entry);
+        expect(
+          contractMethods.has(name),
+          `release ${v} declares "${name}", which is not in the Methods interface`,
+        ).toBe(true);
+      }
     }
   });
 
-  test('notifications:permission.request is the only entry below v2 in 1.5.0', () => {
-    const release150 = parsed.find((p) => p.version === '1.5.0');
-    expect(release150?.methods).toEqual(['notifications:permission.request']);
+  test('every contract method has a release entry', () => {
+    const released = new Set<MethodName>();
+    for (const v of versions) {
+      for (const entry of releases[v] ?? []) released.add(entryName(entry));
+    }
+    for (const method of METHOD_NAMES) {
+      expect(
+        released.has(method),
+        `${method} is declared in Methods but has no release entry`,
+      ).toBe(true);
+    }
   });
 });

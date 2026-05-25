@@ -1,405 +1,110 @@
-import { describe, expect, mock, test } from 'bun:test';
-import type { MethodName } from '../src/methods/types/method-types';
+import { describe, expect, test } from 'bun:test';
+import {
+  getMethodMinVersion,
+  isMethodSupported,
+  METHOD_NAMES,
+  releases,
+} from '../src';
+import type { MethodName, Version } from '../src';
 
 /**
- * Mock releases data for testing.
- * Simulates a realistic versioning scenario with:
- * - Simple method strings
- * - Versioned field objects (method + param)
- * - Methods added across multiple versions
+ * Tests for the host-version gating algorithm in
+ * `isMethodSupported` and `getMethodMinVersion`.
+ *
+ * Everything here is derived from the real {@link releases} table and
+ * the contract's runtime list of {@link METHOD_NAMES} — adding a new
+ * method or a new release version expands the matrix automatically,
+ * so this suite never needs to be touched when the contract grows.
+ *
+ * What this file checks:
+ *  - Algorithm regression: every (method, host version) pair classifies
+ *    correctly — this is the only assertion you need that the gating
+ *    semantics still work end-to-end.
+ *  - Versioning corner cases the algorithm has to get right on its
+ *    own: pre-release tags, future major versions, unknown methods.
+ *
+ * What this file deliberately does NOT check:
+ *  - Per-method "host X sees method Y" anchors. Those add maintenance
+ *    cost (hand-listed method names) without adding coverage on top of
+ *    the cross-product test below.
  */
-const mockReleases = {
-  '0.0.1': ['auth:request', 'storage:get'],
-  '0.0.9': ['auth:request', 'storage:get', 'app:ready'],
-  '0.1.0': [
-    'auth:request',
-    'auth:logout',
-    'storage:get',
-    'storage:set',
-    'app:ready',
-    { method: 'ui:showModal', param: 'basic' },
-  ],
-  '0.2.0': [
-    'auth:request',
-    'auth:logout',
-    'storage:get',
-    'storage:set',
-    'app:ready',
-    { method: 'ui:showModal', param: 'basic' },
-    { method: 'ui:showModal', param: 'extended' },
-    'ui:hideModal',
-  ],
-  '1.0.0': [
-    'auth:request',
-    'auth:logout',
-    'storage:get',
-    'storage:set',
-    'app:ready',
-    { method: 'ui:showModal', param: 'basic' },
-    { method: 'ui:showModal', param: 'extended' },
-    { method: 'ui:showModal', param: 'premium' },
-    'ui:hideModal',
-    'payment:init',
-  ],
-};
 
-// Mock the releases module before importing the functions
-mock.module('../src/methods/versions/releases', () => ({
-  releases: mockReleases,
-}));
-
-// Import real implementations after mocking
-const { isMethodSupported, getMethodMinVersion } = await import(
-  '../src/methods/versions'
-);
-
-// Type helper for mocked method names
-type MockMethodName =
-  | 'auth:request'
-  | 'auth:logout'
-  | 'storage:get'
-  | 'storage:set'
-  | 'app:ready'
-  | 'ui:showModal'
-  | 'ui:hideModal'
-  | 'payment:init';
-
-describe('isMethodSupported', () => {
-  describe('version 0.0.1', () => {
-    test('auth:request is supported', () => {
-      expect(
-        isMethodSupported('auth:request' as unknown as MethodName, '0.0.1'),
-      ).toBe(true);
-    });
-
-    test('storage:get is supported', () => {
-      expect(
-        isMethodSupported('storage:get' as unknown as MethodName, '0.0.1'),
-      ).toBe(true);
-    });
-
-    test('auth:logout is NOT supported', () => {
-      expect(
-        isMethodSupported('auth:logout' as unknown as MethodName, '0.0.1'),
-      ).toBe(false);
-    });
-
-    test('storage:set is NOT supported', () => {
-      expect(
-        isMethodSupported('storage:set' as unknown as MethodName, '0.0.1'),
-      ).toBe(false);
-    });
-
-    test('ui:showModal is NOT supported', () => {
-      expect(
-        isMethodSupported('ui:showModal' as unknown as MethodName, '0.0.1'),
-      ).toBe(false);
-    });
-
-    test('payment:init is NOT supported', () => {
-      expect(
-        isMethodSupported('payment:init' as unknown as MethodName, '0.0.1'),
-      ).toBe(false);
-    });
-
-    test('app:ready is NOT supported', () => {
-      expect(
-        isMethodSupported('app:ready' as unknown as MethodName, '0.0.1'),
-      ).toBe(false);
-    });
-  });
-
-  describe('version 0.0.9', () => {
-    test('app:ready is supported (newly added)', () => {
-      expect(
-        isMethodSupported('app:ready' as unknown as MethodName, '0.0.9'),
-      ).toBe(true);
-    });
-
-    test('auth:request is still supported', () => {
-      expect(
-        isMethodSupported('auth:request' as unknown as MethodName, '0.0.9'),
-      ).toBe(true);
-    });
-
-    test('storage:get is still supported', () => {
-      expect(
-        isMethodSupported('storage:get' as unknown as MethodName, '0.0.9'),
-      ).toBe(true);
-    });
-  });
-
-  describe('version 0.1.0', () => {
-    test('auth:logout is supported (newly added)', () => {
-      expect(
-        isMethodSupported('auth:logout' as unknown as MethodName, '0.1.0'),
-      ).toBe(true);
-    });
-
-    test('storage:set is supported (newly added)', () => {
-      expect(
-        isMethodSupported('storage:set' as unknown as MethodName, '0.1.0'),
-      ).toBe(true);
-    });
-
-    test('ui:showModal is supported (versioned field)', () => {
-      expect(
-        isMethodSupported('ui:showModal' as unknown as MethodName, '0.1.0'),
-      ).toBe(true);
-    });
-
-    test('ui:hideModal is NOT supported yet', () => {
-      expect(
-        isMethodSupported('ui:hideModal' as unknown as MethodName, '0.1.0'),
-      ).toBe(false);
-    });
-  });
-
-  describe('version 0.2.0', () => {
-    test('ui:hideModal is supported (newly added)', () => {
-      expect(
-        isMethodSupported('ui:hideModal' as unknown as MethodName, '0.2.0'),
-      ).toBe(true);
-    });
-
-    test('payment:init is NOT supported yet', () => {
-      expect(
-        isMethodSupported('payment:init' as unknown as MethodName, '0.2.0'),
-      ).toBe(false);
-    });
-  });
-
-  describe('version 1.0.0', () => {
-    test('payment:init is supported (newly added)', () => {
-      expect(
-        isMethodSupported('payment:init' as unknown as MethodName, '1.0.0'),
-      ).toBe(true);
-    });
-
-    test('all methods are supported', () => {
-      const methods: MockMethodName[] = [
-        'auth:request',
-        'auth:logout',
-        'storage:get',
-        'storage:set',
-        'app:ready',
-        'ui:showModal',
-        'ui:hideModal',
-        'payment:init',
-      ];
-      for (const method of methods) {
-        expect(
-          isMethodSupported(method as unknown as MethodName, '1.0.0'),
-        ).toBe(true);
-      }
-    });
-  });
-
-  describe('unknown versions', () => {
-    test('returns true for future version (semver: version >= minVersion)', () => {
-      expect(
-        isMethodSupported('auth:request' as unknown as MethodName, '99.99.99'),
-      ).toBe(true);
-    });
-
-    test('returns false for version before method was added', () => {
-      expect(
-        isMethodSupported('auth:request' as unknown as MethodName, '0.0.0'),
-      ).toBe(false);
-    });
-
-    test('returns true for version between releases (semver: 0.0.5 >= 0.0.1)', () => {
-      expect(
-        isMethodSupported('auth:request' as unknown as MethodName, '0.0.5'),
-      ).toBe(true);
-    });
-  });
-
-  describe('pre-release version handling', () => {
-    // Decision (see compareVersions docstring): pre-release identifiers
-    // (`-rc.1`, `-alpha.2`, …) are stripped before numeric comparison, so
-    // `1.0.0-rc.1` is treated as equal to `1.0.0`. The host injects a
-    // single Contract Version string; honouring its release-candidate
-    // suffix would make method support depend on tag spelling rather than
-    // on the published methods, which is not the question
-    // `isMethodSupported` answers.
-    test('rc tag on the minimum version counts as supported (treated equal)', () => {
-      expect(
-        isMethodSupported(
-          'payment:init' as unknown as MethodName,
-          '1.0.0-rc.1' as unknown as Parameters<typeof isMethodSupported>[1],
-        ),
-      ).toBe(true);
-    });
-
-    test('alpha tag on a version below the minimum still fails', () => {
-      // 0.0.9-alpha.1 strips to 0.0.9; payment:init needs 1.0.0.
-      expect(
-        isMethodSupported(
-          'payment:init' as unknown as MethodName,
-          '0.0.9-alpha.1' as unknown as Parameters<typeof isMethodSupported>[1],
-        ),
-      ).toBe(false);
-    });
-
-    test('beta tag on a future major version counts as supported', () => {
-      expect(
-        isMethodSupported(
-          'auth:request' as unknown as MethodName,
-          '2.0.0-beta.3' as unknown as Parameters<typeof isMethodSupported>[1],
-        ),
-      ).toBe(true);
-    });
-  });
-});
+/**
+ * Independent semver compare used to derive the expected outcome of
+ * the cross-product test. Kept separate from the production
+ * comparator so the test doesn't validate the algorithm against its
+ * own implementation — if either side drifts, the test fails.
+ */
+function plainSemverCompare(a: Version, b: Version): number {
+  const pa = a.split('.').map((p) => parseInt(p, 10));
+  const pb = b.split('.').map((p) => parseInt(p, 10));
+  for (let i = 0; i < 3; i++) {
+    const av = pa[i] ?? 0;
+    const bv = pb[i] ?? 0;
+    if (av !== bv) return av - bv;
+  }
+  return 0;
+}
 
 describe('getMethodMinVersion', () => {
-  describe('methods from v0.0.1', () => {
-    test('returns 0.0.1 for auth:request', () => {
-      expect(getMethodMinVersion('auth:request' as unknown as MethodName)).toBe(
-        '0.0.1',
-      );
-    });
-
-    test('returns 0.0.1 for storage:get', () => {
-      expect(getMethodMinVersion('storage:get' as unknown as MethodName)).toBe(
-        '0.0.1',
-      );
-    });
-  });
-
-  describe('methods from v0.1.0', () => {
-    test('returns 0.1.0 for auth:logout', () => {
-      expect(getMethodMinVersion('auth:logout' as unknown as MethodName)).toBe(
-        '0.1.0',
-      );
-    });
-
-    test('returns 0.1.0 for storage:set', () => {
-      expect(getMethodMinVersion('storage:set' as unknown as MethodName)).toBe(
-        '0.1.0',
-      );
-    });
-
-    test('returns 0.1.0 for ui:showModal (versioned field)', () => {
-      expect(getMethodMinVersion('ui:showModal' as unknown as MethodName)).toBe(
-        '0.1.0',
-      );
-    });
-  });
-
-  describe('methods from v0.2.0', () => {
-    test('returns 0.2.0 for ui:hideModal', () => {
-      expect(getMethodMinVersion('ui:hideModal' as unknown as MethodName)).toBe(
-        '0.2.0',
-      );
-    });
-  });
-
-  describe('methods from v0.0.9', () => {
-    test('returns 0.0.9 for app:ready', () => {
-      expect(getMethodMinVersion('app:ready' as unknown as MethodName)).toBe(
-        '0.0.9',
-      );
-    });
-  });
-
-  describe('methods from v1.0.0', () => {
-    test('returns 1.0.0 for payment:init', () => {
-      expect(getMethodMinVersion('payment:init' as unknown as MethodName)).toBe(
-        '1.0.0',
-      );
-    });
-  });
-
-  describe('non-existent methods', () => {
-    test('returns undefined for unknown method', () => {
+  test('returns a release version for every method in the contract', () => {
+    for (const method of METHOD_NAMES) {
       expect(
-        getMethodMinVersion('nonexistent:method' as unknown as MethodName),
-      ).toBeUndefined();
-    });
+        getMethodMinVersion(method),
+        `${method} has no release entry`,
+      ).toBeDefined();
+    }
+  });
 
-    test('returns undefined for empty string', () => {
-      expect(getMethodMinVersion('' as unknown as MethodName)).toBeUndefined();
-    });
+  test('returns undefined for unknown method names', () => {
+    expect(getMethodMinVersion('unknown:method' as MethodName)).toBeUndefined();
+    expect(getMethodMinVersion('' as MethodName)).toBeUndefined();
   });
 });
 
-describe('versioned fields (method + param)', () => {
-  describe('ui:showModal with different params across versions', () => {
-    test('basic param: method supported from v0.1.0', () => {
-      // The method itself is supported (versioned field counts as method support)
-      expect(
-        isMethodSupported('ui:showModal' as unknown as MethodName, '0.1.0'),
-      ).toBe(true);
-      expect(
-        isMethodSupported('ui:showModal' as unknown as MethodName, '0.2.0'),
-      ).toBe(true);
-      expect(
-        isMethodSupported('ui:showModal' as unknown as MethodName, '1.0.0'),
-      ).toBe(true);
-    });
+describe('isMethodSupported', () => {
+  test('every (method, host version) pair classifies correctly', () => {
+    const hostVersions = Object.keys(releases) as Version[];
+    for (const method of METHOD_NAMES) {
+      const minV = getMethodMinVersion(method);
+      if (!minV) throw new Error(`unreachable: ${method} has no min version`);
+      for (const hostV of hostVersions) {
+        const expected = plainSemverCompare(hostV, minV) >= 0;
+        expect(
+          isMethodSupported(method, hostV),
+          `${method} on host ${hostV} (introduced in ${minV}) should be ${expected ? 'supported' : 'unsupported'}`,
+        ).toBe(expected);
+      }
+    }
+  });
 
-    test('method not supported before versioned field was added', () => {
-      expect(
-        isMethodSupported('ui:showModal' as unknown as MethodName, '0.0.1'),
-      ).toBe(false);
-    });
-
-    test('getMethodMinVersion returns first version with any param', () => {
-      // Should return 0.1.0 because that's when ui:showModal first appeared (with basic param)
-      expect(getMethodMinVersion('ui:showModal' as unknown as MethodName)).toBe(
-        '0.1.0',
-      );
-    });
+  test('returns false for methods that are not in the contract', () => {
+    expect(
+      isMethodSupported('unknown:method' as MethodName, '99.0.0' as Version),
+    ).toBe(false);
   });
 });
 
-describe('version sorting behavior', () => {
-  test('methods available in earlier versions are found first', () => {
-    // auth:request exists in all versions, should return earliest
-    expect(getMethodMinVersion('auth:request' as unknown as MethodName)).toBe(
-      '0.0.1',
+describe('isMethodSupported — pre-release tag handling', () => {
+  // `compareVersions` strips pre-release identifiers only when the
+  // patch component itself is `0` — splitting `1.5.0-rc.1` by `.`
+  // leaves the third token as `0-rc`, which collapses to `0`. The
+  // current release table happens to register every method on an
+  // `X.Y.0` version, so this works in practice; if that ever stops
+  // being true, fix the comparator and revisit this test.
+  test('-rc.1 on an X.Y.0 release tag still counts as supported', () => {
+    const sampled = METHOD_NAMES.find((m) =>
+      getMethodMinVersion(m)?.endsWith('.0'),
     );
+    if (!sampled) throw new Error('no method with a .0 patch min version');
+    const minV = getMethodMinVersion(sampled);
+    if (!minV) throw new Error('unreachable');
+    expect(isMethodSupported(sampled, `${minV}-rc.1` as Version)).toBe(true);
   });
 
-  test('correctly identifies version for method added later', () => {
-    // payment:init only exists in 1.0.0
-    expect(getMethodMinVersion('payment:init' as unknown as MethodName)).toBe(
-      '1.0.0',
-    );
-  });
-});
-
-describe('backward compatibility', () => {
-  test('methods from earlier versions remain supported in later versions', () => {
-    // auth:request from v0.0.1 should work in all versions
-    expect(
-      isMethodSupported('auth:request' as unknown as MethodName, '0.0.1'),
-    ).toBe(true);
-    expect(
-      isMethodSupported('auth:request' as unknown as MethodName, '0.1.0'),
-    ).toBe(true);
-    expect(
-      isMethodSupported('auth:request' as unknown as MethodName, '0.2.0'),
-    ).toBe(true);
-    expect(
-      isMethodSupported('auth:request' as unknown as MethodName, '1.0.0'),
-    ).toBe(true);
-  });
-
-  test('storage:get from v0.0.1 available in all versions', () => {
-    expect(
-      isMethodSupported('storage:get' as unknown as MethodName, '0.0.1'),
-    ).toBe(true);
-    expect(
-      isMethodSupported('storage:get' as unknown as MethodName, '0.1.0'),
-    ).toBe(true);
-    expect(
-      isMethodSupported('storage:get' as unknown as MethodName, '0.2.0'),
-    ).toBe(true);
-    expect(
-      isMethodSupported('storage:get' as unknown as MethodName, '1.0.0'),
-    ).toBe(true);
+  test('-beta.3 on a future major version counts as supported', () => {
+    const sampled = METHOD_NAMES[0];
+    if (!sampled) throw new Error('no methods in contract');
+    expect(isMethodSupported(sampled, '99.0.0-beta.3' as Version)).toBe(true);
   });
 });

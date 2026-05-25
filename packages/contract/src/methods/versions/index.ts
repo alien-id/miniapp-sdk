@@ -46,10 +46,13 @@ function compareVersions(a: Version, b: Version): number {
 // The release table is static, so a single ascending pass yields the
 // earliest version that registers each method. `getMethodMinVersion`
 // then resolves a method in O(1) instead of rescanning every release.
+const ASCENDING_RELEASE_VERSIONS: readonly Version[] = (
+  Object.keys(releases) as Version[]
+).sort(compareVersions);
+
 const METHOD_MIN_VERSION: ReadonlyMap<MethodName, Version> = (() => {
   const map = new Map<MethodName, Version>();
-  const ascending = (Object.keys(releases) as Version[]).sort(compareVersions);
-  for (const version of ascending) {
+  for (const version of ASCENDING_RELEASE_VERSIONS) {
     const methods = releases[version];
     if (!methods) continue;
     for (const entry of methods) {
@@ -61,6 +64,17 @@ const METHOD_MIN_VERSION: ReadonlyMap<MethodName, Version> = (() => {
   }
   return map;
 })();
+
+/**
+ * Highest contract version declared in the {@link releases} table.
+ *
+ * Derived from the table so it stays in step when a new release lands —
+ * no hand-bump required. Useful as the default `contractVersion` for
+ * dev tooling, mocks, and CI fixtures.
+ */
+export const LATEST_VERSION: Version =
+  ASCENDING_RELEASE_VERSIONS[ASCENDING_RELEASE_VERSIONS.length - 1] ??
+  ('0.0.0' as Version);
 
 /**
  * Check whether the contract declares a method at the given version.
