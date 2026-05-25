@@ -3,6 +3,7 @@ import type { MethodName, Version } from '../src';
 import {
   getMethodMinVersion,
   isMethodSupported,
+  isValidVersion,
   METHOD_NAMES,
   releases,
 } from '../src';
@@ -152,5 +153,29 @@ describe('compareVersions', () => {
     ['bare pre-release', 'rc.1'],
   ])('throws on malformed input: %s', (_label, input) => {
     expect(() => compareVersions(input as Version, '1.0.0' as Version)).toThrow();
+  });
+});
+
+describe('isValidVersion', () => {
+  test.each([
+    ['plain X.Y.Z', '1.2.3'],
+    ['pre-release', '1.2.3-rc.1'],
+    ['build metadata', '1.2.3+sha.abc'],
+    ['pre-release plus build', '1.2.3-rc.1+sha.abc'],
+    ['zero version', '0.0.0'],
+  ])('accepts %s', (_label, input) => {
+    expect(isValidVersion(input)).toBe(true);
+  });
+
+  test.each([
+    ['empty', ''],
+    ['major only', '1'],
+    ['major.minor only', '1.5'],
+    ['four components', '1.2.3.4'],
+    ['non-numeric', '1.x.3'],
+    ['garbage', 'not-a-version'],
+    ['leading hyphen', '-1.2.3'],
+  ])('rejects %s', (_label, input) => {
+    expect(isValidVersion(input)).toBe(false);
   });
 });

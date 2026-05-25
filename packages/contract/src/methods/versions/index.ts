@@ -28,6 +28,17 @@ export { releases } from './releases';
 const SEMVER_RE =
   /^(\d+)\.(\d+)\.(\d+)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 
+/**
+ * Whether a string matches the contract's accepted version shape:
+ * `X.Y.Z` with optional `-prerelease` and `+build` suffixes. This is the
+ * single source of truth for "is this a `Version`?" — boundary
+ * validators (e.g. host-injected `__ALIEN_CONTRACT_VERSION__`) and
+ * direct callers of {@link compareVersions} agree by construction.
+ */
+export function isValidVersion(value: string): boolean {
+  return SEMVER_RE.test(value);
+}
+
 export function compareVersions(a: Version, b: Version): number {
   const parse = (v: Version): [number, number, number] => {
     const m = SEMVER_RE.exec(v);

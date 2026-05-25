@@ -28,6 +28,7 @@ export {
   getMethodMinVersion,
   getReleaseVersion,
   isMethodSupported,
+  isValidVersion,
   LATEST_VERSION,
   METHOD_NAMES,
   releases,
