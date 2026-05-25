@@ -119,9 +119,9 @@ describe('isMethodSupported — pre-release tag handling', () => {
  */
 describe('compareVersions', () => {
   test('strips pre-release suffix on any component, not just patch == 0', () => {
-    expect(
-      compareVersions('1.5.3-rc.1' as Version, '1.5.3' as Version),
-    ).toBe(0);
+    expect(compareVersions('1.5.3-rc.1' as Version, '1.5.3' as Version)).toBe(
+      0,
+    );
   });
 
   test('strips build metadata the same way as pre-release', () => {
@@ -137,7 +137,9 @@ describe('compareVersions', () => {
   });
 
   test('1.5.0-rc.1 does not get over-promoted to 1.5.3', () => {
-    expect(compareVersions('1.5.0-rc.1' as Version, '1.5.3' as Version)).toBeLessThan(0);
+    expect(
+      compareVersions('1.5.0-rc.1' as Version, '1.5.3' as Version),
+    ).toBeLessThan(0);
   });
 
   test.each([
@@ -152,7 +154,9 @@ describe('compareVersions', () => {
     ['leading hyphen', '-1.2.3'],
     ['bare pre-release', 'rc.1'],
   ])('throws on malformed input: %s', (_label, input) => {
-    expect(() => compareVersions(input as Version, '1.0.0' as Version)).toThrow();
+    expect(() =>
+      compareVersions(input as Version, '1.0.0' as Version),
+    ).toThrow();
   });
 });
 
