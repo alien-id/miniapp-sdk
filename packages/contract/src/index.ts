@@ -45,4 +45,4 @@ export type {
   Version,
   WalletSolanaErrorCode,
 } from './utils';
-export { WALLET_ERROR } from './utils';
+export { SOLANA_CHAINS, WALLET_ERROR } from './utils';

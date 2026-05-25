@@ -6,9 +6,9 @@ import {
   send,
 } from '@alien-id/miniapps-bridge';
 import {
+  SOLANA_CHAINS,
   type SolanaChain,
   WALLET_ERROR,
-  type WalletSolanaErrorCode,
 } from '@alien-id/miniapps-contract';
 import type {
   SolanaSignAndSendTransactionFeature,
@@ -34,6 +34,7 @@ import type {
 } from '@wallet-standard/features';
 
 import { AlienSolanaAccount } from './account';
+import { AlienWalletError } from './errors';
 import { icon } from './icon';
 import {
   base58Decode,
@@ -42,24 +43,12 @@ import {
   base64Encode,
 } from './utils';
 
-const SOLANA_CHAINS = [
-  'solana:mainnet',
-  'solana:devnet',
-  'solana:testnet',
-] as const;
-
+// `.includes(string)` against a tuple of literals fails typecheck because
+// the tuple's element type is the narrow union, not `string`. Widening for
+// the call only is the standard idiom — narrower than asserting the
+// argument at the call site.
 function isSolanaChain(chain: string): chain is SolanaChain {
   return (SOLANA_CHAINS as readonly string[]).includes(chain);
-}
-
-export class AlienWalletError extends Error {
-  readonly code: WalletSolanaErrorCode;
-
-  constructor(code: WalletSolanaErrorCode, message?: string) {
-    super(message ?? `Wallet error: ${code}`);
-    this.name = 'AlienWalletError';
-    this.code = code;
-  }
 }
 
 function normalizeWalletError(error: unknown): AlienWalletError {
@@ -211,10 +200,15 @@ export class AlienSolanaWallet implements Wallet {
         );
       }
 
-      // Validate before construction so a malformed pubkey from the host
-      // surfaces as a typed wallet error, not a raw bs58 stack.
-      safeDecode('publicKey', base58Decode, response.publicKey);
-      const account = new AlienSolanaAccount(response.publicKey);
+      // Decode once at the bridge boundary so codec failures surface as
+      // typed wallet errors; the account constructor then validates the
+      // 32-byte length on the decoded bytes.
+      const publicKey = safeDecode(
+        'publicKey',
+        base58Decode,
+        response.publicKey,
+      );
+      const account = new AlienSolanaAccount(publicKey, response.publicKey);
       this.#accounts = [account];
       this.#emit('change', { accounts: this.accounts });
 

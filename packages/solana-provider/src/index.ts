@@ -1,3 +1,4 @@
 export { AlienSolanaAccount } from './account';
+export { AlienWalletError } from './errors';
 export { initAlienWallet } from './register';
-export { AlienSolanaWallet, AlienWalletError } from './wallet';
+export { AlienSolanaWallet } from './wallet';
