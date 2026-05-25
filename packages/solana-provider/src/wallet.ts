@@ -180,6 +180,14 @@ export class AlienSolanaWallet implements Wallet {
     }
 
     if (silent) {
+      // Deliberate divergence from reference impls (e.g. Ghost) that forward
+      // `silent` to the host as `onlyIfTrusted`, letting a returning user
+      // silently reconnect a previously-authorised session. The
+      // `wallet.solana:connect` contract method has no field to carry this
+      // flag yet — until it does, we short-circuit to "no cached accounts"
+      // instead of round-tripping the bridge and risking a UI prompt the
+      // caller asked us to suppress. TODO: forward `silent` once the
+      // contract gains the field.
       return { accounts: [] };
     }
 
