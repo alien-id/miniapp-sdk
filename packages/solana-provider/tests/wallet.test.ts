@@ -230,6 +230,46 @@ describe('AlienSolanaWallet', () => {
     expect(wallet.features).toBe(wallet.features);
   });
 
+  test('signTransaction rejects unknown CAIP chain identifiers when chain is provided', async () => {
+    const { wallet, account } = await connect();
+
+    await expect(
+      wallet.features['solana:signTransaction'].signTransaction({
+        account,
+        // Cast through unknown because TS would otherwise reject the chain
+        // value; the wallet must still defend against runtime callers that
+        // do not honour the type. `chain` is OPTIONAL in the spec but, when
+        // present, must be a Solana chain.
+        chain: 'evm:1' as unknown as 'solana:mainnet',
+        transaction: new Uint8Array([1, 2, 3]),
+      }),
+    ).rejects.toMatchObject({
+      code: WALLET_ERROR.INVALID_PARAMS,
+    });
+
+    expect(
+      driver.calls.some((c) => c.method === 'wallet.solana:sign.transaction'),
+    ).toBe(false);
+  });
+
+  test('signTransaction succeeds when chain is omitted (optional per spec)', async () => {
+    const { wallet, account } = await connect();
+    driver.reply(
+      'wallet.solana:sign.transaction',
+      'wallet.solana:sign.transaction.response',
+      { signedTransaction: 'AQID' },
+    );
+
+    const [output] = await wallet.features[
+      'solana:signTransaction'
+    ].signTransaction({
+      account,
+      transaction: new Uint8Array([9, 9, 9]),
+    });
+
+    expect(output?.signedTransaction).toEqual(new Uint8Array([1, 2, 3]));
+  });
+
   test('signAndSendTransaction rejects unknown CAIP chain identifiers', async () => {
     const { wallet, account } = await connect();
 

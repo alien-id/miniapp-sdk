@@ -263,6 +263,17 @@ export class AlienSolanaWallet implements Wallet {
       for (const input of inputs) {
         this.#assertAccount(input.account);
 
+        // `chain` is optional in wallet-standard's SolanaSignTransactionInput,
+        // but when callers pass it we still defend against runtime CAIP
+        // values that aren't on Solana — mirrors the unconditional guard in
+        // signAndSendTransaction.
+        if (input.chain && !isSolanaChain(input.chain)) {
+          throw new AlienWalletError(
+            WALLET_ERROR.INVALID_PARAMS,
+            `Unsupported Solana chain "${input.chain}". Expected one of: ${SOLANA_CHAINS.join(', ')}.`,
+          );
+        }
+
         const transactionBase64 = base64Encode(input.transaction);
 
         const response = await request(
