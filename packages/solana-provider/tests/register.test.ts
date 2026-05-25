@@ -1,75 +1,34 @@
-import { beforeEach, describe, expect, mock, test } from 'bun:test';
-import {
-  BridgeMethodUnsupportedError,
-  BridgeTimeoutError,
-  BridgeUnavailableError,
-  WALLET_ERROR_MOCK,
-} from './test-utils';
+import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
+import { BridgeDriver } from './test-utils';
 
 const registerWalletMock = mock(() => {});
-const getLaunchParamsMock = mock(
-  (): { contractVersion?: string } | undefined => undefined,
-);
-type CallabilityResult =
-  | { callable: true }
-  | { callable: false; reason: 'no-bridge' }
-  | { callable: false; reason: 'host-outdated'; needs: string; has: string };
-const callabilityMock = mock(
-  (): CallabilityResult => ({ callable: false, reason: 'no-bridge' }),
-);
-
 mock.module('@wallet-standard/wallet', () => ({
   registerWallet: registerWalletMock,
 }));
 
-mock.module('@alien-id/miniapps-bridge', () => ({
-  BridgeMethodUnsupportedError,
-  BridgeUnavailableError,
-  BridgeTimeoutError,
-  getLaunchParams: getLaunchParamsMock,
-  callability: callabilityMock,
-  request: mock(() => Promise.resolve({})),
-  send: Object.assign(
-    mock(() => {}),
-    {
-      ifAvailable: mock(() => ({ ok: true, data: undefined })),
-    },
-  ),
-}));
+const driver = new BridgeDriver();
 
-mock.module('@alien-id/miniapps-contract', () => ({
-  WALLET_ERROR: WALLET_ERROR_MOCK,
-}));
+beforeEach(async () => {
+  registerWalletMock.mockClear();
+  driver.uninstall();
+  const { _resetRegistration } = await import('../src/register');
+  _resetRegistration();
+});
+
+afterEach(() => {
+  driver.uninstall();
+});
 
 describe('initAlienWallet', () => {
-  beforeEach(async () => {
-    registerWalletMock.mockClear();
-    getLaunchParamsMock.mockReset();
-    callabilityMock.mockReset();
-    getLaunchParamsMock.mockReturnValue(undefined);
-    callabilityMock.mockReturnValue({ callable: false, reason: 'no-bridge' });
-
-    // Bun's test runtime does not define `window` by default. The provider
-    // gates on `typeof window === 'undefined'` for SSR-safety, so every test
-    // that exercises the bridge path needs a stand-in window. Tests that
-    // explicitly check the SSR branch delete it again.
-    (globalThis as { window?: unknown }).window = globalThis;
-
-    const { _resetRegistration } = await import('../src/register');
-    _resetRegistration();
-  });
-
   test('registers wallet when bridge is available and method is supported', async () => {
-    getLaunchParamsMock.mockReturnValue({ contractVersion: '1.0.0' });
-    callabilityMock.mockReturnValue({ callable: true });
+    driver.install({ contractVersion: '1.0.0' });
     const { initAlienWallet } = await import('../src/register');
     initAlienWallet();
     expect(registerWalletMock).toHaveBeenCalledTimes(1);
   });
 
   test('does not register twice', async () => {
-    getLaunchParamsMock.mockReturnValue({ contractVersion: '1.0.0' });
-    callabilityMock.mockReturnValue({ callable: true });
+    driver.install({ contractVersion: '1.0.0' });
     const { initAlienWallet } = await import('../src/register');
     initAlienWallet();
     initAlienWallet();
@@ -77,27 +36,27 @@ describe('initAlienWallet', () => {
   });
 
   test('does not register when bridge is unavailable', async () => {
-    callabilityMock.mockReturnValue({ callable: false, reason: 'no-bridge' });
+    // No driver.install() — `__miniAppsBridge__` is absent, so callability
+    // returns { callable: false, reason: 'no-bridge' }. window itself must
+    // still exist so the SSR short-circuit doesn't fire first.
+    driver.setupWindow();
     const { initAlienWallet } = await import('../src/register');
     initAlienWallet();
     expect(registerWalletMock).toHaveBeenCalledTimes(0);
   });
 
   test('registers when contractVersion is missing', async () => {
-    callabilityMock.mockReturnValue({ callable: true });
+    // No contractVersion → callability skips the version check and reports
+    // `{ callable: true }` purely on bridge presence.
+    driver.install();
     const { initAlienWallet } = await import('../src/register');
     initAlienWallet();
     expect(registerWalletMock).toHaveBeenCalledTimes(1);
   });
 
   test('does not register when wallet method is unsupported', async () => {
-    getLaunchParamsMock.mockReturnValue({ contractVersion: '0.2.4' });
-    callabilityMock.mockReturnValue({
-      callable: false,
-      reason: 'host-outdated',
-      needs: '1.0.0',
-      has: '0.2.4',
-    });
+    // wallet.solana:connect lives in the 1.0.0 release; 0.2.4 is below it.
+    driver.install({ contractVersion: '0.2.4' });
     const { initAlienWallet } = await import('../src/register');
     initAlienWallet();
     expect(registerWalletMock).toHaveBeenCalledTimes(0);
@@ -108,13 +67,7 @@ describe('initAlienWallet', () => {
     const originalWarn = console.warn;
     console.warn = warnSpy;
     try {
-      getLaunchParamsMock.mockReturnValue({ contractVersion: '0.2.4' });
-      callabilityMock.mockReturnValue({
-        callable: false,
-        reason: 'host-outdated',
-        needs: '1.0.0',
-        has: '0.2.4',
-      });
+      driver.install({ contractVersion: '0.2.4' });
       const { initAlienWallet } = await import('../src/register');
       initAlienWallet();
       expect(warnSpy).toHaveBeenCalledTimes(1);
@@ -133,7 +86,7 @@ describe('initAlienWallet', () => {
     const originalWarn = console.warn;
     console.warn = warnSpy;
     try {
-      callabilityMock.mockReturnValue({ callable: false, reason: 'no-bridge' });
+      driver.setupWindow();
       const { initAlienWallet } = await import('../src/register');
       initAlienWallet();
       expect(warnSpy).not.toHaveBeenCalled();
