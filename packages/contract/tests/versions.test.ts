@@ -3,9 +3,16 @@ import type { MethodName, Version } from '../src';
 import {
   getMethodMinVersion,
   isMethodSupported,
+  isValidVersion,
   METHOD_NAMES,
   releases,
 } from '../src';
+// `compareVersions` is exported from the versions module but deliberately
+// kept out of the package's public API (`src/index.ts`). Imported here so
+// the comparator's contract — including the pre-release / build-metadata
+// stripping rules — can be tested directly, without needing a fictional
+// release table to exercise non-`.0` patch scenarios.
+import { compareVersions } from '../src/methods/versions';
 
 /**
  * Tests for the host-version gating algorithm in
@@ -86,17 +93,9 @@ describe('isMethodSupported', () => {
 });
 
 describe('isMethodSupported — pre-release tag handling', () => {
-  // `compareVersions` strips pre-release identifiers only when the
-  // patch component itself is `0` — splitting `1.5.0-rc.1` by `.`
-  // leaves the third token as `0-rc`, which collapses to `0`. The
-  // current release table happens to register every method on an
-  // `X.Y.0` version, so this works in practice; if that ever stops
-  // being true, fix the comparator and revisit this test.
-  test('-rc.1 on an X.Y.0 release tag still counts as supported', () => {
-    const sampled = METHOD_NAMES.find((m) =>
-      getMethodMinVersion(m)?.endsWith('.0'),
-    );
-    if (!sampled) throw new Error('no method with a .0 patch min version');
+  test('-rc.1 on a release tag still counts as supported', () => {
+    const sampled = METHOD_NAMES[0];
+    if (!sampled) throw new Error('no methods in contract');
     const minV = getMethodMinVersion(sampled);
     if (!minV) throw new Error('unreachable');
     expect(isMethodSupported(sampled, `${minV}-rc.1` as Version)).toBe(true);
@@ -106,5 +105,77 @@ describe('isMethodSupported — pre-release tag handling', () => {
     const sampled = METHOD_NAMES[0];
     if (!sampled) throw new Error('no methods in contract');
     expect(isMethodSupported(sampled, '99.0.0-beta.3' as Version)).toBe(true);
+  });
+});
+
+/**
+ * Direct comparator tests.
+ *
+ * `compareVersions` is a private helper exported only for testing — see
+ * the import comment at the top of this file. These tests pin down the
+ * contract that `isMethodSupported` exercises only indirectly: cases
+ * that depend on the relationship between two specific versions (e.g.
+ * "`1.5.3-rc.1` and `1.5.2`") rather than the release-table state.
+ */
+describe('compareVersions', () => {
+  test('strips pre-release suffix on any component, not just patch == 0', () => {
+    expect(
+      compareVersions('1.5.3-rc.1' as Version, '1.5.3' as Version),
+    ).toBe(0);
+  });
+
+  test('strips build metadata the same way as pre-release', () => {
+    expect(
+      compareVersions('1.5.3+sha.abc' as Version, '1.5.3' as Version),
+    ).toBe(0);
+  });
+
+  test('1.5.3-rc.1 is strictly greater than 1.5.2', () => {
+    expect(
+      compareVersions('1.5.3-rc.1' as Version, '1.5.2' as Version),
+    ).toBeGreaterThan(0);
+  });
+
+  test('1.5.0-rc.1 does not get over-promoted to 1.5.3', () => {
+    expect(compareVersions('1.5.0-rc.1' as Version, '1.5.3' as Version)).toBeLessThan(0);
+  });
+
+  test.each([
+    ['empty string', ''],
+    ['whitespace', '  '],
+    ['major only', '1'],
+    ['major.minor only', '1.5'],
+    ['four components', '1.2.3.4'],
+    ['empty patch (trailing dot)', '1.2.'],
+    ['double dot', '1..2'],
+    ['non-numeric component', '1.x.3'],
+    ['leading hyphen', '-1.2.3'],
+    ['bare pre-release', 'rc.1'],
+  ])('throws on malformed input: %s', (_label, input) => {
+    expect(() => compareVersions(input as Version, '1.0.0' as Version)).toThrow();
+  });
+});
+
+describe('isValidVersion', () => {
+  test.each([
+    ['plain X.Y.Z', '1.2.3'],
+    ['pre-release', '1.2.3-rc.1'],
+    ['build metadata', '1.2.3+sha.abc'],
+    ['pre-release plus build', '1.2.3-rc.1+sha.abc'],
+    ['zero version', '0.0.0'],
+  ])('accepts %s', (_label, input) => {
+    expect(isValidVersion(input)).toBe(true);
+  });
+
+  test.each([
+    ['empty', ''],
+    ['major only', '1'],
+    ['major.minor only', '1.5'],
+    ['four components', '1.2.3.4'],
+    ['non-numeric', '1.x.3'],
+    ['garbage', 'not-a-version'],
+    ['leading hyphen', '-1.2.3'],
+  ])('rejects %s', (_label, input) => {
+    expect(isValidVersion(input)).toBe(false);
   });
 });

@@ -5,7 +5,11 @@ import type {
   SafeAreaInsets,
   Version,
 } from '@alien-id/miniapps-contract';
-import { DISPLAY_MODES, PLATFORMS } from '@alien-id/miniapps-contract';
+import {
+  DISPLAY_MODES,
+  isValidVersion,
+  PLATFORMS,
+} from '@alien-id/miniapps-contract';
 import { BridgeError } from './errors';
 
 declare global {
@@ -37,7 +41,7 @@ export class LaunchParamsError extends BridgeError {
 
 function validateVersion(value: string | undefined): Version | undefined {
   if (!value) return undefined;
-  return /^\d+\.\d+\.\d+$/.test(value) ? (value as Version) : undefined;
+  return isValidVersion(value) ? (value as Version) : undefined;
 }
 
 function validatePlatform(value: string | undefined): Platform | undefined {

@@ -8,16 +8,14 @@ export { releases } from './releases';
 /**
  * Compare two semver versions on their major.minor.patch numbers only.
  *
- * Pre-release identifiers (`1.0.0-rc.1`, `0.2.0-alpha.3`, build metadata
- * after `+`) are intentionally ignored: each component is parsed with
- * `Number(part)`, and any non-numeric remainder (e.g. `'0-rc'`) collapses
- * to `0` via the `isFinite` guard. The net effect is that `1.0.0-rc.1`
- * compares equal to `1.0.0`.
+ * Pre-release identifiers (`-rc.1`, `-alpha.3`) and build metadata
+ * (`+sha`) are stripped before parsing, so `1.5.3-rc.1` compares equal
+ * to `1.5.3` regardless of which component carries the suffix.
  *
  * Rationale: the host injects a single Contract Version string
  * (`window.__ALIEN_CONTRACT_VERSION__`). Method support is a property of
  * the *released* contract surface, not of the tag spelling — a host on
- * `1.0.0-rc.1` ships the same methods as `1.0.0`. Honouring the
+ * `1.5.3-rc.1` ships the same methods as `1.5.3`. Honouring the
  * pre-release suffix would deny callers methods their host already
  * declares.
  *
@@ -27,13 +25,26 @@ export { releases } from './releases';
  *
  * @returns negative if a < b, 0 if a === b, positive if a > b
  */
-function compareVersions(a: Version, b: Version): number {
+const SEMVER_RE =
+  /^(\d+)\.(\d+)\.(\d+)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
+
+/**
+ * Whether a string matches the contract's accepted version shape:
+ * `X.Y.Z` with optional `-prerelease` and `+build` suffixes. This is the
+ * single source of truth for "is this a `Version`?" — boundary
+ * validators (e.g. host-injected `__ALIEN_CONTRACT_VERSION__`) and
+ * direct callers of {@link compareVersions} agree by construction.
+ */
+export function isValidVersion(value: string): boolean {
+  return SEMVER_RE.test(value);
+}
+
+export function compareVersions(a: Version, b: Version): number {
   const parse = (v: Version): [number, number, number] => {
-    const [maj, min, pat] = v.split('.').map((p) => {
-      const n = Number(p);
-      return Number.isFinite(n) ? n : 0;
-    });
-    return [maj ?? 0, min ?? 0, pat ?? 0];
+    const m = SEMVER_RE.exec(v);
+    if (!m) throw new TypeError(`Invalid version string: ${JSON.stringify(v)}`);
+    // Indices 1–3 are guaranteed numeric by the regex.
+    return [Number(m[1]), Number(m[2]), Number(m[3])];
   };
   const [aMajor, aMinor, aPatch] = parse(a);
   const [bMajor, bMinor, bPatch] = parse(b);
@@ -42,28 +53,24 @@ function compareVersions(a: Version, b: Version): number {
   return aPatch - bPatch;
 }
 
-// Build a direct `MethodName → minimum Version` lookup at module load.
-// The release table is static, so a single ascending pass yields the
-// earliest version that registers each method. `getMethodMinVersion`
-// then resolves a method in O(1) instead of rescanning every release.
 const ASCENDING_RELEASE_VERSIONS: readonly Version[] = (
   Object.keys(releases) as Version[]
 ).sort(compareVersions);
 
-const METHOD_MIN_VERSION: ReadonlyMap<MethodName, Version> = (() => {
-  const map = new Map<MethodName, Version>();
-  for (const version of ASCENDING_RELEASE_VERSIONS) {
-    const methods = releases[version];
-    if (!methods) continue;
-    for (const entry of methods) {
-      const name = (
-        typeof entry === 'string' ? entry : entry.method
-      ) as MethodName;
-      if (!map.has(name)) map.set(name, version);
-    }
+// Walked in ascending order, first-seen wins — so each method maps to
+// the earliest release that introduced it.
+const methodMinVersion = new Map<MethodName, Version>();
+for (const version of ASCENDING_RELEASE_VERSIONS) {
+  const methods = releases[version];
+  if (!methods) continue;
+  for (const entry of methods) {
+    const name = (
+      typeof entry === 'string' ? entry : entry.method
+    ) as MethodName;
+    if (!methodMinVersion.has(name)) methodMinVersion.set(name, version);
   }
-  return map;
-})();
+}
+const METHOD_MIN_VERSION: ReadonlyMap<MethodName, Version> = methodMinVersion;
 
 /**
  * Runtime list of every method declared in the {@link releases} table.
@@ -84,8 +91,7 @@ export const METHOD_NAMES: readonly MethodName[] = Array.from(
  * dev tooling, mocks, and CI fixtures.
  */
 export const LATEST_VERSION: Version =
-  ASCENDING_RELEASE_VERSIONS[ASCENDING_RELEASE_VERSIONS.length - 1] ??
-  ('0.0.0' as Version);
+  ASCENDING_RELEASE_VERSIONS[ASCENDING_RELEASE_VERSIONS.length - 1] ?? '0.0.0';
 
 /**
  * Check whether the contract declares a method at the given version.
@@ -125,8 +131,7 @@ export function isMethodSupported(
 
 /**
  * Get the minimum contract version that declares a method, or
- * `undefined` if the method is not in any release. Backed by a
- * module-load-time `Map` lookup — O(1) per call.
+ * `undefined` if the method is not in any release.
  */
 export function getMethodMinVersion(method: MethodName): Version | undefined {
   return METHOD_MIN_VERSION.get(method);
