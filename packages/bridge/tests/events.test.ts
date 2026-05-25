@@ -171,7 +171,7 @@ test('transport listener - stays attached across full subscribe/unsubscribe cycl
   const offSecond = on('host.back.button:clicked', () => {
     receivedSecond++;
   });
-  await emit('host.back.button:clicked', undefined);
+  await emit('host.back.button:clicked', {});
   expect(receivedSecond).toBe(1);
 
   offSecond();

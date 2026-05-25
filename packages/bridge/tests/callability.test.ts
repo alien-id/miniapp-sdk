@@ -118,8 +118,6 @@ test('callability - fails closed when method has no known min version (registry 
 // arbitrary strings at the call site. This function is never invoked —
 // the assertion lives entirely in the type system. If any `@ts-expect-error`
 // stops failing, `MethodName` has been widened to `string` (regression).
-// biome-ignore lint/correctness/noUnusedFunctionParameters: type-only test
-// biome-ignore lint/correctness/noUnusedVariables: type-only test
 function _typeLevel_MethodName_isLiteralUnion(): void {
   // @ts-expect-error — arbitrary strings are not assignable to MethodName.
   callability('not:a:real:method');

@@ -47,7 +47,7 @@ export function enableLinkInterceptor(
       el = el.parentElement;
     }
     const anchor = el as HTMLAnchorElement | null;
-    if (!anchor || !anchor.href || anchor.hasAttribute('download')) return;
+    if (!anchor?.href || anchor.hasAttribute('download')) return;
 
     let url: URL;
     try {
