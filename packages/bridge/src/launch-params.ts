@@ -35,9 +35,17 @@ export class LaunchParamsError extends BridgeError {
   }
 }
 
+// Matches the shape accepted by `compareVersions` in @alien-id/miniapps-contract:
+// `X.Y.Z` with optional `-prerelease` and/or `+build` suffixes. Mirroring the
+// comparator's grammar here keeps the host-injected `__ALIEN_CONTRACT_VERSION__`
+// passing through to gating logic instead of being coerced to `undefined` and
+// silently skipping the version check.
+const CONTRACT_VERSION_RE =
+  /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
+
 function validateVersion(value: string | undefined): Version | undefined {
   if (!value) return undefined;
-  return /^\d+\.\d+\.\d+$/.test(value) ? (value as Version) : undefined;
+  return CONTRACT_VERSION_RE.test(value) ? (value as Version) : undefined;
 }
 
 function validatePlatform(value: string | undefined): Platform | undefined {
