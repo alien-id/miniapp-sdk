@@ -26,6 +26,11 @@
       "matchFileNames": ["packages/**/package.json"],
       "matchDepTypes": ["dependencies", "peerDependencies", "optionalDependencies"],
       "rangeStrategy": "replace"
+    },
+    {
+      "description": "Engines declare a minimum supported runtime — never pin them to an exact version.",
+      "matchDepTypes": ["engines"],
+      "rangeStrategy": "replace"
     }
   ]
 }
