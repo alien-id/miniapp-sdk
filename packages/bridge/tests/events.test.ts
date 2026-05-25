@@ -148,3 +148,51 @@ test('emit - should pass correct payload', async () => {
   expect(receivedPayload).not.toBeNull();
   expect(receivedPayload).toEqual(testPayload);
 });
+
+test('transport listener - stays attached across full subscribe/unsubscribe cycles', async () => {
+  // First subscriber attaches the transport listener.
+  let receivedFirst = 0;
+  const offFirst = on('payment:response', () => {
+    receivedFirst++;
+  });
+  await emit('payment:response', {
+    status: 'paid' as const,
+    txHash: 'tx-1',
+    reqId: 'r1',
+  });
+  expect(receivedFirst).toBe(1);
+
+  // Drop to zero subscribers — the transport must NOT detach. A future
+  // refactor that tears down on listenerCount==0 would break the next
+  // assertion: a fresh subscriber to a different event must still work.
+  offFirst();
+
+  let receivedSecond = 0;
+  const offSecond = on('host.back.button:clicked', () => {
+    receivedSecond++;
+  });
+  await emit('host.back.button:clicked', {});
+  expect(receivedSecond).toBe(1);
+
+  offSecond();
+});
+
+test('on - async listeners are supported and their promise is awaited', async () => {
+  const order: string[] = [];
+
+  on('payment:response', async (_payload) => {
+    await Promise.resolve();
+    order.push('async-done');
+  });
+
+  await emit('payment:response', {
+    status: 'paid' as const,
+    txHash: 'tx-async',
+    reqId: 'async',
+  });
+  order.push('after-emit');
+
+  // `emit` awaits each listener (Emittery semantics) — so 'async-done'
+  // must appear before 'after-emit'.
+  expect(order).toEqual(['async-done', 'after-emit']);
+});

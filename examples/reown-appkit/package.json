@@ -13,17 +13,18 @@
     "react-dom": "^19.2.0",
     "@alien-id/miniapps-react": "workspace:*",
     "@alien-id/miniapps-bridge": "workspace:*",
+    "@alien-id/miniapps-contract": "workspace:*",
     "@alien-id/miniapps-solana-provider": "workspace:*",
     "@reown/appkit": "^1.8.19",
     "@reown/appkit-adapter-solana": "^1.8.19",
-    "@solana/web3.js": "^1.98.0"
+    "@solana/web3.js": "^1.98.4"
   },
   "devDependencies": {
-    "@types/node": "^25.3.5",
-    "@types/react": "^19.2.5",
+    "@types/node": "^25.9.1",
+    "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.1",
-    "typescript": "~6.0.2",
-    "vite": "^8.0.3"
+    "@vitejs/plugin-react": "^6.0.2",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.13"
   }
 }

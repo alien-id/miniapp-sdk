@@ -6,9 +6,14 @@ import type {
 import Emittery from 'emittery';
 import { setupMessageListener } from './transport';
 
+/**
+ * Listener for a bridge event. May be synchronous or return a promise —
+ * `emit()` awaits each listener (Emittery semantics), so async handlers
+ * are safe to use without unhandled-rejection risk.
+ */
 export type EventListener<T extends EventName = EventName> = (
   payload: EventPayload<T>,
-) => void;
+) => void | Promise<void>;
 
 // Create Emittery-compatible event map from Events type
 type EmitteryEventMap = {
@@ -16,26 +21,40 @@ type EmitteryEventMap = {
 };
 
 let emitter: Emittery<EmitteryEventMap> | undefined;
+let teardownTransport: (() => void) | undefined;
 
 function getEmitter(): Emittery<EmitteryEventMap> {
   if (!emitter) {
     emitter = new Emittery<EmitteryEventMap>();
-    setupMessageListener((message) => {
-      if (message.type === 'event') {
-        void emitter?.emit(message.name, message.payload);
-      }
-    });
   }
   return emitter;
+}
+
+function attachTransportIfNeeded(): void {
+  if (teardownTransport) return;
+  teardownTransport = setupMessageListener((message) => {
+    if (message.type === 'event') {
+      void emitter?.emit(message.name, message.payload);
+    }
+  });
+}
+
+function detachTransportIfIdle(): void {
+  if (!teardownTransport) return;
+  if (emitter && emitter.listenerCount() > 0) return;
+  teardownTransport();
+  teardownTransport = undefined;
 }
 
 export function on<T extends EventName>(
   name: T,
   listener: EventListener<T>,
 ): () => void {
+  attachTransportIfNeeded();
   getEmitter().on(name, listener);
   return () => {
     getEmitter().off(name, listener);
+    detachTransportIfIdle();
   };
 }
 
@@ -44,6 +63,7 @@ export function off<T extends EventName>(
   listener: EventListener<T>,
 ): void {
   getEmitter().off(name, listener);
+  detachTransportIfIdle();
 }
 
 export async function emit<T extends EventName>(

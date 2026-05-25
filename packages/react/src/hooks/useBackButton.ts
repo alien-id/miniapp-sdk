@@ -1,7 +1,14 @@
 import { on, send } from '@alien-id/miniapps-bridge';
-import { isMethodSupported } from '@alien-id/miniapps-contract';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useAlien } from './useAlien';
+import { useCallable, withSupportedAlias } from './useCallable';
 
 export interface UseBackButtonReturn {
   /** Whether the back button is currently visible. */
@@ -10,8 +17,8 @@ export interface UseBackButtonReturn {
   show: () => void;
   /** Hide the back button. No-op if already hidden. */
   hide: () => void;
-  /** Whether the back button method is supported by the host app. */
-  supported: boolean;
+  /** Whether the back button method is Callable. */
+  callable: boolean;
 }
 
 /**
@@ -19,103 +26,73 @@ export interface UseBackButtonReturn {
  *
  * Manages visibility, listens for clicks, and handles cleanup automatically.
  * The back button is hidden on unmount to prevent stale UI in the host app.
- *
- * @param onPress - Callback fired when the back button is pressed.
- *   Stabilized internally via ref — safe to pass inline functions.
- *
- * @example
- * ```tsx
- * // Show back button while this screen is mounted
- * function DetailScreen() {
- *   const { show, hide } = useBackButton(() => {
- *     navigate(-1);
- *   });
- *
- *   useEffect(() => {
- *     show();
- *     return () => hide();
- *   }, [show, hide]);
- *
- *   return <div>Detail content</div>;
- * }
- * ```
- *
- * @example
- * ```tsx
- * // Conditional visibility based on navigation depth
- * function App() {
- *   const { show, hide } = useBackButton(() => {
- *     router.back();
- *   });
- *
- *   useEffect(() => {
- *     if (canGoBack) show();
- *     else hide();
- *   }, [canGoBack, show, hide]);
- *
- *   return <Outlet />;
- * }
- * ```
  */
 export function useBackButton(onPress?: () => void): UseBackButtonReturn {
-  const { contractVersion, isBridgeAvailable } = useAlien();
+  const { isBridgeAvailable } = useAlien();
+  const { callable } = useCallable('host.back.button:toggle');
   const [isVisible, setIsVisible] = useState(false);
   const visibleRef = useRef(false);
   const onPressRef = useRef(onPress);
-  onPressRef.current = onPress;
+  // Sync in a layout effect so the ref reflects the latest callback by
+  // the time React yields after commit — passive `useEffect` would
+  // leave a stale-callback window between commit and effect flush where
+  // a microtask-dispatched bridge event would see the previous closure.
+  useLayoutEffect(() => {
+    onPressRef.current = onPress;
+  });
 
-  const supported = contractVersion
-    ? isMethodSupported('host.back.button:toggle', contractVersion)
-    : true;
-
-  // Subscribe to back button click events.
-  // Uses ref so the subscription is stable regardless of
-  // whether the consumer passes an inline function.
+  // Subscribe to back button click events. Emittery's `on` is total — it
+  // doesn't throw — so a try/catch here would only swallow errors that
+  // the SDK itself wouldn't surface. Uses a ref so the subscription is
+  // stable regardless of whether the consumer passes an inline function.
   useEffect(() => {
     if (!isBridgeAvailable) return;
-    try {
-      return on('host.back.button:clicked', () => {
-        onPressRef.current?.();
-      });
-    } catch {
-      return;
-    }
+    return on('host.back.button:clicked', () => {
+      onPressRef.current?.();
+    });
   }, [isBridgeAvailable]);
 
   const show = useCallback(() => {
     if (visibleRef.current) return;
     visibleRef.current = true;
     setIsVisible(true);
-    send.ifAvailable(
-      'host.back.button:toggle',
-      { visible: true },
-      { version: contractVersion },
-    );
-  }, [contractVersion]);
+    const result = send.ifAvailable('host.back.button:toggle', {
+      visible: true,
+    });
+    if (!result.ok && process.env.NODE_ENV !== 'production') {
+      console.warn(
+        '[@alien-id/miniapps-react] host.back.button:toggle not callable:',
+        result.error,
+      );
+    }
+  }, []);
 
   const hide = useCallback(() => {
     if (!visibleRef.current) return;
     visibleRef.current = false;
     setIsVisible(false);
-    send.ifAvailable(
-      'host.back.button:toggle',
-      { visible: false },
-      { version: contractVersion },
-    );
-  }, [contractVersion]);
+    const result = send.ifAvailable('host.back.button:toggle', {
+      visible: false,
+    });
+    if (!result.ok && process.env.NODE_ENV !== 'production') {
+      console.warn(
+        '[@alien-id/miniapps-react] host.back.button:toggle not callable:',
+        result.error,
+      );
+    }
+  }, []);
 
   // Hide back button on unmount to prevent stale native UI.
-  // send.ifAvailable handles the case where bridge is already
-  // gone during WebView teardown.
   useEffect(() => {
     return () => {
       if (!visibleRef.current) return;
+      // Best-effort cleanup; warning would be noise during teardown.
       send.ifAvailable('host.back.button:toggle', { visible: false });
     };
   }, []);
 
   return useMemo(
-    () => ({ isVisible, show, hide, supported }),
-    [isVisible, show, hide, supported],
+    () => withSupportedAlias({ isVisible, show, hide, callable }),
+    [isVisible, show, hide, callable],
   );
 }

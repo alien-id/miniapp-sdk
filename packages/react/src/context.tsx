@@ -26,8 +26,9 @@ export interface AlienContextValue {
    */
   authToken: string | undefined;
   /**
-   * Contract version supported by the host app.
-   * `undefined` if not provided (fallback: assume all methods supported).
+   * Contract version reported by the host app. When `undefined`, the
+   * version check inside `callability()` is skipped — methods are gated
+   * only on bridge presence, not on version compatibility.
    */
   contractVersion: Version | undefined;
   /**
@@ -88,11 +89,15 @@ const SAFE_AREA_EDGES = ['top', 'right', 'bottom', 'left'] as const;
 
 function setSafeAreaCssVars(insets: SafeAreaInsets | undefined): void {
   if (typeof document === 'undefined') return;
+  // Only write vars when the host actually declared insets. Writing `0px`
+  // for a missing inset would clobber a meaningful CSS fallback like
+  // `env(safe-area-inset-top, 0px)` that the consumer set themselves.
+  if (!insets) return;
   const root = document.documentElement;
   for (const edge of SAFE_AREA_EDGES) {
     root.style.setProperty(
       `--alien-safe-area-inset-${edge}`,
-      `${insets?.[edge] ?? 0}px`,
+      `${insets[edge] ?? 0}px`,
     );
   }
 }
@@ -124,10 +129,12 @@ export function AlienProvider({
 
   const ready = useCallback(() => {
     if (readySent.current) return;
-    if (isBridgeAvailable()) {
-      send('app:ready', {});
-      readySent.current = true;
-    }
+    if (!isBridgeAvailable()) return;
+    // ifAvailable() degrades gracefully on too-old hosts where 'app:ready'
+    // is below the Contract Version floor. Only mark sent on success so a
+    // pre-call refusal during boot doesn't permanently latch the flag.
+    const result = send.ifAvailable('app:ready', {});
+    if (result.ok) readySent.current = true;
   }, []);
 
   const [value, setValue] = useState<AlienContextValue>(() => ({

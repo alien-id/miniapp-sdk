@@ -3,6 +3,7 @@ import { useAppKitAccount, useAppKitNetwork } from '@reown/appkit/react';
 import { useAppKitConnection } from '@reown/appkit-adapter-solana/react';
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { useCallback, useEffect, useState } from 'react';
+import { CallabilityBanner } from './CallabilityBanner';
 
 function App() {
   const { address, isConnected } = useAppKitAccount();
@@ -48,6 +49,8 @@ function App() {
         <appkit-network-button />
       </section>
 
+      <CallabilityBanner method="wallet.solana:connect" />
+
       {isConnected && address && (
         <section className="card wallet-card">
           <h2>Wallet Connected</h2>
@@ -87,7 +90,7 @@ function App() {
         <div className="info-row">
           <span className="label">Auth Token</span>
           <span className={`badge ${authToken ? 'badge-ok' : 'badge-muted'}`}>
-            {authToken ? `${authToken.slice(0, 12)}...` : 'None'}
+            {authToken ? 'Present' : 'None'}
           </span>
         </div>
         <div className="info-row">

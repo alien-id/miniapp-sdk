@@ -1,75 +1,23 @@
-import type { MethodName, Version } from '@alien-id/miniapps-contract';
-import {
-  getMethodMinVersion,
-  isMethodSupported,
-} from '@alien-id/miniapps-contract';
-import { BridgeMethodUnsupportedError, BridgeUnavailableError } from './errors';
-import { isBridgeAvailable } from './utils';
+import type { CallabilityOptions } from './callability';
 
 /**
  * Discriminated union for safe execution results.
- * Returned by `.ifAvailable()` methods instead of throwing.
- */
-export type SafeResult<T> = { ok: true; data: T } | { ok: false; error: Error };
-
-/**
- * Options for availability checks.
- */
-export interface AvailabilityOptions {
-  /** Contract version to check method support against. */
-  version?: Version;
-}
-
-/**
- * Checks if a method can be executed.
- * Verifies bridge availability and optionally checks version support.
+ * Returned by `*IfAvailable` functions instead of throwing.
  *
- * @param method - The method name to check
- * @param options - Optional availability options (version check)
- * @returns `true` if the method can be executed, `false` otherwise
+ * The error channel is generic so Safe Track entry points can pin it to a
+ * narrower subclass (e.g., `BridgeError`) and remove the `instanceof` /
+ * cast dance at call sites.
  */
-export function isAvailable(
-  method: MethodName,
-  options?: AvailabilityOptions,
-): boolean {
-  if (!isBridgeAvailable()) {
-    return false;
-  }
-
-  if (options?.version) {
-    return isMethodSupported(method, options.version);
-  }
-
-  return true;
-}
+export type SafeResult<T, E extends Error = Error> =
+  | { ok: true; data: T }
+  | { ok: false; error: E };
 
 /**
- * Checks availability and returns a SafeResult error if not available.
- * Internal helper used by sendIfAvailable and requestIfAvailable.
+ * @deprecated Use {@link CallabilityOptions} from `./callability` instead.
  *
- * @returns A SafeResult error if not available, or undefined if available
+ * Compatibility shim — `AvailabilityOptions` and `CallabilityOptions` were
+ * both `{ version?: Version }`. Kept as an alias so the public re-export in
+ * `index.ts` continues to work until Agent #2 prunes it. Remove once that
+ * re-export is gone.
  */
-export function checkAvailability(
-  method: MethodName,
-  options?: AvailabilityOptions,
-): SafeResult<never> | undefined {
-  if (!isBridgeAvailable()) {
-    return { ok: false, error: new BridgeUnavailableError() };
-  }
-
-  if (options?.version) {
-    if (!isMethodSupported(method, options.version)) {
-      const minVersion = getMethodMinVersion(method);
-      return {
-        ok: false,
-        error: new BridgeMethodUnsupportedError(
-          method,
-          options.version,
-          minVersion,
-        ),
-      };
-    }
-  }
-
-  return undefined;
-}
+export type AvailabilityOptions = CallabilityOptions;

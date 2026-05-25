@@ -1,15 +1,19 @@
 /**
  * Base class for all bridge-related errors.
  * Allows catching all bridge errors with a single catch block.
+ *
+ * Forwards `options.cause` to `Error` (ES2022) so callers can chain the
+ * underlying error without losing context:
+ *
+ * ```ts
+ * try { JSON.parse(raw); }
+ * catch (e) { throw new BridgeError('bad payload', { cause: e }); }
+ * ```
  */
 export class BridgeError extends Error {
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, options?: { cause?: unknown }) {
+    super(message, options);
     this.name = 'BridgeError';
-    // Maintains proper stack trace for where our error was thrown (only available on V8)
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, BridgeError);
-    }
   }
 }
 
@@ -21,16 +25,6 @@ export class BridgeUnavailableError extends BridgeError {
   constructor() {
     super('Bridge is not available. This SDK requires Alien App environment.');
     this.name = 'BridgeUnavailableError';
-  }
-}
-
-/**
- * Thrown when window is undefined (e.g., SSR scenarios).
- */
-export class BridgeWindowUnavailableError extends BridgeError {
-  constructor() {
-    super('Window is not available. This SDK requires a browser environment.');
-    this.name = 'BridgeWindowUnavailableError';
   }
 }
 
@@ -50,7 +44,35 @@ export class BridgeTimeoutError extends BridgeError {
 }
 
 /**
- * Thrown when a method is not supported by the current contract version.
+ * Thrown when a hook-level call is rejected because an identical request is
+ * already in flight. Distinct from {@link BridgeUnavailableError} so UI can
+ * branch on "wait for the active call" vs. "bridge missing".
+ */
+export class BridgeBusyError extends BridgeError {
+  readonly method: string;
+
+  constructor(method: string) {
+    super(`A "${method}" call is already in flight.`);
+    this.name = 'BridgeBusyError';
+    this.method = method;
+  }
+}
+
+/**
+ * Coerces an arbitrary thrown value into a {@link BridgeError}. Used by the
+ * Safe Track to keep `SafeResult.error` pinned to `BridgeError` even when the
+ * underlying throw isn't one (e.g., `JSON.stringify` on a cyclic payload).
+ * The original value is preserved on `.cause` (ES2022 Error option) so
+ * post-mortem debugging doesn't lose the root cause.
+ */
+export function toBridgeError(err: unknown): BridgeError {
+  if (err instanceof BridgeError) return err;
+  const message = err instanceof Error ? err.message : String(err);
+  return new BridgeError(message, { cause: err });
+}
+
+/**
+ * Thrown when a Method is not Callable in the Host's current Contract Version.
  */
 export class BridgeMethodUnsupportedError extends BridgeError {
   readonly method: string;

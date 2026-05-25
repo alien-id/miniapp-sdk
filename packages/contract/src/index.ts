@@ -1,6 +1,8 @@
-// Re-export methods
+// Public surface of @alien-id/miniapps-contract. Grouped roughly by
+// concern (events, launch params, methods, version utilities, shared
+// utility types) so editors that follow exports surface the right
+// neighbourhood for each symbol.
 
-// Re-export events
 export type { Events } from './events/events';
 export type {
   CreateEventPayload,
@@ -26,6 +28,9 @@ export {
   getMethodMinVersion,
   getReleaseVersion,
   isMethodSupported,
+  isValidVersion,
+  LATEST_VERSION,
+  METHOD_NAMES,
   releases,
 } from './methods/versions';
 export type {
@@ -40,4 +45,4 @@ export type {
   Version,
   WalletSolanaErrorCode,
 } from './utils';
-export { WALLET_ERROR } from './utils';
+export { SOLANA_CHAINS, WALLET_ERROR } from './utils';

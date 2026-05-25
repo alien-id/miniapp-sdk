@@ -1,5 +1,6 @@
 export { useAlien } from './useAlien';
 export { type UseBackButtonReturn, useBackButton } from './useBackButton';
+export { useCallable } from './useCallable';
 export {
   type ClipboardErrorCode,
   type UseClipboardOptions,
@@ -9,17 +10,9 @@ export {
 export { type UseCloseReturn, useClose } from './useClose';
 export { useEvent } from './useEvent';
 export { type UseHapticReturn, useHaptic } from './useHaptic';
-export {
-  type MethodSupportResult,
-  useIsMethodSupported,
-} from './useIsMethodSupported';
 export { useLaunchParams } from './useLaunchParams';
 export { useLinkInterceptor } from './useLinkInterceptor';
-export {
-  type UseMethodExecuteResult,
-  type UseMethodOptions,
-  useMethod,
-} from './useMethod';
+export { type UseMethodExecuteResult, useMethod } from './useMethod';
 export {
   type NotificationPermissionStatus,
   type UseNotificationPermissionOptions,

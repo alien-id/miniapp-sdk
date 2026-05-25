@@ -1,7 +1,16 @@
-import { request, send } from '@alien-id/miniapps-bridge';
-import { isMethodSupported } from '@alien-id/miniapps-contract';
+import {
+  BridgeBusyError,
+  BridgeError,
+  request,
+  send,
+} from '@alien-id/miniapps-bridge';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { useAlien } from './useAlien';
+import {
+  callabilityError,
+  useCallable,
+  withSupportedAlias,
+} from './useCallable';
+import { useMounted } from './useMounted';
 
 /** Clipboard error codes from the host app. */
 export type ClipboardErrorCode = 'permission_denied' | 'unavailable';
@@ -14,110 +23,136 @@ export interface UseClipboardOptions {
   timeout?: number;
 }
 
+/**
+ * Outcome of a clipboard read.
+ *
+ * - `ok: true` — host returned text (possibly empty string).
+ * - `ok: false, errorCode` — host-domain refusal (`permission_denied` /
+ *   `unavailable`).
+ * - `ok: false, error` — pre-call refusal or transport failure: typed
+ *   {@link BridgeError} subclass (`BridgeUnavailableError`,
+ *   `BridgeMethodUnsupportedError`, `BridgeTimeoutError`).
+ */
+export type ClipboardReadResult =
+  | { ok: true; text: string }
+  | { ok: false; errorCode: ClipboardErrorCode; error?: undefined }
+  | { ok: false; errorCode?: undefined; error: BridgeError };
+
 export interface UseClipboardReturn {
   /** Write text to clipboard. Fire-and-forget. */
   writeText: (text: string) => void;
-  /** Read text from clipboard. Returns text or null on failure. */
-  readText: () => Promise<string | null>;
+  /**
+   * Read text from clipboard. Resolves with a discriminated result so
+   * callers can distinguish bridge/timeout failures from host-domain
+   * clipboard refusals.
+   */
+  readText: () => Promise<ClipboardReadResult>;
   /** Whether a read operation is in progress. */
   isReading: boolean;
-  /** Error code from the last failed read operation. */
+  /** Error code from the last failed read operation (host-domain only). */
   errorCode: ClipboardErrorCode | null;
-  /** Whether clipboard methods are supported by the host app. */
-  supported: boolean;
+  /**
+   * Bridge error from the last failed read operation (pre-call refusal,
+   * timeout, transport). Null when the last read succeeded or failed for
+   * a host-domain reason.
+   */
+  error: BridgeError | null;
+  /** Whether both clipboard methods are Callable. */
+  callable: boolean;
 }
 
 /**
  * Hook for clipboard operations.
- *
- * @example
- * ```tsx
- * function ClipboardDemo() {
- *   const { writeText, readText, isReading, errorCode, supported } = useClipboard();
- *
- *   if (!supported) return null;
- *
- *   return (
- *     <>
- *       <button onClick={() => writeText('Hello!')}>Copy</button>
- *       <button
- *         onClick={async () => {
- *           const text = await readText();
- *           if (text !== null) console.log('Pasted:', text);
- *         }}
- *         disabled={isReading}
- *       >
- *         Paste
- *       </button>
- *       {errorCode && <span>Error: {errorCode}</span>}
- *     </>
- *   );
- * }
- * ```
  */
 export function useClipboard(
   options: UseClipboardOptions = {},
 ): UseClipboardReturn {
   const { timeout = 5000 } = options;
-  const { contractVersion, isBridgeAvailable } = useAlien();
+  const writeCallability = useCallable('clipboard:write');
+  const readCallability = useCallable('clipboard:read');
+  const callable = writeCallability.callable && readCallability.callable;
 
   const [isReading, setIsReading] = useState(false);
   const [errorCode, setErrorCode] = useState<ClipboardErrorCode | null>(null);
+  const [error, setError] = useState<BridgeError | null>(null);
   const readingRef = useRef(false);
+  const mounted = useMounted();
 
-  const supported = contractVersion
-    ? isMethodSupported('clipboard:write', contractVersion) &&
-      isMethodSupported('clipboard:read', contractVersion)
-    : true;
-
-  const writeText = useCallback(
-    (text: string) => {
-      send.ifAvailable(
-        'clipboard:write',
-        { text },
-        { version: contractVersion },
+  const writeText = useCallback((text: string) => {
+    // No local state to flicker; safe-track absorbs errors. Surface a dev
+    // warning so consumers notice unavailable hosts during development.
+    const result = send.ifAvailable('clipboard:write', { text });
+    if (!result.ok && process.env.NODE_ENV !== 'production') {
+      console.warn(
+        '[@alien-id/miniapps-react] clipboard:write not callable:',
+        result.error,
       );
-    },
-    [contractVersion],
-  );
+    }
+  }, []);
 
-  const readText = useCallback(async (): Promise<string | null> => {
-    if (readingRef.current) return null;
-    if (!isBridgeAvailable) return null;
-    if (
-      contractVersion &&
-      !isMethodSupported('clipboard:read', contractVersion)
-    )
-      return null;
+  const readText = useCallback(async (): Promise<ClipboardReadResult> => {
+    if (readingRef.current) {
+      return { ok: false, error: new BridgeBusyError('clipboard:read') };
+    }
+
+    // Short-circuit pre-call refusal so `isReading` doesn't flicker and
+    // callers see the typed bridge error directly.
+    const refusal = callabilityError('clipboard:read', readCallability);
+    if (refusal) {
+      setErrorCode(null);
+      setError(refusal);
+      return { ok: false, error: refusal };
+    }
 
     readingRef.current = true;
     setIsReading(true);
     setErrorCode(null);
+    setError(null);
 
     try {
-      const response = await request(
+      const result = await request.ifAvailable(
         'clipboard:read',
         {},
         'clipboard:response',
         { timeout },
       );
-
-      if (response.errorCode) {
-        setErrorCode(response.errorCode);
-        return null;
+      if (!result.ok) {
+        const { error: bridgeError } = result;
+        if (mounted.current) setError(bridgeError);
+        return { ok: false, error: bridgeError };
       }
-
-      return response.text;
-    } catch {
-      return null;
+      if (result.data.errorCode) {
+        if (mounted.current) setErrorCode(result.data.errorCode);
+        return { ok: false, errorCode: result.data.errorCode };
+      }
+      // Protocol violation: host returned ok (no errorCode) but a null
+      // text. Surface as a typed BridgeError instead of silently coercing
+      // to '' — empty string is a legitimate clipboard payload that the
+      // caller would otherwise be unable to distinguish from a bug.
+      if (result.data.text == null) {
+        const protoError = new BridgeError(
+          'Host returned clipboard:response without a text or errorCode.',
+        );
+        if (mounted.current) setError(protoError);
+        return { ok: false, error: protoError };
+      }
+      return { ok: true, text: result.data.text };
     } finally {
       readingRef.current = false;
-      setIsReading(false);
+      if (mounted.current) setIsReading(false);
     }
-  }, [isBridgeAvailable, contractVersion, timeout]);
+  }, [readCallability, timeout, mounted]);
 
   return useMemo(
-    () => ({ writeText, readText, isReading, errorCode, supported }),
-    [writeText, readText, isReading, errorCode, supported],
+    () =>
+      withSupportedAlias({
+        writeText,
+        readText,
+        isReading,
+        errorCode,
+        error,
+        callable,
+      }),
+    [writeText, readText, isReading, errorCode, error, callable],
   );
 }

@@ -35,7 +35,7 @@ Provider options:
 
 ### useAlien
 
-Access the Alien context (auth token, contract version, bridge availability):
+Access the Alien context (auth token, Contract Version, Bridge availability):
 
 ```tsx
 import { useAlien } from '@alien-id/miniapps-react';
@@ -69,23 +69,23 @@ function MyComponent() {
 }
 ```
 
-### useIsMethodSupported
+### useCallable
 
-Check if a method is supported by the host:
+Ask whether a Method is **Callable** right now — bridge present AND host's Contract Version supports the Method. Returns a discriminated union so you can render different UI for "open in Alien App" vs "update Alien App":
 
 ```tsx
-import { useIsMethodSupported } from '@alien-id/miniapps-react';
+import { useCallable } from '@alien-id/miniapps-react';
 
 function MyComponent() {
-  const { supported, minVersion } = useIsMethodSupported('payment:request');
+  const result = useCallable('payment:request');
 
-  if (!supported) {
-    return <div>Please update to v{minVersion}</div>;
-  }
-
-  return <div>Feature available!</div>;
+  if (result.callable) return <PayButton />;
+  if (result.reason === 'no-bridge') return <OpenInAlienApp />;
+  return <UpdateAlienApp needs={result.needs} has={result.has} />;
 }
 ```
+
+For the common "render or hide" case, every call hook (`useMethod`, `usePayment`, `useClipboard`, etc.) also exposes a `callable: boolean` shortcut field so you don't need to learn the union.
 
 ### useEvent
 
@@ -104,15 +104,23 @@ function MyComponent() {
 }
 ```
 
+In **Dev Mode** (no Bridge present), `useEvent` does not throw, does not
+warn per consumer, and quietly registers the listener against the bridge's
+in-memory emitter — the listener simply never fires because no real
+events arrive. The `AlienProvider` already prints a single
+"Bridge is not available" notice at boot, so the dev signal is centralised
+and your component tree doesn't get spammed per `useEvent` call.
+
 ### useBackButton
 
 Control the host app's native back button:
 
 ```tsx
+import { useEffect } from 'react';
 import { useBackButton } from '@alien-id/miniapps-react';
 
 function DetailScreen() {
-  const { show, hide, isVisible, supported } = useBackButton(() => {
+  const { show, hide, isVisible, callable } = useBackButton(() => {
     navigate(-1);
   });
 
@@ -135,9 +143,9 @@ Request the host app to close the miniapp:
 import { useClose } from '@alien-id/miniapps-react';
 
 function CloseButton() {
-  const { close, supported } = useClose();
+  const { close, callable } = useClose();
 
-  if (!supported) return null;
+  if (!callable) return null;
 
   return <button onClick={close}>Close</button>;
 }
@@ -151,13 +159,13 @@ Make bridge requests with state management and version checking:
 import { useMethod } from '@alien-id/miniapps-react';
 
 function PayButton() {
-  const { execute, data, error, isLoading, supported, reset } = useMethod(
+  const { execute, data, error, isLoading, callable, reset } = useMethod(
     'payment:request',
     'payment:response',
   );
 
-  if (!supported) {
-    return <div>Payment not supported</div>;
+  if (!callable) {
+    return <div>Payment not available</div>;
   }
 
   const handlePay = async () => {
@@ -172,7 +180,7 @@ function PayButton() {
       console.error(error);
       return;
     }
-    console.log('Payment status:', data.status, data.txHash);
+    if (data) console.log('Payment status:', data.status, data.txHash);
   };
 
   if (isLoading) return <button disabled>Processing...</button>;
@@ -183,11 +191,7 @@ function PayButton() {
 }
 ```
 
-Disable version checking if needed:
-
-```tsx
-const { execute } = useMethod('payment:request', 'payment:response', { checkVersion: false });
-```
+`execute()` never enters the loading state on a pre-call refusal: if the method isn't Callable it writes the typed error (`BridgeUnavailableError` or `BridgeMethodUnsupportedError`) directly to `error` state — no `isLoading: true` flicker.
 
 ### usePayment
 
@@ -207,7 +211,7 @@ function BuyButton({ orderId }: { orderId: string }) {
     errorCode,
     error,
     reset,
-    supported,
+    callable,
   } = usePayment({
     timeout: 120000, // 2 minutes (default)
     onPaid: (txHash) => console.log('Paid!', txHash),
@@ -243,9 +247,9 @@ Read and write text via the host app clipboard.
 import { useClipboard } from '@alien-id/miniapps-react';
 
 function CopyButton() {
-  const { writeText, readText, isReading, supported } = useClipboard();
+  const { writeText, readText, isReading, callable } = useClipboard();
 
-  if (!supported) return null;
+  if (!callable) return null;
 
   return (
     <button
@@ -269,14 +273,10 @@ Trigger native haptic feedback.
 import { useHaptic } from '@alien-id/miniapps-react';
 
 function LikeButton() {
-  const { impactOccurred, supported } = useHaptic();
+  const { impactOccurred, callable } = useHaptic();
 
   return (
-    <button
-      onClick={() => supported && impactOccurred('medium')}
-    >
-      Like
-    </button>
+    <button onClick={() => callable && impactOccurred('medium')}>Like</button>
   );
 }
 ```
@@ -295,6 +295,12 @@ function App() {
 }
 ```
 
+Unlike the call hooks, `useLinkInterceptor` does **not** return a
+`callable` field. Link interception is a declarative side effect that
+the consumer enables once at the app boundary — not a per-call
+operation — so there is nothing for `callable` to gate. The hook is a
+safe no-op in Dev Mode and when the Bridge is absent.
+
 ## Re-exports
 
 The package re-exports utilities from `@alien-id/miniapps-contract` and `@alien-id/miniapps-bridge`:
@@ -302,16 +308,14 @@ The package re-exports utilities from `@alien-id/miniapps-contract` and `@alien-
 ```tsx
 import {
   // From @alien-id/miniapps-bridge
+  callability,
   createMockBridge,
-  isAvailable,
-  requestIfAvailable,
+  request,
   send,
-  sendIfAvailable,
+  type Callability,
   type RequestOptions,
 
   // From @alien-id/miniapps-contract
-  isMethodSupported,
-  getMethodMinVersion,
   type MethodName,
   type MethodPayload,
   type EventName,
@@ -328,17 +332,20 @@ Bridge errors are caught and set in error state rather than throwing, allowing d
 
 ```tsx
 import {
-  // React SDK errors
-  ReactSDKError,           // Base class for React SDK errors
-  MethodNotSupportedError, // Method not supported by contract version
-
   // Bridge errors (re-exported from @alien-id/miniapps-bridge)
-  BridgeError,                  // Base class for bridge errors
-  BridgeUnavailableError,       // Bridge not available
+  BridgeError,                  // Base class for all bridge errors
+  BridgeUnavailableError,       // Bridge not present (no host, SSR, browser tab)
+  BridgeMethodUnsupportedError, // Host's Contract Version is below method's min
   BridgeTimeoutError,           // Request timed out
-  BridgeWindowUnavailableError, // Window undefined (SSR)
+  BridgeBusyError,              // Re-entrant hook call while one is in flight
 } from '@alien-id/miniapps-react';
 ```
+
+`BridgeBusyError` is returned by `useMethod`, `useClipboard.readText`, and
+`useNotificationPermission.requestPermission` when you re-invoke them
+before the previous call resolves. The first call keeps running; the
+second observes a typed error so callers can branch on
+`instanceof BridgeBusyError` instead of guessing from a falsy result.
 
 ## Development Mode
 
@@ -347,3 +354,13 @@ When running outside Alien App, the SDK will:
 - Warn that the bridge is not available (does not throw)
 - Handle errors gracefully by setting error state
 - Allow your app to render and function (though bridge communication won't work)
+
+### Strict Track caveat
+
+The package also re-exports the bridge's **Strict Track** functions
+(`send` and `request`) for imperative callers. Unlike the React hooks,
+these **do throw** in Dev Mode — `send('foo', ...)` raises
+`BridgeUnavailableError` immediately when no bridge is injected, and
+`request(...)` does the same. If you want the Dev Mode degradation
+behaviour the hooks provide, use `send.ifAvailable` / `request.ifAvailable`
+(the **Safe Track**), which return a `SafeResult` instead of throwing.

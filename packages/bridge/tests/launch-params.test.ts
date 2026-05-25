@@ -164,6 +164,39 @@ describe('parseLaunchParams', () => {
     expect(params.contractVersion).toBeUndefined();
   });
 
+  test('preserves pre-release contract version', () => {
+    const raw = JSON.stringify({
+      authToken: 'test-token',
+      contractVersion: '1.5.3-rc.1',
+    });
+
+    const params = parseLaunchParams(raw);
+
+    expect(params.contractVersion).toBe('1.5.3-rc.1');
+  });
+
+  test('preserves contract version with build metadata', () => {
+    const raw = JSON.stringify({
+      authToken: 'test-token',
+      contractVersion: '1.5.3+sha.abc',
+    });
+
+    const params = parseLaunchParams(raw);
+
+    expect(params.contractVersion).toBe('1.5.3+sha.abc');
+  });
+
+  test('preserves pre-release plus build metadata combined', () => {
+    const raw = JSON.stringify({
+      authToken: 'test-token',
+      contractVersion: '1.5.3-rc.1+sha.abc',
+    });
+
+    const params = parseLaunchParams(raw);
+
+    expect(params.contractVersion).toBe('1.5.3-rc.1+sha.abc');
+  });
+
   test('validates platform values (invalid becomes undefined)', () => {
     const raw = JSON.stringify({
       authToken: 'test-token',

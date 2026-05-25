@@ -1,16 +1,25 @@
-// Re-export request options type
+// Re-export Callability + Safe Track + types + errors from the bridge.
+// React never throws its own SDK errors — it surfaces the bridge's typed
+// errors directly so a single `instanceof BridgeUnavailableError` check
+// works across hook state, direct calls, and any future framework binding.
 export type {
   AvailabilityOptions,
+  Callability,
+  CallabilityOptions,
   LinkInterceptorOptions,
   RequestOptions,
   SafeRequestOptions,
   SafeResult,
 } from '@alien-id/miniapps-bridge';
 export {
-  isAvailable,
-  requestIfAvailable,
+  BridgeBusyError,
+  BridgeError,
+  BridgeMethodUnsupportedError,
+  BridgeTimeoutError,
+  BridgeUnavailableError,
+  callability,
+  request,
   send,
-  sendIfAvailable,
 } from '@alien-id/miniapps-bridge';
 // Re-export mock bridge from dedicated entrypoint
 export type {
@@ -29,27 +38,11 @@ export type {
   MethodPayload,
   Version,
 } from '@alien-id/miniapps-contract';
-// Re-export version utilities from contract
-export {
-  getMethodMinVersion,
-  isMethodSupported,
-} from '@alien-id/miniapps-contract';
 // Provider
 export { AlienProvider, type AlienProviderProps } from './context';
-// Errors
-export {
-  BridgeError,
-  BridgeMethodUnsupportedError,
-  BridgeTimeoutError,
-  BridgeUnavailableError,
-  BridgeWindowUnavailableError,
-  MethodNotSupportedError,
-  ReactSDKError,
-} from './errors';
 // Hooks
 export {
   type ClipboardErrorCode,
-  type MethodSupportResult,
   type NotificationPermissionStatus,
   type PaymentCallbacks,
   type PaymentErrorCode,
@@ -63,18 +56,17 @@ export {
   type UseCloseReturn,
   type UseHapticReturn,
   type UseMethodExecuteResult,
-  type UseMethodOptions,
   type UseNotificationPermissionOptions,
   type UseNotificationPermissionReturn,
   type UsePaymentOptions,
   type UsePaymentReturn,
   useAlien,
   useBackButton,
+  useCallable,
   useClipboard,
   useClose,
   useEvent,
   useHaptic,
-  useIsMethodSupported,
   useLaunchParams,
   useLinkInterceptor,
   useMethod,

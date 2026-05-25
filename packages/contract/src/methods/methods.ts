@@ -7,4 +7,9 @@ export type {
   MethodPayload,
   MethodVersionedPayload,
 } from './types';
-export { getReleaseVersion, releases } from './versions';
+export {
+  getReleaseVersion,
+  LATEST_VERSION,
+  METHOD_NAMES,
+  releases,
+} from './versions';

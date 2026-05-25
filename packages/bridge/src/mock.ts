@@ -4,6 +4,7 @@ import type {
   LaunchParams,
   MethodName,
 } from '@alien-id/miniapps-contract';
+import { LATEST_VERSION } from '@alien-id/miniapps-contract';
 import { emit } from './events';
 import { clearMockLaunchParams, mockLaunchParamsForDev } from './launch-params';
 import type { Message } from './transport';
@@ -31,13 +32,17 @@ export interface MockBridgeInstance {
   resetCalls: () => void;
 }
 
-const METHOD_RESPONSE_MAP: Record<
-  string,
-  {
-    event: EventName;
-    defaultResponse: (reqId: string) => Record<string, unknown>;
-  }
-> = {
+interface MockResponse {
+  event: EventName;
+  defaultResponse: (reqId: string) => Record<string, unknown>;
+}
+
+// Mock-only mapping from request methods to their response event and a
+// default response payload. The contract no longer enforces this binding
+// — every test or app that needs a richer simulation passes a custom
+// handler via `MockBridgeOptions.handlers`. Methods absent from this
+// table are treated as fire-and-forget by the mock.
+const MOCK_RESPONSES: Partial<Record<MethodName, MockResponse>> = {
   'payment:request': {
     event: 'payment:response',
     defaultResponse: (reqId) => ({
@@ -91,21 +96,9 @@ const METHOD_RESPONSE_MAP: Record<
   },
 };
 
-const FIRE_AND_FORGET_METHODS = new Set<string>([
-  'app:ready',
-  'app:close',
-  'host.back.button:toggle',
-  'clipboard:write',
-  'link:open',
-  'haptic:impact',
-  'haptic:notification',
-  'haptic:selection',
-  'wallet.solana:disconnect',
-]);
-
 const DEFAULT_LAUNCH_PARAMS: Partial<LaunchParams> = {
   authToken: 'mock-auth-token',
-  contractVersion: '1.5.0',
+  contractVersion: LATEST_VERSION,
   platform: 'ios',
   displayMode: 'standard',
 };
@@ -132,7 +125,6 @@ export function createMockBridge(
   const launchParams = { ...DEFAULT_LAUNCH_PARAMS, ...options.launchParams };
   mockLaunchParamsForDev(launchParams);
 
-  // Inject mock bridge
   window.__miniAppsBridge__ = {
     postMessage(data: string) {
       let message: Message;
@@ -142,21 +134,19 @@ export function createMockBridge(
         return;
       }
 
-      // Only handle method calls from the miniapp
       if (message.type !== 'method') return;
 
       const { name, payload } = message;
       const payloadObj = (payload ?? {}) as Record<string, unknown>;
 
-      // Record the call
       calls.push({
         method: name,
         payload: payloadObj,
         timestamp: Date.now(),
       });
 
-      // Check if fire-and-forget
-      if (FIRE_AND_FORGET_METHODS.has(name)) {
+      const mapping = MOCK_RESPONSES[name];
+      if (!mapping) {
         console.log(
           `[AlienMock] --> ${name} ${JSON.stringify(payloadObj)}  (fire-and-forget)`,
         );
@@ -165,33 +155,23 @@ export function createMockBridge(
 
       console.log(`[AlienMock] --> ${name} ${JSON.stringify(payloadObj)}`);
 
-      // Check for response mapping
-      const mapping = METHOD_RESPONSE_MAP[name];
-      if (!mapping) return;
-
-      // Check custom handler
-      const customHandler = handlers[name as MethodName];
-      if (customHandler === false) {
-        // Suppress response
-        return;
-      }
+      const customHandler = handlers[name];
+      if (customHandler === false) return;
 
       const reqId = (payloadObj.reqId as string) ?? '';
-
-      let responsePayload: Record<string, unknown>;
-      if (typeof customHandler === 'function') {
-        responsePayload = customHandler(payloadObj);
-      } else {
-        responsePayload = mapping.defaultResponse(reqId);
-      }
+      const responsePayload =
+        typeof customHandler === 'function'
+          ? customHandler(payloadObj)
+          : mapping.defaultResponse(reqId);
+      const { event: responseEvent } = mapping;
 
       const dispatchResponse = () => {
         console.log(
-          `[AlienMock] <-- ${mapping.event} ${JSON.stringify(responsePayload)}`,
+          `[AlienMock] <-- ${responseEvent} ${JSON.stringify(responsePayload)}`,
         );
         void emit(
-          mapping.event,
-          responsePayload as EventPayload<typeof mapping.event>,
+          responseEvent,
+          responsePayload as EventPayload<typeof responseEvent>,
         );
       };
 

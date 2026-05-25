@@ -1,79 +1,52 @@
-import { beforeEach, describe, expect, mock, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
+import {
+  BridgeMethodUnsupportedError,
+  BridgeTimeoutError,
+  BridgeUnavailableError,
+} from '@alien-id/miniapps-bridge';
+import { WALLET_ERROR } from '@alien-id/miniapps-contract';
+import { AlienSolanaWallet } from '../src/wallet';
+import { BridgeDriver } from './test-utils';
 
-const requestMock = mock(async (method: string) => {
-  if (method === 'wallet.solana:connect') {
-    return {
-      publicKey: '11111111111111111111111111111111',
-      reqId: 'req-connect',
-    };
-  }
+const PUBLIC_KEY = '11111111111111111111111111111111';
 
-  if (method === 'wallet.solana:sign.send') {
-    return { signature: '11111111111111111111111111111111', reqId: 'req-send' };
-  }
+const driver = new BridgeDriver();
 
-  return { reqId: 'req-default' };
+/**
+ * Connect once and return the resulting account. Every wallet test that
+ * exercises sign* goes through connect first, so this collapses six lines
+ * of boilerplate per test into one.
+ */
+async function connect(): Promise<{
+  wallet: AlienSolanaWallet;
+  account: NonNullable<
+    Awaited<
+      ReturnType<AlienSolanaWallet['features']['standard:connect']['connect']>
+    >['accounts'][number]
+  >;
+}> {
+  driver.reply('wallet.solana:connect', 'wallet.solana:connect.response', {
+    publicKey: PUBLIC_KEY,
+  });
+  const wallet = new AlienSolanaWallet();
+  const { accounts } = await wallet.features['standard:connect'].connect();
+  const account = accounts[0];
+  if (!account) throw new Error('Expected connected account');
+  return { wallet, account };
+}
+
+beforeEach(() => {
+  driver.install({ contractVersion: '1.5.0' });
 });
 
-const sendIfAvailableMock = mock(() => ({ ok: true, data: undefined }));
-const sendMock = Object.assign(
-  mock(() => {}),
-  {
-    ifAvailable: sendIfAvailableMock,
-  },
-);
-
-mock.module('@alien-id/miniapps-bridge', () => ({
-  request: requestMock,
-  send: sendMock,
-}));
-
-mock.module('@alien-id/miniapps-contract', () => ({
-  WALLET_ERROR: {
-    USER_REJECTED: 5000,
-    INVALID_PARAMS: -32602,
-    INTERNAL_ERROR: -32603,
-    REQUEST_EXPIRED: 8000,
-  },
-}));
+afterEach(() => {
+  driver.uninstall();
+});
 
 describe('AlienSolanaWallet', () => {
-  beforeEach(() => {
-    requestMock.mockReset();
-    sendMock.mockClear();
-    sendIfAvailableMock.mockClear();
-
-    requestMock.mockImplementation(async (method: string) => {
-      if (method === 'wallet.solana:connect') {
-        return {
-          publicKey: '11111111111111111111111111111111',
-          reqId: 'req-connect',
-        };
-      }
-
-      if (method === 'wallet.solana:sign.send') {
-        return {
-          signature: '11111111111111111111111111111111',
-          reqId: 'req-send',
-        };
-      }
-
-      return { reqId: 'req-default' };
-    });
-  });
-
   test('normalizes generic request errors from signAndSendTransaction', async () => {
-    const { WALLET_ERROR } = await import('@alien-id/miniapps-contract');
-    const { AlienSolanaWallet } = await import('../src/wallet');
-
-    const wallet = new AlienSolanaWallet();
-    const connectResult = await wallet.features['standard:connect'].connect();
-    const account = connectResult.accounts[0];
-    if (!account) {
-      throw new Error('Expected connected account');
-    }
-
-    requestMock.mockRejectedValueOnce(new Error('boom'));
+    const { wallet, account } = await connect();
+    driver.fail('wallet.solana:sign.send', new Error('boom'));
 
     await expect(
       wallet.features['solana:signAndSendTransaction'].signAndSendTransaction({
@@ -87,19 +60,314 @@ describe('AlienSolanaWallet', () => {
     });
   });
 
-  test('disconnect uses send.ifAvailable and clears accounts', async () => {
-    const { AlienSolanaWallet } = await import('../src/wallet');
+  test('maps BridgeMethodUnsupportedError to actionable wallet error', async () => {
+    const { wallet, account } = await connect();
+    driver.fail(
+      'wallet.solana:sign.send',
+      new BridgeMethodUnsupportedError(
+        'wallet.solana:sign.send',
+        '0.2.4',
+        '1.0.0',
+      ),
+    );
 
-    const wallet = new AlienSolanaWallet();
-    await wallet.features['standard:connect'].connect();
+    await expect(
+      wallet.features['solana:signAndSendTransaction'].signAndSendTransaction({
+        account,
+        chain: 'solana:mainnet',
+        transaction: new Uint8Array([1, 2, 3]),
+      }),
+    ).rejects.toMatchObject({
+      code: WALLET_ERROR.INTERNAL_ERROR,
+      message:
+        'Alien App needs to be updated to v1.0.0 to use this wallet feature (host is v0.2.4).',
+    });
+  });
+
+  test('maps BridgeUnavailableError to actionable wallet error', async () => {
+    const { wallet, account } = await connect();
+    driver.fail('wallet.solana:sign.transaction', new BridgeUnavailableError());
+
+    await expect(
+      wallet.features['solana:signTransaction'].signTransaction({
+        account,
+        chain: 'solana:mainnet',
+        transaction: new Uint8Array([1, 2, 3]),
+      }),
+    ).rejects.toMatchObject({
+      code: WALLET_ERROR.INTERNAL_ERROR,
+      message:
+        'Alien App bridge is not available. Open this miniapp inside Alien App.',
+    });
+  });
+
+  test('maps BridgeTimeoutError to REQUEST_EXPIRED wallet error', async () => {
+    const { wallet, account } = await connect();
+    driver.fail(
+      'wallet.solana:sign.message',
+      new BridgeTimeoutError('wallet.solana:sign.message', 30000),
+    );
+
+    await expect(
+      wallet.features['solana:signMessage'].signMessage({
+        account,
+        message: new Uint8Array([1, 2, 3]),
+      }),
+    ).rejects.toMatchObject({
+      code: WALLET_ERROR.REQUEST_EXPIRED,
+      message:
+        'Alien App did not respond to wallet.solana:sign.message within 30000ms.',
+    });
+  });
+
+  test('disconnect notifies host via the bridge and clears accounts', async () => {
+    const { wallet } = await connect();
+    driver.accept('wallet.solana:disconnect');
 
     await wallet.features['standard:disconnect'].disconnect();
 
-    expect(sendIfAvailableMock).toHaveBeenCalledTimes(1);
-    expect(sendIfAvailableMock).toHaveBeenCalledWith(
-      'wallet.solana:disconnect',
-      {},
-    );
+    expect(driver.calls).toContainEqual({
+      method: 'wallet.solana:disconnect',
+      payload: {},
+    });
     expect(wallet.accounts).toHaveLength(0);
+  });
+
+  test('connect populates accounts and emits a change event', async () => {
+    driver.reply('wallet.solana:connect', 'wallet.solana:connect.response', {
+      publicKey: PUBLIC_KEY,
+    });
+    const wallet = new AlienSolanaWallet();
+
+    const changeListener = mock(() => {});
+    wallet.features['standard:events'].on('change', changeListener);
+
+    const result = await wallet.features['standard:connect'].connect();
+
+    expect(result.accounts).toHaveLength(1);
+    expect(result.accounts[0]?.address).toBe(PUBLIC_KEY);
+    expect(changeListener).toHaveBeenCalledTimes(1);
+    expect(changeListener).toHaveBeenCalledWith({ accounts: wallet.accounts });
+  });
+
+  test('disconnect emits a change event with empty accounts', async () => {
+    const { wallet } = await connect();
+    driver.accept('wallet.solana:disconnect');
+
+    const changeListener = mock(() => {});
+    wallet.features['standard:events'].on('change', changeListener);
+
+    await wallet.features['standard:disconnect'].disconnect();
+
+    expect(changeListener).toHaveBeenCalledTimes(1);
+    expect(changeListener).toHaveBeenCalledWith({ accounts: [] });
+  });
+
+  test('signTransaction returns base64-decoded bytes from the host', async () => {
+    const { wallet, account } = await connect();
+    // "AQID" is base64 for [1, 2, 3].
+    driver.reply(
+      'wallet.solana:sign.transaction',
+      'wallet.solana:sign.transaction.response',
+      { signedTransaction: 'AQID' },
+    );
+
+    const [output] = await wallet.features[
+      'solana:signTransaction'
+    ].signTransaction({
+      account,
+      chain: 'solana:mainnet',
+      transaction: new Uint8Array([9, 9, 9]),
+    });
+
+    expect(output?.signedTransaction).toEqual(new Uint8Array([1, 2, 3]));
+  });
+
+  test('signMessage round-trip returns base58-decoded signature', async () => {
+    const { wallet, account } = await connect();
+    // Base58 "11" decodes to [0, 0]; we just need any deterministic value.
+    driver.reply(
+      'wallet.solana:sign.message',
+      'wallet.solana:sign.message.response',
+      { signature: '11', publicKey: account.address },
+    );
+
+    const message = new Uint8Array([1, 2, 3]);
+    const [output] = await wallet.features['solana:signMessage'].signMessage({
+      account,
+      message,
+    });
+
+    expect(output?.signedMessage).toBe(message);
+    expect(output?.signatureType).toBe('ed25519');
+    expect(output?.signature).toBeInstanceOf(Uint8Array);
+  });
+
+  test('signMessage rejects when host returns a different publicKey than the requested account', async () => {
+    const { wallet, account } = await connect();
+    // Host signs with a key the caller did not request — must be rejected.
+    driver.reply(
+      'wallet.solana:sign.message',
+      'wallet.solana:sign.message.response',
+      { signature: '11', publicKey: '22222222222222222222222222222222' },
+    );
+
+    await expect(
+      wallet.features['solana:signMessage'].signMessage({
+        account,
+        message: new Uint8Array([1, 2, 3]),
+      }),
+    ).rejects.toMatchObject({
+      code: WALLET_ERROR.INTERNAL_ERROR,
+    });
+  });
+
+  test('features is memoized (reference-stable across accesses)', () => {
+    const wallet = new AlienSolanaWallet();
+    // Spec doesn't require stability, but adapters that memoize derived
+    // state on the features reference benefit from it. Cheap to keep.
+    expect(wallet.features).toBe(wallet.features);
+  });
+
+  test('signTransaction rejects unknown CAIP chain identifiers when chain is provided', async () => {
+    const { wallet, account } = await connect();
+
+    await expect(
+      wallet.features['solana:signTransaction'].signTransaction({
+        account,
+        // Cast through unknown because TS would otherwise reject the chain
+        // value; the wallet must still defend against runtime callers that
+        // do not honour the type. `chain` is OPTIONAL in the spec but, when
+        // present, must be a Solana chain.
+        chain: 'evm:1' as unknown as 'solana:mainnet',
+        transaction: new Uint8Array([1, 2, 3]),
+      }),
+    ).rejects.toMatchObject({
+      code: WALLET_ERROR.INVALID_PARAMS,
+    });
+
+    expect(
+      driver.calls.some((c) => c.method === 'wallet.solana:sign.transaction'),
+    ).toBe(false);
+  });
+
+  test('signTransaction succeeds when chain is omitted (optional per spec)', async () => {
+    const { wallet, account } = await connect();
+    driver.reply(
+      'wallet.solana:sign.transaction',
+      'wallet.solana:sign.transaction.response',
+      { signedTransaction: 'AQID' },
+    );
+
+    const [output] = await wallet.features[
+      'solana:signTransaction'
+    ].signTransaction({
+      account,
+      transaction: new Uint8Array([9, 9, 9]),
+    });
+
+    expect(output?.signedTransaction).toEqual(new Uint8Array([1, 2, 3]));
+  });
+
+  test('signAndSendTransaction rejects unknown CAIP chain identifiers', async () => {
+    const { wallet, account } = await connect();
+
+    await expect(
+      wallet.features['solana:signAndSendTransaction'].signAndSendTransaction({
+        account,
+        // Cast through unknown because TS would otherwise reject the chain
+        // value; the wallet must still defend against runtime callers that
+        // do not honour the type.
+        chain: 'evm:1' as unknown as 'solana:mainnet',
+        transaction: new Uint8Array([1, 2, 3]),
+      }),
+    ).rejects.toMatchObject({
+      code: WALLET_ERROR.INVALID_PARAMS,
+    });
+
+    expect(
+      driver.calls.some((c) => c.method === 'wallet.solana:sign.send'),
+    ).toBe(false);
+  });
+
+  test('signAndSendTransaction returns base58-decoded signature on success', async () => {
+    const { wallet, account } = await connect();
+    driver.reply(
+      'wallet.solana:sign.send',
+      'wallet.solana:sign.send.response',
+      { signature: '11' },
+    );
+
+    const [output] = await wallet.features[
+      'solana:signAndSendTransaction'
+    ].signAndSendTransaction({
+      account,
+      chain: 'solana:devnet',
+      transaction: new Uint8Array([1, 2, 3]),
+    });
+
+    expect(output?.signature).toBeInstanceOf(Uint8Array);
+  });
+
+  test('signTransaction wraps malformed host base64 as AlienWalletError', async () => {
+    const { wallet, account } = await connect();
+    // "!!!" is not valid base64. Without safeDecode, atob throws raw
+    // DOMException which leaks past .catch(normalizeWalletError).
+    driver.reply(
+      'wallet.solana:sign.transaction',
+      'wallet.solana:sign.transaction.response',
+      { signedTransaction: '!!!' },
+    );
+
+    await expect(
+      wallet.features['solana:signTransaction'].signTransaction({
+        account,
+        chain: 'solana:mainnet',
+        transaction: new Uint8Array([1]),
+      }),
+    ).rejects.toMatchObject({
+      code: WALLET_ERROR.INTERNAL_ERROR,
+      message: expect.stringContaining('signedTransaction'),
+    });
+  });
+
+  test('signAndSendTransaction wraps malformed host base58 as AlienWalletError', async () => {
+    const { wallet, account } = await connect();
+    // "0" is not in the base58 alphabet; bs58.decode throws.
+    driver.reply(
+      'wallet.solana:sign.send',
+      'wallet.solana:sign.send.response',
+      { signature: '0not-base58!' },
+    );
+
+    await expect(
+      wallet.features['solana:signAndSendTransaction'].signAndSendTransaction({
+        account,
+        chain: 'solana:devnet',
+        transaction: new Uint8Array([1]),
+      }),
+    ).rejects.toMatchObject({
+      code: WALLET_ERROR.INTERNAL_ERROR,
+      message: expect.stringContaining('signature'),
+    });
+  });
+
+  test('signMessage wraps malformed host base58 as AlienWalletError', async () => {
+    const { wallet, account } = await connect();
+    driver.reply(
+      'wallet.solana:sign.message',
+      'wallet.solana:sign.message.response',
+      { signature: '0not-base58!', publicKey: account.address },
+    );
+
+    await expect(
+      wallet.features['solana:signMessage'].signMessage({
+        account,
+        message: new Uint8Array([1]),
+      }),
+    ).rejects.toMatchObject({
+      code: WALLET_ERROR.INTERNAL_ERROR,
+      message: expect.stringContaining('signature'),
+    });
   });
 });

@@ -39,24 +39,38 @@ export function enableLinkInterceptor(
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0)
       return;
 
+    // tagName check (not `instanceof HTMLAnchorElement`) so the interceptor
+    // stays portable across DOM implementations — happy-dom and friends
+    // ship their own anchor classes that don't satisfy the global one.
     let el = e.target as HTMLElement | null;
     while (el && el.tagName !== 'A') {
       el = el.parentElement;
     }
-    if (!el) return;
+    const anchor = el as HTMLAnchorElement | null;
+    if (!anchor?.href || anchor.hasAttribute('download')) return;
 
-    const anchor = el as HTMLAnchorElement;
-    if (!anchor.href || anchor.hasAttribute('download')) return;
-
+    let url: URL;
     try {
-      const url = new URL(anchor.href, window.location.href);
-      if (url.protocol === 'javascript:' || url.protocol === 'blob:') return;
-      if (url.origin === window.location.origin) return;
-
-      send('link:open', { url: url.href, openMode });
-      e.preventDefault();
+      url = new URL(anchor.href, window.location.href);
     } catch {
-      // Invalid URL or bridge unavailable — let the browser handle it
+      return; // invalid URL — let the browser handle it
+    }
+    if (url.protocol === 'javascript:' || url.protocol === 'blob:') return;
+    if (url.origin === window.location.origin) return;
+
+    const result = send.ifAvailable('link:open', {
+      url: url.href,
+      openMode,
+    });
+    if (result.ok) {
+      e.preventDefault();
+    } else {
+      // Pre-call refusal (e.g., host Contract Version below `link:open`).
+      // Let the browser handle the navigation, but tell the dev why.
+      console.warn(
+        '[@alien-id/miniapps-bridge] link:open failed, falling back to browser:',
+        result.error.message,
+      );
     }
   }
 

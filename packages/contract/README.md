@@ -23,6 +23,9 @@ import type {
   CreateMethodPayload,            // Helper for defining methods
   MethodNameWithVersionedPayload, // Methods with versioned payloads
   MethodVersionedPayload,         // Versioned payload for a method
+  MethodResponseEvent,            // Response event for a request method
+  MethodResponseEvents,           // Exhaustive method-to-event map
+  RequestMethodName,              // Subset of MethodName that expects a response
 
   // Event types
   Events,               // Interface of all events
@@ -34,6 +37,18 @@ import type {
   LaunchParams,         // Host-injected params (authToken, contractVersion, etc.)
   Platform,             // 'ios' | 'android'
   DisplayMode,          // 'standard' | 'fullscreen' | 'immersive'
+  SafeAreaInsets,       // Host-reported safe-area insets
+
+  // Domain literals
+  HapticImpactStyle,            // 'light' | 'medium' | 'heavy' | 'soft' | 'rigid'
+  HapticNotificationType,       // 'success' | 'warning' | 'error'
+  NotificationPermissionStatus, // 'granted' | 'denied' | 'rate_limited'
+  PaymentErrorCode,             // Pre-broadcast payment errors
+  PaymentTestScenario,          // Test-mode simulation scenarios
+  PaymentWebhookStatus,         // On-chain payment webhook status
+  SolanaChain,                  // 'solana:mainnet' | 'solana:devnet' | 'solana:testnet'
+  SolanaCommitment,             // 'processed' | 'confirmed' | 'finalized'
+  WalletSolanaErrorCode,        // WalletConnect-compatible error codes
 
   // Utilities
   Version,              // Semantic version string type
@@ -43,11 +58,17 @@ import type {
 ### Constants
 
 ```typescript
-import { DISPLAY_MODES, PLATFORMS, releases } from '@alien-id/miniapps-contract';
+import {
+  DISPLAY_MODES,
+  PLATFORMS,
+  WALLET_ERROR,
+  releases,
+} from '@alien-id/miniapps-contract';
 
-PLATFORMS      // ['ios', 'android']
-DISPLAY_MODES  // ['standard', 'fullscreen', 'immersive']
-releases       // Record<Version, MethodName[]> - version to methods mapping
+PLATFORMS       // ['ios', 'android']
+DISPLAY_MODES   // ['standard', 'fullscreen', 'immersive']
+WALLET_ERROR    // Named WalletConnect-compatible Solana wallet error codes
+releases        // Record<Version, MethodName[]> — version to methods mapping
 ```
 
 ### Version Utilities
@@ -90,6 +111,7 @@ getReleaseVersion('app:ready');           // '0.0.9'
 | `wallet.solana:sign.send` | 1.0.0 | Sign and send a Solana transaction |
 | `app:close` | 1.0.0 | Request host to close the miniapp |
 | `host.back.button:toggle` | 1.0.0 | Show/hide back button |
+| `notifications:permission.request` | 1.5.0 | Request OS push-notification permission |
 
 ## Available Events
 
@@ -102,6 +124,7 @@ getReleaseVersion('app:ready');           // '0.0.9'
 | `wallet.solana:sign.transaction.response` | 1.0.0 | Transaction signing result |
 | `wallet.solana:sign.message.response` | 1.0.0 | Message signing result |
 | `wallet.solana:sign.send.response` | 1.0.0 | Sign and send result |
+| `notifications:permission.response` | 1.5.0 | Notification permission result |
 
 ## LaunchParams
 

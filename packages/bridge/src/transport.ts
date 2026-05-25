@@ -4,7 +4,7 @@ import type {
   MethodName,
   MethodPayload,
 } from '@alien-id/miniapps-contract';
-import { BridgeUnavailableError, BridgeWindowUnavailableError } from './errors';
+import { BridgeUnavailableError } from './errors';
 
 // Bridge interface for mobile/desktop clients
 interface MiniAppsBridge {
@@ -52,13 +52,11 @@ export function getBridge(): MiniAppsBridge | undefined {
 
 /**
  * Sends a message using the native bridge.
- * Throws errors if bridge is unavailable (strict behavior).
+ * Throws {@link BridgeUnavailableError} if the bridge isn't injected
+ * (covers both the SSR no-window case and the browser-tab no-injection case
+ * via {@link getBridge}).
  */
 export function sendMessage(message: Message): void {
-  if (typeof window === 'undefined') {
-    throw new BridgeWindowUnavailableError();
-  }
-
   const bridge = getBridge();
   if (!bridge) {
     throw new BridgeUnavailableError();

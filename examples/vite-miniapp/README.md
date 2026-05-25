@@ -1,34 +1,23 @@
-# Alien Miniapp SDK - Events Example
+# Alien Miniapp SDK — Request & Event Example
 
-This example demonstrates how to use the `@alien-id/miniapps-react` SDK to listen for events from the host app in a React + TypeScript + Vite application.
+A React + TypeScript + Vite example for `@alien-id/miniapps-react`. It exercises both the request/response track (`useMethod`) and the event subscription track (`useEvent`), with a UI for inspecting raw payloads and the host's reply.
 
-## What This Example Shows
+## What it shows
 
-- How to use the `useEvent` hook to listen for events from the host app
-- How to check bridge availability with `useAlien`
-- How to access launch parameters with `useLaunchParams`
-- Clean, modern UI showcasing event reception in real-time
+- **`useMethod`** — type-safe request/response calls. The hook constrains the response event to the method's contract, surfaces typed `BridgeError` subclasses, and exposes loading/error/data state.
+- **`useEvent`** — subscribe to events from the host app, including the response that pairs with the active request.
+- **`useCallable`** — pre-call Callability check (`bridge present` + `host Contract Version covers the Method`) so the UI can render the right unavailable state.
+- **`useAlien`** — bridge availability, presence (not value) of the auth token, and Contract Version snapshot.
 
-## Features
-
-- **Event Listening**: Automatically listens for bridge events
-- **Bridge Status**: Shows whether the bridge is available
-- **Event Log**: Displays all received events with timestamps and payloads
-- **Type Safety**: Full TypeScript support with type-safe event payloads
-
-## Running the Example
+## Running
 
 ```bash
 bun run dev
 ```
 
-The miniapp will run on `http://localhost:5173`
+The miniapp serves on `http://localhost:5173`. When running outside the Alien App, the SDK keeps the UI alive and clearly marks the bridge as unavailable — bridge calls report a typed `BridgeUnavailableError` instead of throwing.
 
-## Development Mode
+## Notes for production builds
 
-When running outside of Alien App (e.g., in a regular browser), the SDK will:
-- Warn that the bridge is not available (does not throw)
-- Handle errors gracefully
-- Allow your app to render and function (though bridge communication won't work)
-
-This makes it easy to develop and test your miniapp UI without needing Alien App running.
+- The example never renders the auth token's contents — only its presence — and your production miniapp should follow the same pattern.
+- The "raw JSON" override on the form is intentionally typed-cast and is meant for debugging the protocol; production code paths should always go through typed payload builders.

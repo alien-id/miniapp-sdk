@@ -28,13 +28,13 @@ version. Otherwise users installing an upstream package get a stale dependency.
 
 ## Current Versions
 
-| Package | Name | Current Version |
-| --- | --- | --- |
-| contract | @alien-id/miniapps-contract | 1.5.0-alpha.2 |
-| bridge | @alien-id/miniapps-bridge | 1.4.1-alpha.1 |
-| react | @alien-id/miniapps-react | 1.6.0-alpha.1 |
-| auth-client | @alien-id/miniapps-auth-client | 1.5.0-alpha.5 |
-| solana-provider | @alien-id/miniapps-solana-provider | 1.4.1-alpha.1 |
+The current version of each package lives in its own `package.json`. Treat that file as the source of truth — this document does not duplicate the values to keep them from drifting out of sync.
+
+```bash
+for pkg in packages/*/package.json; do
+  jq -r '"\(.name): \(.version)"' "$pkg"
+done
+```
 
 ## Steps
 
@@ -95,7 +95,7 @@ workflow to complete.
 
 ```bash
 # Step 1: Push commit + packages with no dependencies
-git push origin develop contract@x.x.x auth-client@x.x.x
+git push origin main contract@x.x.x auth-client@x.x.x
 # ⏳ Wait for workflows to complete
 
 # Step 2: Push bridge (depends on contract)
@@ -105,6 +105,8 @@ git push origin bridge@x.x.x
 # Step 3: Push react + solana-provider (depend on bridge + contract)
 git push origin react@x.x.x solana-provider@x.x.x
 ```
+
+Tags are placed on `main` only — see `CLAUDE.md` for the GitHub Flow conventions. Releases are cut by tagging commits on `main`; there is no `develop` branch.
 
 Monitor workflows at: <https://github.com/alien-id/miniapp-sdk/actions>
 
