@@ -33,3 +33,6 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # Private working notes (audits, drafts, review scratch)
 .private/
+
+# Claude Code agent worktrees
+.claude/worktrees/
