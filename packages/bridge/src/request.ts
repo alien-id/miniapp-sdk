@@ -28,11 +28,11 @@ function generateReqId(): string {
 }
 
 /**
- * Internal: send a request without gating on {@link callability}. Caller is
- * responsible for the Callability check. Used by `request()` (Strict Track)
- * and `request.ifAvailable()` (Safe Track) so each gate can use its own
- * version semantics (launch params vs. `options.version` override) without
- * re-gating downstream and clobbering the override.
+ * Dispatch a request and await its matching response — without the
+ * Callability gate. Callers (`request` and `request.ifAvailable`) gate
+ * first so each can use its own version semantics (launch params vs.
+ * `options.version` override) without re-gating downstream and
+ * clobbering the override.
  */
 async function _requestUnchecked<M extends MethodName, E extends EventName>(
   method: M,
@@ -42,7 +42,6 @@ async function _requestUnchecked<M extends MethodName, E extends EventName>(
 ): Promise<EventPayload<E>> {
   const reqId = options.reqId || generateReqId();
   const timeout = options.timeout ?? DEFAULT_TIMEOUT;
-
   const payload = { ...params, reqId } as MethodPayload<M>;
 
   return new Promise<EventPayload<E>>((resolve, reject) => {
@@ -69,7 +68,7 @@ async function _requestUnchecked<M extends MethodName, E extends EventName>(
       sendMessage({ type: 'method', name: method, payload });
     } catch (err) {
       cleanup();
-      reject(err instanceof Error ? err : new Error(String(err)));
+      reject(toBridgeError(err));
     }
   });
 }
@@ -115,7 +114,6 @@ async function _request<M extends MethodName, E extends EventName>(
 ): Promise<EventPayload<E>> {
   const error = gate(method);
   if (error) throw error;
-
   return _requestUnchecked(method, params, responseEvent, options);
 }
 
