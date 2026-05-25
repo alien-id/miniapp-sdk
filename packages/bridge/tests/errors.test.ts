@@ -4,6 +4,7 @@ import {
   BridgeMethodUnsupportedError,
   BridgeTimeoutError,
   BridgeUnavailableError,
+  toBridgeError,
 } from '../src/errors';
 
 test('BridgeError - accepts and exposes cause via options', () => {
@@ -40,6 +41,29 @@ test('BridgeError subclasses - keep their existing constructors working', () => 
   expect(unsupported.method).toBe('payment:request');
   expect(unsupported.contractVersion).toBe('0.1.0');
   expect(unsupported.minVersion).toBe('0.2.0');
+});
+
+test('toBridgeError - passes BridgeError instances through unchanged', () => {
+  const original = new BridgeUnavailableError();
+  expect(toBridgeError(original)).toBe(original);
+});
+
+test('toBridgeError - wraps generic Error preserving message and cause', () => {
+  const original = new TypeError('boom');
+  const wrapped = toBridgeError(original);
+
+  expect(wrapped).toBeInstanceOf(BridgeError);
+  expect(wrapped).not.toBe(original);
+  expect(wrapped.message).toBe('boom');
+  expect(wrapped.cause).toBe(original);
+});
+
+test('toBridgeError - wraps non-Error throws by stringifying and chaining cause', () => {
+  const wrapped = toBridgeError('plain string');
+
+  expect(wrapped).toBeInstanceOf(BridgeError);
+  expect(wrapped.message).toBe('plain string');
+  expect(wrapped.cause).toBe('plain string');
 });
 
 test('BridgeUnavailableError - stack does not contain BridgeError base frame', () => {

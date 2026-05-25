@@ -8,6 +8,7 @@ import {
   BridgeMethodUnsupportedError,
   BridgeUnavailableError,
 } from './errors';
+import { getLaunchParams } from './launch-params';
 import { isBridgeAvailable } from './utils';
 
 /**
@@ -81,4 +82,23 @@ export function callabilityError(
   if (result.callable) return undefined;
   if (result.reason === 'no-bridge') return new BridgeUnavailableError();
   return new BridgeMethodUnsupportedError(method, result.has, result.needs);
+}
+
+/**
+ * Live gate check: resolves `options.version` against the launch params and
+ * runs the canonical Callability → BridgeError pipeline. Returns the matching
+ * {@link BridgeError} or `undefined` when the Method is Callable. Used by
+ * both the Strict Track (throws the returned error) and the Safe Track
+ * (channels it into `SafeResult.error`).
+ */
+export function gate(
+  method: MethodName,
+  options?: CallabilityOptions,
+): BridgeError | undefined {
+  return callabilityError(
+    method,
+    callability(method, {
+      version: options?.version ?? getLaunchParams()?.contractVersion,
+    }),
+  );
 }

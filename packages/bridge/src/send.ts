@@ -1,11 +1,6 @@
 import type { MethodName, MethodPayload } from '@alien-id/miniapps-contract';
-import {
-  type CallabilityOptions,
-  callability,
-  callabilityError,
-} from './callability';
-import { BridgeError } from './errors';
-import { getLaunchParams } from './launch-params';
+import { type CallabilityOptions, gate } from './callability';
+import { type BridgeError, toBridgeError } from './errors';
 import type { SafeResult } from './safe-result';
 import { sendMessage } from './transport';
 
@@ -37,10 +32,7 @@ function _send<M extends MethodName>(
   method: M,
   payload: MethodPayload<M>,
 ): void {
-  const error = callabilityError(
-    method,
-    callability(method, { version: getLaunchParams()?.contractVersion }),
-  );
+  const error = gate(method);
   if (error) throw error;
   sendMessage({ type: 'method', name: method, payload });
 }
@@ -51,33 +43,14 @@ export const send = Object.assign(_send, {
     payload: MethodPayload<M>,
     options?: CallabilityOptions,
   ): SafeResult<void, BridgeError> {
-    const gateError = callabilityError(
-      method,
-      callability(method, {
-        version: options?.version ?? getLaunchParams()?.contractVersion,
-      }),
-    );
-    if (gateError) return { ok: false, error: gateError };
+    const error = gate(method, options);
+    if (error) return { ok: false, error };
 
     try {
       sendMessage({ type: 'method', name: method, payload });
       return { ok: true, data: undefined };
-    } catch (error) {
-      // sendMessage throws BridgeUnavailable/Window errors; anything else
-      // (e.g., JSON.stringify on a cyclic payload) gets wrapped so callers
-      // can rely on the channel being a BridgeError. The original error is
-      // preserved on `.cause` (ES2022 Error option) so post-mortem debugging
-      // doesn't lose the root cause.
-      return {
-        ok: false,
-        error:
-          error instanceof BridgeError
-            ? error
-            : new BridgeError(
-                error instanceof Error ? error.message : String(error),
-                { cause: error },
-              ),
-      };
+    } catch (err) {
+      return { ok: false, error: toBridgeError(err) };
     }
   },
 });

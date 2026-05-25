@@ -59,6 +59,19 @@ export class BridgeBusyError extends BridgeError {
 }
 
 /**
+ * Coerces an arbitrary thrown value into a {@link BridgeError}. Used by the
+ * Safe Track to keep `SafeResult.error` pinned to `BridgeError` even when the
+ * underlying throw isn't one (e.g., `JSON.stringify` on a cyclic payload).
+ * The original value is preserved on `.cause` (ES2022 Error option) so
+ * post-mortem debugging doesn't lose the root cause.
+ */
+export function toBridgeError(err: unknown): BridgeError {
+  if (err instanceof BridgeError) return err;
+  const message = err instanceof Error ? err.message : String(err);
+  return new BridgeError(message, { cause: err });
+}
+
+/**
  * Thrown when a Method is not Callable in the Host's current Contract Version.
  */
 export class BridgeMethodUnsupportedError extends BridgeError {

@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, expect, test } from 'bun:test';
-import { callability } from '../src/callability';
+import { callability, gate } from '../src/callability';
+import {
+  BridgeMethodUnsupportedError,
+  BridgeUnavailableError,
+} from '../src/errors';
+import { mockLaunchParamsForDev } from '../src/launch-params';
 
 let mockWindow: {
   __miniAppsBridge__?: { postMessage: (data: string) => void };
@@ -112,6 +117,40 @@ test('callability - fails closed when method has no known min version (registry 
     needs: '1.0.0',
     has: '1.0.0',
   });
+});
+
+test('gate - returns BridgeUnavailableError when bridge is not present', () => {
+  delete mockWindow.__miniAppsBridge__;
+  (globalThis as { window: typeof mockWindow }).window = mockWindow;
+
+  expect(gate('app:ready')).toBeInstanceOf(BridgeUnavailableError);
+});
+
+test('gate - returns undefined when bridge is present and no version is known', () => {
+  mockWindow.__miniAppsBridge__ = { postMessage: () => {} };
+  (globalThis as { window: typeof mockWindow }).window = mockWindow;
+
+  expect(gate('app:ready')).toBeUndefined();
+});
+
+test('gate - falls back to launch-params version when options.version is omitted', () => {
+  mockWindow.__miniAppsBridge__ = { postMessage: () => {} };
+  (globalThis as { window: typeof mockWindow }).window = mockWindow;
+  mockLaunchParamsForDev({ authToken: 'tok', contractVersion: '0.0.9' });
+
+  // wallet.solana:connect requires 1.0.0; launch-params has 0.0.9 → outdated.
+  expect(gate('wallet.solana:connect')).toBeInstanceOf(
+    BridgeMethodUnsupportedError,
+  );
+});
+
+test('gate - options.version overrides the launch-params version', () => {
+  mockWindow.__miniAppsBridge__ = { postMessage: () => {} };
+  (globalThis as { window: typeof mockWindow }).window = mockWindow;
+  mockLaunchParamsForDev({ authToken: 'tok', contractVersion: '0.0.9' });
+
+  // Override to 1.0.0 → method becomes Callable, no error.
+  expect(gate('wallet.solana:connect', { version: '1.0.0' })).toBeUndefined();
 });
 
 // Type-level test: confirm `MethodName` is a literal union that rejects

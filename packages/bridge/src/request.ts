@@ -4,14 +4,9 @@ import type {
   MethodName,
   MethodPayload,
 } from '@alien-id/miniapps-contract';
-import {
-  type CallabilityOptions,
-  callability,
-  callabilityError,
-} from './callability';
-import { BridgeError, BridgeTimeoutError } from './errors';
+import { type CallabilityOptions, gate } from './callability';
+import { type BridgeError, BridgeTimeoutError, toBridgeError } from './errors';
 import { off, on } from './events';
-import { getLaunchParams } from './launch-params';
 import type { SafeResult } from './safe-result';
 import { sendMessage } from './transport';
 
@@ -118,10 +113,7 @@ async function _request<M extends MethodName, E extends EventName>(
   responseEvent: E,
   options: RequestOptions = {},
 ): Promise<EventPayload<E>> {
-  const error = callabilityError(
-    method,
-    callability(method, { version: getLaunchParams()?.contractVersion }),
-  );
+  const error = gate(method);
   if (error) throw error;
 
   return _requestUnchecked(method, params, responseEvent, options);
@@ -134,13 +126,8 @@ export const request = Object.assign(_request, {
     responseEvent: E,
     options: SafeRequestOptions = {},
   ): Promise<SafeResult<EventPayload<E>, BridgeError>> {
-    const gateError = callabilityError(
-      method,
-      callability(method, {
-        version: options.version ?? getLaunchParams()?.contractVersion,
-      }),
-    );
-    if (gateError) return { ok: false, error: gateError };
+    const error = gate(method, options);
+    if (error) return { ok: false, error };
 
     try {
       // Explicit destructure: only forward the request-shaped fields so a
@@ -151,22 +138,8 @@ export const request = Object.assign(_request, {
         timeout: options.timeout,
       });
       return { ok: true, data };
-    } catch (error) {
-      // Strict Track only throws BridgeError subclasses; non-bridge throws
-      // from `sendMessage` (e.g., `JSON.stringify` on a cyclic payload) get
-      // wrapped so the channel stays pinned to BridgeError. The original
-      // error is preserved on `.cause` (ES2022 Error option) so post-mortem
-      // debugging doesn't lose the root cause.
-      return {
-        ok: false,
-        error:
-          error instanceof BridgeError
-            ? error
-            : new BridgeError(
-                error instanceof Error ? error.message : String(error),
-                { cause: error },
-              ),
-      };
+    } catch (err) {
+      return { ok: false, error: toBridgeError(err) };
     }
   },
 });
