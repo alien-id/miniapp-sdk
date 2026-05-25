@@ -17,9 +17,6 @@ export interface RequestOptions extends CallabilityOptions {
   timeout?: number;
 }
 
-/** @deprecated Use {@link RequestOptions} — the two are now identical. */
-export type SafeRequestOptions = RequestOptions;
-
 function generateReqId(): string {
   return typeof crypto !== 'undefined' && crypto.randomUUID
     ? crypto.randomUUID()

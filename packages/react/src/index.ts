@@ -8,7 +8,6 @@ export type {
   CallabilityOptions,
   LinkInterceptorOptions,
   RequestOptions,
-  SafeRequestOptions,
   SafeResult,
 } from '@alien-id/miniapps-bridge';
 export {
