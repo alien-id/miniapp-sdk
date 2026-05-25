@@ -10,11 +10,8 @@
     "minimumReleaseAge": "0"
   },
   "rangeStrategy": "pin",
+  "separateMinorPatch": true,
   "packageRules": [
-    {
-      "matchManagers": ["github-actions"],
-      "pinDigests": true
-    },
     {
       "matchUpdateTypes": ["patch"],
       "automerge": true,
