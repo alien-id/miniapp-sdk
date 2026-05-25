@@ -39,20 +39,20 @@
   "dependencies": {
     "@alien-id/miniapps-bridge": "workspace:*",
     "@alien-id/miniapps-contract": "workspace:*",
-    "bs58": "^6.0.0"
+    "bs58": "6.0.0"
   },
   "devDependencies": {
-    "@solana/wallet-standard-features": "^1.3.0",
-    "@types/bun": "^1.3.14",
-    "@wallet-standard/base": "^1.1.0",
-    "@wallet-standard/features": "^1.1.0",
-    "@wallet-standard/wallet": "^1.1.0",
-    "tsdown": "^0.22.0"
+    "@solana/wallet-standard-features": "1.3.0",
+    "@types/bun": "1.3.14",
+    "@wallet-standard/base": "1.1.0",
+    "@wallet-standard/features": "1.1.0",
+    "@wallet-standard/wallet": "1.1.0",
+    "tsdown": "0.22.0"
   },
   "peerDependencies": {
-    "@solana/wallet-standard-features": "^1.3.0",
-    "@wallet-standard/base": "^1.1.0",
-    "@wallet-standard/features": "^1.1.0",
-    "@wallet-standard/wallet": "^1.1.0"
+    "@solana/wallet-standard-features": "1.3.0",
+    "@wallet-standard/base": "1.1.0",
+    "@wallet-standard/features": "1.1.0",
+    "@wallet-standard/wallet": "1.1.0"
   }
 }
