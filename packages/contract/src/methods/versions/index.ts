@@ -42,28 +42,24 @@ export function compareVersions(a: Version, b: Version): number {
   return aPatch - bPatch;
 }
 
-// Build a direct `MethodName → minimum Version` lookup at module load.
-// The release table is static, so a single ascending pass yields the
-// earliest version that registers each method. `getMethodMinVersion`
-// then resolves a method in O(1) instead of rescanning every release.
 const ASCENDING_RELEASE_VERSIONS: readonly Version[] = (
   Object.keys(releases) as Version[]
 ).sort(compareVersions);
 
-const METHOD_MIN_VERSION: ReadonlyMap<MethodName, Version> = (() => {
-  const map = new Map<MethodName, Version>();
-  for (const version of ASCENDING_RELEASE_VERSIONS) {
-    const methods = releases[version];
-    if (!methods) continue;
-    for (const entry of methods) {
-      const name = (
-        typeof entry === 'string' ? entry : entry.method
-      ) as MethodName;
-      if (!map.has(name)) map.set(name, version);
-    }
+// Walked in ascending order, first-seen wins — so each method maps to
+// the earliest release that introduced it.
+const methodMinVersion = new Map<MethodName, Version>();
+for (const version of ASCENDING_RELEASE_VERSIONS) {
+  const methods = releases[version];
+  if (!methods) continue;
+  for (const entry of methods) {
+    const name = (
+      typeof entry === 'string' ? entry : entry.method
+    ) as MethodName;
+    if (!methodMinVersion.has(name)) methodMinVersion.set(name, version);
   }
-  return map;
-})();
+}
+const METHOD_MIN_VERSION: ReadonlyMap<MethodName, Version> = methodMinVersion;
 
 /**
  * Runtime list of every method declared in the {@link releases} table.
@@ -84,8 +80,7 @@ export const METHOD_NAMES: readonly MethodName[] = Array.from(
  * dev tooling, mocks, and CI fixtures.
  */
 export const LATEST_VERSION: Version =
-  ASCENDING_RELEASE_VERSIONS[ASCENDING_RELEASE_VERSIONS.length - 1] ??
-  ('0.0.0' as Version);
+  ASCENDING_RELEASE_VERSIONS[ASCENDING_RELEASE_VERSIONS.length - 1] ?? '0.0.0';
 
 /**
  * Check whether the contract declares a method at the given version.
@@ -125,8 +120,7 @@ export function isMethodSupported(
 
 /**
  * Get the minimum contract version that declares a method, or
- * `undefined` if the method is not in any release. Backed by a
- * module-load-time `Map` lookup — O(1) per call.
+ * `undefined` if the method is not in any release.
  */
 export function getMethodMinVersion(method: MethodName): Version | undefined {
   return METHOD_MIN_VERSION.get(method);
