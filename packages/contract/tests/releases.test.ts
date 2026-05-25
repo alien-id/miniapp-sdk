@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { METHOD_NAMES, releases } from '../src';
 import type { MethodName, Version } from '../src';
+import { METHOD_NAMES, releases } from '../src';
 
 /**
  * Source-level guards on the real {@link releases} table.

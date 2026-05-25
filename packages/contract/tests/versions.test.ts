@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'bun:test';
+import type { MethodName, Version } from '../src';
 import {
   getMethodMinVersion,
   isMethodSupported,
   METHOD_NAMES,
   releases,
 } from '../src';
-import type { MethodName, Version } from '../src';
 
 /**
  * Tests for the host-version gating algorithm in

@@ -6,10 +6,10 @@ import {
   type SafeRequestOptions,
 } from '@alien-id/miniapps-bridge';
 import type {
+  EventName,
   EventPayload,
+  MethodName,
   MethodPayload,
-  MethodResponseEvent,
-  RequestMethodName,
 } from '@alien-id/miniapps-contract';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import {
@@ -19,8 +19,8 @@ import {
 } from './useCallable';
 import { useMounted } from './useMounted';
 
-export interface UseMethodExecuteResult<M extends RequestMethodName> {
-  data: EventPayload<MethodResponseEvent<M>> | undefined;
+export interface UseMethodExecuteResult<E extends EventName> {
+  data: EventPayload<E> | undefined;
   /**
    * Bridge error from the last attempted call, or `null` if there is no
    * error. `null` (not `undefined`) so consumers can distinguish "cleared"
@@ -29,17 +29,17 @@ export interface UseMethodExecuteResult<M extends RequestMethodName> {
   error: BridgeError | null;
 }
 
-interface UseMethodState<M extends RequestMethodName>
-  extends UseMethodExecuteResult<M> {
+interface UseMethodState<E extends EventName>
+  extends UseMethodExecuteResult<E> {
   isLoading: boolean;
 }
 
-interface UseMethodResult<M extends RequestMethodName>
-  extends UseMethodState<M> {
+interface UseMethodResult<M extends MethodName, E extends EventName>
+  extends UseMethodState<E> {
   execute: (
     params: Omit<MethodPayload<M>, 'reqId'>,
     options?: SafeRequestOptions,
-  ) => Promise<UseMethodExecuteResult<M>>;
+  ) => Promise<UseMethodExecuteResult<E>>;
   reset: () => void;
   /**
    * Whether the Method is Callable in the current host — bridge present
@@ -51,11 +51,11 @@ interface UseMethodResult<M extends RequestMethodName>
 /**
  * Hook for making bridge requests with loading/error state management.
  *
- * The `responseEvent` parameter is constrained by the contract — only the
- * response event registered against `method` in `MethodResponseEvents`
- * type-checks. Errors surface as {@link BridgeError} subclasses
- * (`BridgeUnavailableError`, `BridgeMethodUnsupportedError`,
- * `BridgeTimeoutError`) so callers can narrow on `instanceof`.
+ * `method` and `responseEvent` are independent generics — the caller is
+ * responsible for pairing them correctly. Errors surface as
+ * {@link BridgeError} subclasses (`BridgeUnavailableError`,
+ * `BridgeMethodUnsupportedError`, `BridgeTimeoutError`) so callers can
+ * narrow on `instanceof`.
  *
  * @example
  * ```tsx
@@ -89,13 +89,13 @@ interface UseMethodResult<M extends RequestMethodName>
  * }
  * ```
  */
-export function useMethod<M extends RequestMethodName>(
+export function useMethod<M extends MethodName, E extends EventName>(
   method: M,
-  responseEvent: MethodResponseEvent<M>,
-): UseMethodResult<M> {
+  responseEvent: E,
+): UseMethodResult<M, E> {
   const contextCallability = useCallable(method);
 
-  const [state, setState] = useState<UseMethodState<M>>({
+  const [state, setState] = useState<UseMethodState<E>>({
     data: undefined,
     error: null,
     isLoading: false,
@@ -110,7 +110,7 @@ export function useMethod<M extends RequestMethodName>(
     async (
       params: Omit<MethodPayload<M>, 'reqId'>,
       requestOptions?: SafeRequestOptions,
-    ): Promise<UseMethodExecuteResult<M>> => {
+    ): Promise<UseMethodExecuteResult<E>> => {
       // Reject re-entry with a typed busy error so the result shape stays
       // unambiguous — `{ data: undefined, error: undefined }` would be
       // indistinguishable from a successful response carrying no payload.

@@ -66,6 +66,17 @@ const METHOD_MIN_VERSION: ReadonlyMap<MethodName, Version> = (() => {
 })();
 
 /**
+ * Runtime list of every method declared in the {@link releases} table.
+ *
+ * TypeScript types are erased at runtime, so this constant is the only
+ * honest way to enumerate methods. Iterate it for tests, tooling, or
+ * dev surface that needs to walk every method.
+ */
+export const METHOD_NAMES: readonly MethodName[] = Array.from(
+  METHOD_MIN_VERSION.keys(),
+);
+
+/**
  * Highest contract version declared in the {@link releases} table.
  *
  * Derived from the table so it stays in step when a new release lands —

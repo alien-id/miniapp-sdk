@@ -3,8 +3,6 @@ import type {
   EventPayload,
   MethodName,
   MethodPayload,
-  MethodResponseEvent,
-  RequestMethodName,
 } from '@alien-id/miniapps-contract';
 import {
   type CallabilityOptions,
@@ -114,33 +112,28 @@ async function _requestUnchecked<M extends MethodName, E extends EventName>(
  * if (!result.ok) console.warn(result.error.message);
  * ```
  */
-async function _request<M extends RequestMethodName>(
+async function _request<M extends MethodName, E extends EventName>(
   method: M,
   params: Omit<MethodPayload<M>, 'reqId'>,
-  responseEvent: MethodResponseEvent<M>,
+  responseEvent: E,
   options: RequestOptions = {},
-): Promise<EventPayload<MethodResponseEvent<M>>> {
+): Promise<EventPayload<E>> {
   const error = callabilityError(
     method,
     callability(method, { version: getLaunchParams()?.contractVersion }),
   );
   if (error) throw error;
 
-  return _requestUnchecked(
-    method,
-    params,
-    responseEvent as EventName,
-    options,
-  ) as Promise<EventPayload<MethodResponseEvent<M>>>;
+  return _requestUnchecked(method, params, responseEvent, options);
 }
 
 export const request = Object.assign(_request, {
-  async ifAvailable<M extends RequestMethodName>(
+  async ifAvailable<M extends MethodName, E extends EventName>(
     method: M,
     params: Omit<MethodPayload<M>, 'reqId'>,
-    responseEvent: MethodResponseEvent<M>,
+    responseEvent: E,
     options: SafeRequestOptions = {},
-  ): Promise<SafeResult<EventPayload<MethodResponseEvent<M>>, BridgeError>> {
+  ): Promise<SafeResult<EventPayload<E>, BridgeError>> {
     const gateError = callabilityError(
       method,
       callability(method, {
@@ -153,12 +146,10 @@ export const request = Object.assign(_request, {
       // Explicit destructure: only forward the request-shaped fields so a
       // future option on `SafeRequestOptions` (like `version`) can't leak
       // into the wire payload through `_requestUnchecked`'s pass-through.
-      const data = (await _requestUnchecked(
-        method,
-        params,
-        responseEvent as EventName,
-        { reqId: options.reqId, timeout: options.timeout },
-      )) as EventPayload<MethodResponseEvent<M>>;
+      const data = await _requestUnchecked(method, params, responseEvent, {
+        reqId: options.reqId,
+        timeout: options.timeout,
+      });
       return { ok: true, data };
     } catch (error) {
       // Strict Track only throws BridgeError subclasses; non-bridge throws

@@ -1,11 +1,8 @@
-import type {
-  MethodPayload,
-  MethodResponseEvent,
-} from '@alien-id/miniapps-contract';
+import type { MethodPayload } from '@alien-id/miniapps-contract';
 import { useMemo, useState } from 'react';
 
 type DemoMethod = 'payment:request';
-type DemoEvent = MethodResponseEvent<DemoMethod>;
+type DemoEvent = 'payment:response';
 type DemoPayload = Omit<MethodPayload<DemoMethod>, 'reqId'>;
 
 interface RequestFormProps {

@@ -3,11 +3,8 @@ import type {
   EventPayload,
   LaunchParams,
   MethodName,
-  MethodPayload,
-  MethodResponseEvent,
-  RequestMethodName,
 } from '@alien-id/miniapps-contract';
-import { getResponseEvent, LATEST_VERSION } from '@alien-id/miniapps-contract';
+import { LATEST_VERSION } from '@alien-id/miniapps-contract';
 import { emit } from './events';
 import { clearMockLaunchParams, mockLaunchParamsForDev } from './launch-params';
 import type { Message } from './transport';
@@ -35,67 +32,69 @@ export interface MockBridgeInstance {
   resetCalls: () => void;
 }
 
-/**
- * Mock responder per request method.
- *
- * Receives the request payload, returns the response payload that the
- * mock dispatches on the matching response event. Both sides are typed
- * against the contract, so a payload-shape change there propagates here
- * as a compile error.
- */
-type MockResponder<M extends RequestMethodName> = (
-  payload: MethodPayload<M>,
-) => EventPayload<MethodResponseEvent<M>>;
-
-/**
- * Default mock response for every request-response method.
- *
- * Typed as a mapped type over {@link RequestMethodName}, so adding a
- * new request method to the contract fails this map's `satisfies`
- * check until the new responder is wired in — no separate
- * fire-and-forget list to keep in sync, no parity test required.
- *
- * The runtime membership of this object also classifies methods: any
- * method *not* in it is fire-and-forget.
- */
-const MOCK_RESPONSES: {
-  [M in RequestMethodName]: MockResponder<M>;
-} = {
-  'payment:request': (p) => ({
-    status: 'paid',
-    txHash: `mock-tx-${p.reqId}`,
-    reqId: p.reqId,
-  }),
-  'clipboard:read': (p) => ({
-    text: 'mock clipboard text',
-    reqId: p.reqId,
-  }),
-  'wallet.solana:connect': (p) => ({
-    publicKey: '11111111111111111111111111111111',
-    reqId: p.reqId,
-  }),
-  'wallet.solana:sign.transaction': (p) => ({
-    signedTransaction: 'mock-signed-tx',
-    reqId: p.reqId,
-  }),
-  'wallet.solana:sign.message': (p) => ({
-    signature: 'mock-sig',
-    publicKey: '11111111111111111111111111111111',
-    reqId: p.reqId,
-  }),
-  'wallet.solana:sign.send': (p) => ({
-    signature: `mock-sig-${p.reqId}`,
-    reqId: p.reqId,
-  }),
-  'notifications:permission.request': (p) => ({
-    status: 'granted',
-    reqId: p.reqId,
-  }),
-};
-
-function isRequestMethod(name: string): name is RequestMethodName {
-  return Object.hasOwn(MOCK_RESPONSES, name);
+interface MockResponse {
+  event: EventName;
+  defaultResponse: (reqId: string) => Record<string, unknown>;
 }
+
+// Mock-only mapping from request methods to their response event and a
+// default response payload. The contract no longer enforces this binding
+// — every test or app that needs a richer simulation passes a custom
+// handler via `MockBridgeOptions.handlers`. Methods absent from this
+// table are treated as fire-and-forget by the mock.
+const MOCK_RESPONSES: Partial<Record<MethodName, MockResponse>> = {
+  'payment:request': {
+    event: 'payment:response',
+    defaultResponse: (reqId) => ({
+      status: 'paid',
+      txHash: `mock-tx-${reqId}`,
+      reqId,
+    }),
+  },
+  'clipboard:read': {
+    event: 'clipboard:response',
+    defaultResponse: (reqId) => ({
+      text: 'mock clipboard text',
+      reqId,
+    }),
+  },
+  'wallet.solana:connect': {
+    event: 'wallet.solana:connect.response',
+    defaultResponse: (reqId) => ({
+      publicKey: '11111111111111111111111111111111',
+      reqId,
+    }),
+  },
+  'wallet.solana:sign.transaction': {
+    event: 'wallet.solana:sign.transaction.response',
+    defaultResponse: (reqId) => ({
+      signedTransaction: 'mock-signed-tx',
+      reqId,
+    }),
+  },
+  'wallet.solana:sign.message': {
+    event: 'wallet.solana:sign.message.response',
+    defaultResponse: (reqId) => ({
+      signature: 'mock-sig',
+      publicKey: '11111111111111111111111111111111',
+      reqId,
+    }),
+  },
+  'wallet.solana:sign.send': {
+    event: 'wallet.solana:sign.send.response',
+    defaultResponse: (reqId) => ({
+      signature: `mock-sig-${reqId}`,
+      reqId,
+    }),
+  },
+  'notifications:permission.request': {
+    event: 'notifications:permission.response',
+    defaultResponse: (reqId) => ({
+      status: 'granted',
+      reqId,
+    }),
+  },
+};
 
 const DEFAULT_LAUNCH_PARAMS: Partial<LaunchParams> = {
   authToken: 'mock-auth-token',
@@ -146,7 +145,8 @@ export function createMockBridge(
         timestamp: Date.now(),
       });
 
-      if (!isRequestMethod(name)) {
+      const mapping = MOCK_RESPONSES[name];
+      if (!mapping) {
         console.log(
           `[AlienMock] --> ${name} ${JSON.stringify(payloadObj)}  (fire-and-forget)`,
         );
@@ -158,19 +158,12 @@ export function createMockBridge(
       const customHandler = handlers[name];
       if (customHandler === false) return;
 
-      // Each MOCK_RESPONSES entry is typed against its specific request
-      // method, but a runtime-dispatched call has the union type, which
-      // TypeScript widens to a contravariant impossible parameter. Cast
-      // through `unknown` so the dispatch line stays plain at runtime
-      // without leaking weak typing back into the table itself.
-      const responder = MOCK_RESPONSES[name] as unknown as (
-        p: Record<string, unknown>,
-      ) => Record<string, unknown>;
+      const reqId = (payloadObj.reqId as string) ?? '';
       const responsePayload =
         typeof customHandler === 'function'
           ? customHandler(payloadObj)
-          : responder(payloadObj);
-      const responseEvent = getResponseEvent(name);
+          : mapping.defaultResponse(reqId);
+      const { event: responseEvent } = mapping;
 
       const dispatchResponse = () => {
         console.log(

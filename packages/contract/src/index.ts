@@ -17,28 +17,19 @@ export type {
 } from './launch-params';
 export { DISPLAY_MODES, PLATFORMS } from './launch-params';
 export type { Methods } from './methods/methods';
-export {
-  FIRE_AND_FORGET_METHOD_NAMES,
-  getResponseEvent,
-  METHOD_NAMES,
-  REQUEST_METHOD_NAMES,
-} from './methods/types';
 export type {
   CreateMethodPayload,
-  FireAndForgetMethodName,
   MethodName,
   MethodNameWithVersionedPayload,
   MethodPayload,
-  MethodResponseEvent,
-  MethodResponseEvents,
   MethodVersionedPayload,
-  RequestMethodName,
 } from './methods/types';
 export {
   getMethodMinVersion,
   getReleaseVersion,
   isMethodSupported,
   LATEST_VERSION,
+  METHOD_NAMES,
   releases,
 } from './methods/versions';
 export type {

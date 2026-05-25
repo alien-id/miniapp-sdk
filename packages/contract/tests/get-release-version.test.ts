@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { getReleaseVersion, METHOD_NAMES, releases } from '../src';
 import type { MethodName, Version } from '../src';
+import { getReleaseVersion, METHOD_NAMES, releases } from '../src';
 
 /**
  * Tests `getReleaseVersion` against the real release table.
