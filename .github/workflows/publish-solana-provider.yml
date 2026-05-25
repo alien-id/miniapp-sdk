@@ -24,7 +24,7 @@ permissions: {}
 jobs:
   publish:
     if: startsWith(github.ref, 'refs/tags/solana-provider@')
-    uses: ./.github/workflows/_publish-npm-package.yml
+    uses: ./.github/workflows/reusable-publish-npm-package.yml
     permissions:
       contents: write
       id-token: write
