@@ -9,13 +9,16 @@ feature PRs and approve two gates.
 
 1. **Feature PR merge.** The developer adds a `.changeset/*.md` file declaring
    which packages bump and how. A maintainer reviews and squash-merges.
-2. **Version PR merge.** A bot (`changesets/action`) opens or updates a
-   `chore: release packages` PR on every push to `main` that has pending
-   changesets. The maintainer reviews the computed bumps + CHANGELOGs +
-   regenerated lockfile, then squash-merges.
-3. **`npm-publish` environment approval.** Merging the Version PR triggers the
-   publish path. The job pauses at the environment reviewer gate. A maintainer
-   approves, and the publish loop runs in topological order.
+2. **Version PR merge.** A bot (`changesets/action`, in the `version-pr` job)
+   opens or updates a `chore: release packages` PR on every push to `main`
+   that has pending changesets. This job has only `contents: write` and
+   `pull-requests: write` — no `id-token: write`, no environment gate, no
+   OIDC token in scope. The maintainer reviews the computed bumps +
+   CHANGELOGs + regenerated lockfile, then squash-merges.
+3. **`npm-publish` environment approval.** Merging the Version PR triggers
+   the `publish` job (a separate job, gated by the `npm-publish` GitHub
+   Environment reviewer, the only job that holds `id-token: write`). A
+   maintainer approves, and the publish loop runs in topological order.
 
 ## Adding a changeset
 
@@ -95,9 +98,10 @@ The publish script derives the npm dist-tag from the version suffix in
 `scripts/lib/tag.ts`:
 
 - `2.1.0` → `latest`
-- `2.1.0-beta.3` → `beta`
+- `2.1.0-beta` / `2.1.0-beta.3` → `beta`
 - `2.1.0-alpha.1` → `alpha`
 - `2.1.0-rc.0` → `rc`
+- `2.1.0-alpha-20260528120000` → `alpha` (snapshot-style)
 
 No maintainer ever picks the tag manually.
 
@@ -187,44 +191,81 @@ changesets.
 
 | Workflow | Trigger | What it does |
 | --- | --- | --- |
-| `.github/workflows/release.yml` | `push: main` | Open/update the Version PR (if pending changesets) OR run the publish path (if a Version PR was just merged). Same workflow, two modes. |
-| `.github/workflows/ci.yml` | `pull_request` | Lint, typecheck, test. Does NOT enforce changeset presence — `changesets/bot` GitHub App handles that conversationally. |
+| `.github/workflows/release.yml` | `push: main` | Two jobs. `version-pr` (no env gate, no OIDC token): opens/updates the Version PR when changesets are pending; no-ops when they aren't. `publish` (env-gated, OIDC, depends on `version-pr` reporting `hasChangesets=false`): builds, runs the topological publish loop, runs `changeset tag`. |
+| `.github/workflows/ci.yml` | `push: main` + `pull_request` | Lint, typecheck, test on every push and PR. On PRs only, also surfaces `changeset status` as an advisory check (never fails). `changesets/bot` GitHub App handles "you forgot a changeset" nudges conversationally. |
 
 ## Security posture
 
 - **All third-party actions are SHA-pinned**, not tag-pinned. Defeats the
   tag-overwrite attack class (e.g. `tj-actions/changed-files` compromise of
   March 2025).
-- **`oven-sh/setup-bun` is inlined with caching disabled** in `release.yml`.
-  Action caching during OIDC-holding workflows is a known exfiltration vector
-  (TanStack/Astro 2025 postmortems).
+- **`version-pr` and `publish` are separate jobs.** The publish job is the
+  only place `id-token: write` is granted; it never coexists with code that
+  runs `bun install` against contributor-supplied manifests in a context
+  that could exfiltrate the OIDC token (TanStack/Astro 2025 attack class).
+- **`oven-sh/setup-bun` runs with `no-cache: true`** on both jobs in
+  `release.yml`. Action caching during OIDC-holding workflows is a known
+  exfiltration vector.
 - **No long-lived `NPM_TOKEN`**. Every publish uses OIDC trusted publishing
-  with sigstore provenance attached to each tarball.
-- **`harden-runner` egress is blocked** outside an explicit allowlist
-  (`registry.npmjs.org`, sigstore endpoints, github.com APIs).
+  with sigstore provenance attached to each tarball. `NPM_TOKEN: ''` is
+  explicitly set on the publish step to defeat any accidental fallback.
+- **`harden-runner` egress is blocked** outside an explicit allowlist on
+  both jobs. The `version-pr` allowlist excludes sigstore endpoints (it
+  doesn't touch them); the `publish` allowlist includes them.
 - **`persist-credentials: false`** on `actions/checkout` so the `GITHUB_TOKEN`
-  is never written to git config — `changesets/action` re-injects via env when
-  it needs to push.
-- **Minimal `permissions:`** at workflow level; jobs opt into the specific
-  permissions they need.
-- **`environment: npm-publish` reviewer gate** is the final human approval
-  before any publish. Configured in repo settings, not in code.
-- **`changesets/bot` GitHub App** posts a comment on PRs missing a changeset —
-  no custom CI gate code to maintain.
+  is never written to git config — `changesets/action` re-injects via env
+  when it needs to push.
+- **Minimal `permissions:`** at workflow level (default-deny); each job opts
+  into the specific permissions it needs.
+- **`environment: npm-publish` reviewer gate** lives only on the `publish`
+  job — Version PRs are created without environment gating so reviewers
+  can see the proposed bumps before approving the eventual publish.
+- **`changesets/bot` GitHub App** posts a comment on PRs missing a changeset
+  — no custom CI gate code to maintain. `ci.yml` additionally surfaces
+  `changeset status` as an advisory log line.
 
 ## Manual operator tasks (one-time, alongside migration)
 
-1. Configure the npm trusted-publisher for each of the five packages to
-   authorize `.github/workflows/release.yml` (replacing the previous per-package
-   workflow authorizations).
-2. Install the `changesets/bot` GitHub App at the `alien-id` org level.
-3. Verify the `npm-publish` GitHub Environment reviewer list matches the
-   maintainer set.
-4. Verify branch protection on `main` requires CODEOWNERS approval. The bot
-   pushes to `changeset-release/main`, not `main` directly, so the protection
-   does not block automation.
-5. Extend CODEOWNERS if needed to cover `.changeset/`, `.github/workflows/`,
-   `scripts/`, `packages/*/package.json`, `RELEASING.md`, and `CLAUDE.md`.
+### Blocking — must happen alongside merge
+
+1. **Reconfigure npm trusted-publishers** for each of the five packages
+   (`@alien-id/miniapps-{contract,bridge,react,auth-client,solana-provider}`)
+   to authorize `.github/workflows/release.yml` with **the `publish` job**.
+   Replaces the previous per-package workflow authorizations. Without this,
+   OIDC publish fails with `EUNAUTHORIZED`.
+2. **Verify the `npm-publish` GitHub Environment** reviewer list still
+   matches the maintainer set in repo settings.
+3. **Create `.github/CODEOWNERS`** (none exists today) and wire branch
+   protection on `main` to require CODEOWNERS approval. Cover at minimum
+   `.changeset/`, `.github/workflows/`, `scripts/`, `packages/*/package.json`,
+   `RELEASING.md`, `SECURITY.md`, and `CLAUDE.md`. The bot pushes to
+   `changeset-release/main`, not `main` directly, so the protection does
+   not block automation.
+
+### Choose your release line after merge
+
+This PR leaves the repo with `2.1.0-beta` as the in-source baseline for all
+five packages (matching what's already on the `@beta` dist-tag) and **no**
+`.changeset/pre.json`. The next change you make determines the cut:
+
+- **Continue the beta cycle** — open a one-line PR `bun changeset pre enter
+  beta` before adding new feature changesets. The next Version PR ships
+  `x.y.z-beta.N` to `@beta`.
+- **Cut stable 2.x** — add normal changesets on feature PRs. The first
+  Version PR consolidates the `2.1.0-beta` baseline to `2.1.0` (semver
+  treats prereleases as below their target) and publishes to `@latest`.
+  Note: `@latest` currently points at the 1.x line; consumers on `@latest`
+  will see a major version jump.
+
+### Recommended — install when convenient
+
+- **Install the `changesets/bot` GitHub App** at the `alien-id` organisation
+  level: https://github.com/apps/changeset-bot. Posts a non-blocking
+  "missing changeset" comment on PRs that touch `packages/*` without a
+  changeset. The system works fine without it — `ci.yml` also surfaces
+  `changeset status` as an advisory log line — but the bot is a
+  conversational nudge that becomes more valuable as the contributor count
+  grows or external PRs land.
 
 ## Troubleshooting
 

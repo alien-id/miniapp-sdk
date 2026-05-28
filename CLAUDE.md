@@ -307,7 +307,8 @@ This project uses **GitHub Flow**. All agents and contributors must follow these
 - Feature branches must be up to date with `main` before merging.
 - Feature branches are deleted after merge.
 - CI runs on every PR.
-- Releases are cut by tagging commits on `main`.
+- Releases are cut by `changesets/action` — merging the Version PR triggers
+  publish + `git tag` automatically. No human creates or pushes tags.
 - Do not create `develop`, `release/*`, or `hotfix/*` branches.
 
 ### Branch naming
@@ -330,16 +331,21 @@ Use `<type>/<short-description>` with lowercase and hyphens:
 
 ### Tagging and environment (Skrrt convention)
 
-Tags are placed **on `main` only** — never on feature branches. See shared deployment conventions above.
+This repo ships libraries to npm rather than to deploy environments, so npm
+**dist-tags** play the role of staging/production. All tags are created and
+pushed by `changesets/action` after a Version PR merges and the
+`npm-publish` environment reviewer approves the publish job — no human ever
+runs `git tag` or `git push --tags` against `main`.
 
-| Environment | Trigger | Tag? |
+| npm dist-tag | Trigger | Source version pattern |
 | --- | --- | --- |
-| Dev | Merge to `main` (squash merge) | No |
-| Staging | Tag `vX.Y.Z-rc.N` on `main` | Yes |
-| Production | Tag `vX.Y.Z` on `main` | Yes |
+| (none) | Merge to `main` (no Version PR yet) | n/a |
+| `@beta` | Version PR merges while `.changeset/pre.json` is in `beta` mode | `x.y.z-beta.N` |
+| `@alpha` | Version PR merges while `.changeset/pre.json` is in `alpha` mode | `x.y.z-alpha.N` |
+| `@latest` | Version PR merges while pre mode is exited | `x.y.z` |
 
-- Promote to staging by tagging an RC on `main`. If it fails, merge fixes via PR and tag a new RC.
-- Promote to production by tagging a clean semver release on the validated commit.
+Dist-tag derivation lives in `scripts/lib/tag.ts` — no maintainer ever picks
+the tag manually. See `RELEASING.md` for the full mental model.
 
 ### Agent lifecycle (full auto)
 
