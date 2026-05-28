@@ -18,10 +18,6 @@
       "automergeType": "pr"
     },
     {
-      "matchDepTypes": ["devDependencies"],
-      "minimumReleaseAge": "1 day"
-    },
-    {
       "description": "Published libraries must keep ranges so consumers can dedupe — only devDependencies stay pinned.",
       "matchFileNames": ["packages/**/package.json"],
       "matchDepTypes": ["dependencies", "peerDependencies", "optionalDependencies"],

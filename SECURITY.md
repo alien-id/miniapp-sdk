@@ -62,8 +62,9 @@ harden in layers. Each layer assumes the layers below it have failed.
 
 ### Layer 4 — Dependency hygiene
 
-- **Renovate** (`renovate.json`) enforces a 3-day cooldown for runtime deps
-  and 1-day for devDependencies. Vulnerability alerts bypass cooldown.
+- **Renovate** (`renovate.json`) enforces a uniform 3-day cooldown for all
+  dependency types, matching the install-time enforcement in `bunfig.toml`
+  and `.npmrc`. Vulnerability alerts bypass cooldown.
 - `pinDigests: true` on `github-actions` updates — any Action bump is a SHA
   change visible in the PR diff.
 - `rangeStrategy: pin` — Renovate writes exact versions, never ranges.
