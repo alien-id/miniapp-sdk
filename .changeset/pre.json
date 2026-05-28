@@ -2,9 +2,6 @@
   "mode": "pre",
   "tag": "beta",
   "initialVersions": {
-    "reown-appkit-example": "0.0.0",
-    "solana-wallet-example": "0.0.0",
-    "vite-miniapp": "0.0.0",
     "@alien-id/miniapps-auth-client": "2.1.0",
     "@alien-id/miniapps-bridge": "2.1.0",
     "@alien-id/miniapps-contract": "2.1.0",
