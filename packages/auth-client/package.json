@@ -1,6 +1,6 @@
 {
   "name": "@alien-id/miniapps-auth-client",
-  "version": "2.1.0-beta",
+  "version": "2.1.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
