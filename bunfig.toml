@@ -9,7 +9,6 @@
 # is already 259200 — we set it explicitly so a future default change can
 # never weaken us.
 minimumReleaseAge = 259200
-minimumReleaseAgeExcludes = ["@types/bun", "typescript"]
 
 # Exact-version installs (no ^ or ~). Floats are how poisoned patches
 # reach consumers without code review.
