@@ -1,214 +1,70 @@
 ---
 name: release
-description: Release packages to npm in correct dependency order. Use when publishing new versions, bumping versions, or deploying packages to the registry.
+description: Drive the changesets-based release flow. Use when the user wants to release packages, cut a version, declare a release intent, enter or exit a beta cycle, or check what's pending for the next release.
 disable-model-invocation: false
 user-invocable: true
 ---
 
-# Release Packages
+# Release
 
-Release monorepo packages to npm in the correct dependency order.
+The release pipeline is fully automated by changesets. A maintainer's only manual
+gates are: write a `.changeset/*.md` on the feature PR, merge the bot-opened
+"chore: release packages" Version PR, and approve the `npm-publish` environment.
 
-## Package Dependencies
+See `RELEASING.md` for the full mental model. This skill drives the conversational
+shape of the flow.
 
-```
-contract (no deps)      auth-client (no deps)
-    ↓
-  bridge → depends on contract
-    ↓
-  react → depends on bridge + contract
-  solana-provider → depends on bridge + contract
-```
+## Decision tree
 
-## Cascade Rule
+When invoked, first run `bun changeset status --verbose` and figure out which
+branch of the tree applies:
 
-When a package is published, **all packages that depend on it must also be published** — otherwise their published `workspace:*` dependency resolves to a stale version and users won't get the update.
+1. **Feature PR in progress** (user is mid-flight on a code change). Help them
+   declare a release intent with `bun changeset` and commit the resulting
+   `.changeset/*.md` file alongside their code. Stop after that.
 
-| If releasing... | Must also release |
-|-----------------|-------------------|
-| contract | bridge, react, solana-provider |
-| bridge | react, solana-provider |
-| auth-client | (nothing) |
-| react | (nothing) |
-| solana-provider | (nothing) |
+2. **Pending changesets on `main`, no Version PR yet visible.** The
+   `changesets/action` workflow opens it automatically on the next push to
+   `main`. If the user just merged, wait ~30 seconds then point them at the PR
+   list.
 
-Cascaded packages that had no code changes get a **patch** bump automatically.
+3. **Version PR open**. Read the PR (it lists computed bumps + cascade). If the
+   user is ready to release, walk them through: review → squash-merge → approve
+   the `npm-publish` environment → watch the workflow run. Surface the GitHub
+   Actions URL.
 
-## Supporting Files
+4. **Beta cycle decision**. If `.changeset/pre.json` is absent and the user
+   wants to start a beta cycle, run `bun changeset pre enter beta` and open a
+   one-line PR. If `pre.json` exists with mode `pre` and the user wants stable,
+   run `bun changeset pre exit` and open a one-line PR.
 
-- `scripts/detect-changes.sh` - Detects which packages have changes since last release
+5. **Partial publish failure**. If the previous publish failed mid-loop, the
+   recovery is to re-run the workflow from the GitHub Actions UI. The
+   orchestrator skips already-published packages (via `npm view`) and resumes.
+   Do NOT manually edit versions or tags to "fix" things.
 
-## Execution Steps
-
-Execute steps in order. Each step has clear success criteria.
-
-### Step 0: Sync `main`
-
-Releases land on `main` per the project's GitHub Flow configuration. Switch to `main` and pull the latest before bumping anything:
-
-```bash
-git switch main && git pull --ff-only origin main
-```
-
-If `git pull --ff-only` fails (local `main` has diverged), abort and ask the user to resolve before continuing — never force-update `main`.
-
-**Success**: working tree clean and on `main` at `origin/main` HEAD.
-
-### Step 1: Detect Changes
-
-Run the change detection script:
+## How to add a changeset (verbatim instructions)
 
 ```bash
-bash .claude/skills/release/scripts/detect-changes.sh
+bun changeset
+# Interactive: pick packages, bump types (patch/minor/major), summary line.
+git add .changeset/<id>.md
 ```
 
-Display the results table to the user showing:
-- Package name
-- Current version (from package.json)
-- Latest release tag
-- Whether there are changes (Yes/No)
-- Number of changed files
+The summary line is what appears in the per-package CHANGELOG. Write it as if a
+consumer is reading it: "Add X", "Fix Y", "Breaking: rename Z."
 
-**Success**: Table displayed with accurate change detection.
+## Important behaviours to surface to the user
 
-### Step 2: Select Packages
+- **Cascade is automatic.** Bumping `contract` patches `bridge`/`react`/`solana-provider`. The user does not list the cascade — changesets does.
+- **Examples are ignored.** `vite-miniapp`, `solana-wallet-example`, `reown-appkit-example` are excluded in `.changeset/config.json` so they never appear in Version PRs.
+- **Version PR force-pushes on every new changeset.** If a reviewer previously approved the Version PR and a new changeset lands on `main`, the approval resets. Re-approve before merging.
+- **In pre mode**, every Version PR ships as `x.y.z-beta.N` to `@beta`. A stable hotfix requires exiting pre mode first (one PR), shipping the hotfix (one PR), then re-entering pre mode (one PR). Acknowledge this cost when the user asks for a hotfix mid-beta.
+- **Trusted publishing means no NPM_TOKEN.** Authentication is OIDC + sigstore provenance. If `npm publish` fails with an auth error, the trusted publisher config on npm needs to authorize `release.yml` for the failing package — that's a manual operator task, not a code fix.
 
-Ask the user which packages to release using a **multi-select** prompt:
-- Show packages with changes pre-selected
-- Allow user to add/remove packages (force release without changes)
-- Options: contract, auth-client, bridge, react, solana-provider
+## Hard rules
 
-If no packages selected, abort the release.
-
-**After selection, apply the cascade rule automatically:**
-- If contract is selected → add bridge, react, solana-provider
-- If bridge is selected → add react, solana-provider
-- Display the expanded list to the user: "Based on the dependency cascade, these packages will also be released: ..."
-
-**Success**: User has confirmed the full package list (including cascaded dependencies).
-
-### Step 3: Select Version Bump Per Package
-
-For each **user-selected** package (not cascaded ones), ask the user to choose the version bump:
-- **Patch** (0.0.x → 0.0.x+1)
-- **Minor** (0.x.0 → 0.x+1.0)
-- **Major** (x.0.0 → x+1.0.0)
-
-Use a single multi-question prompt to collect all bumps at once.
-
-**Cascaded packages** (added automatically by the cascade rule, not directly selected by the user) get a **patch** bump automatically — do NOT ask the user for these.
-
-**Success**: Version bump selected for each package.
-
-### Step 4: Select Release Type
-
-Ask the user for the release type (applies to all packages):
-- **Stable** - No suffix (1.0.0)
-- **Beta** - Add -beta suffix (1.0.0-beta)
-- **Alpha** - Add -alpha suffix (1.0.0-alpha)
-
-**Success**: Release type selected.
-
-### Step 5: Confirm Versions
-
-Display a summary table:
-
-| Package | Current | New |
-|---------|---------|-----|
-| ... | ... | ... |
-
-Ask user to confirm with a simple Yes/No prompt.
-
-**Success**: User confirmed the version changes.
-
-### Step 6: Update package.json Files
-
-Edit the `version` field in each selected package's package.json.
-
-**Success**: All package.json files updated with new versions.
-
-### Step 7: Regenerate Lockfile
-
-```bash
-rm bun.lock && bun install
-```
-
-**Success**: Lockfile regenerated without errors.
-
-### Step 8: Verify Lockfile
-
-For each selected package, verify the lockfile has correct versions:
-
-```bash
-grep -A2 '"packages/<package>"' bun.lock
-```
-
-**Success**: All versions in lockfile match expected new versions.
-
-### Step 9: Update RELEASING.md
-
-Update the "Current Versions" table in RELEASING.md with new versions.
-
-**Success**: RELEASING.md updated.
-
-### Step 10: Commit Changes
-
-```bash
-git add packages/*/package.json bun.lock RELEASING.md
-git commit -m "chore: :bookmark: bump packages for release
-
-- <package>: <version>
-..."
-```
-
-**Success**: Changes committed.
-
-### Step 11: Create Tags
-
-Create a git tag for each selected package:
-
-```bash
-git tag <package>@<version>
-```
-
-**Success**: All tags created locally.
-
-### Step 12: Push in Dependency Order
-
-Push tags in dependency order, waiting for CI between each group.
-
-**Push 1** - Independent packages:
-```bash
-git push origin main contract@<version> auth-client@<version>
-```
-Show message: "Pushing contract and auth-client. Click **Continue** when workflows complete."
-Provide link: https://github.com/alien-id/miniapp-sdk/actions
-Wait for user to click Continue.
-
-**Push 2** - Bridge (if selected):
-```bash
-git push origin bridge@<version>
-```
-Show message: "Pushing bridge. Click **Continue** when workflow completes."
-Wait for user to click Continue.
-
-**Push 3** - React + Solana Provider (if selected):
-```bash
-git push origin react@<version> solana-provider@<version>
-```
-
-Skip any push step if no packages in that group were selected.
-
-**Success**: All tags pushed, workflows triggered.
-
-### Step 13: Summary
-
-Display final summary:
-
-| Package | Version | Status |
-|---------|---------|--------|
-| ... | ... | ✅ Released |
-
-Provide link: https://github.com/alien-id/miniapp-sdk/actions
-
-**Success**: All selected packages released.
+- NEVER edit `packages/*/package.json` `version` fields by hand. `changeset version` computes them.
+- NEVER edit `bun.lock` manually after a `changeset version` run. The `ci:version` script wipes and regenerates it.
+- NEVER push a tag directly. `changeset tag` (inside `ci:publish`) creates them.
+- NEVER bypass the `npm-publish` environment reviewer gate. It is the last human checkpoint.

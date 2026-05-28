@@ -234,11 +234,38 @@ await execute({ recipient: 'wallet-123', amount: '100', token: 'SOL', network: '
       B-->>A: Response
   ```
 
+## Releases
+
+The SDK uses [changesets](https://github.com/changesets/changesets) in canonical
+bot-driven mode. See `RELEASING.md` for the full mental model. The shape:
+
+1. Every feature PR includes a `.changeset/*.md` declaring which packages bump
+   and how. Add via `bun changeset`.
+2. On push to `main`, `changesets/action` opens or updates a `chore: release
+   packages` Version PR with computed bumps + CHANGELOGs + regenerated lockfile.
+3. Merging the Version PR triggers the publish path, gated by the `npm-publish`
+   environment reviewer.
+4. `scripts/publish-topological.ts` walks packages in dependency order
+   (computed from `package.json` deps at runtime), packs each with
+   `bun pm pack`, and uploads via `npm publish <tgz> --provenance` (OIDC,
+   sigstore attestation).
+5. `bun pm pack` is used instead of `bun publish` because `bun publish` lacks
+   `--provenance`. `npm pack` is avoided because Bun's `workspace:*` is not
+   substituted by it (open issue oven-sh/bun#24687).
+6. `ci:version` script uses `rm bun.lock && bun install` (not
+   `bun install --no-frozen-lockfile`) because the latter does not refresh
+   workspace versions in the lockfile under Bun.
+
+Pre-release lines: enter via one-line PR (`bun changeset pre enter beta` or
+`...alpha`), exit via one-line PR (`bun changeset pre exit`). No separate
+snapshot workflow.
+
 ## Skills
 
 Local Claude skills for common workflows:
 
-- `/release` - Release packages to npm in correct dependency order. Handles version bumping, lockfile updates, tagging, and pushing in the correct order.
+- `/release` - Drive the changesets-based release flow (add changeset, manage
+  Version PRs, toggle pre mode, recover from partial failures).
 
 <!-- skrrt:ship -->
 ## Git workflow — skrrt skills
@@ -247,7 +274,11 @@ Use the installed skrrt skills for all git shipping operations:
 
 - **Commits**: Use `/commit` to stage changes and write conventional commits with gitmojis.
 - **Pull requests**: Use `/pr` to push branches and open PRs or MRs with the matching forge CLI.
-- **Releases**: Use `/release` to draft release notes and publish releases.
+- **Releases**: Releases are automated by `changesets/action`. Use the local
+  `/release` skill (repo-scoped) to drive the changesets flow — adding
+  changesets, toggling pre mode, and recovering from partial failures. Do NOT
+  use a generic release-notes drafting skill here; CHANGELOGs and GitHub
+  releases are created by `changesets/action` and the publish workflow.
 
 Do not write raw `git commit`, `gh pr create`, `gh release create`, `glab mr create`, or
 `glab release create` commands manually when these skills are available.
@@ -276,7 +307,8 @@ This project uses **GitHub Flow**. All agents and contributors must follow these
 - Feature branches must be up to date with `main` before merging.
 - Feature branches are deleted after merge.
 - CI runs on every PR.
-- Releases are cut by tagging commits on `main`.
+- Releases are cut by `changesets/action` — merging the Version PR triggers
+  publish + `git tag` automatically. No human creates or pushes tags.
 - Do not create `develop`, `release/*`, or `hotfix/*` branches.
 
 ### Branch naming
@@ -299,24 +331,34 @@ Use `<type>/<short-description>` with lowercase and hyphens:
 
 ### Tagging and environment (Skrrt convention)
 
-Tags are placed **on `main` only** — never on feature branches. See shared deployment conventions above.
+This repo ships libraries to npm rather than to deploy environments, so npm
+**dist-tags** play the role of staging/production. All tags are created and
+pushed by `changesets/action` after a Version PR merges and the
+`npm-publish` environment reviewer approves the publish job — no human ever
+runs `git tag` or `git push --tags` against `main`.
 
-| Environment | Trigger | Tag? |
+| npm dist-tag | Trigger | Source version pattern |
 | --- | --- | --- |
-| Dev | Merge to `main` (squash merge) | No |
-| Staging | Tag `vX.Y.Z-rc.N` on `main` | Yes |
-| Production | Tag `vX.Y.Z` on `main` | Yes |
+| (none) | Merge to `main` (no Version PR yet) | n/a |
+| `@beta` | Version PR merges while `.changeset/pre.json` is in `beta` mode | `x.y.z-beta.N` |
+| `@alpha` | Version PR merges while `.changeset/pre.json` is in `alpha` mode | `x.y.z-alpha.N` |
+| `@latest` | Version PR merges while pre mode is exited | `x.y.z` |
 
-- Promote to staging by tagging an RC on `main`. If it fails, merge fixes via PR and tag a new RC.
-- Promote to production by tagging a clean semver release on the validated commit.
+Dist-tag derivation lives in `scripts/lib/tag.ts` — no maintainer ever picks
+the tag manually. See `RELEASING.md` for the full mental model.
 
 ### Agent lifecycle (full auto)
 
 1. Create a branch from `main`: `git switch -c <type>/<description>`
-2. Make changes and commit using `/commit`.
-3. Before opening a PR, rebase onto `main`: `git pull --rebase origin main`
-4. Push and open a PR using `/pr` — target is always `main`.
-5. After squash merge, the branch is deleted automatically by the forge.
-6. To promote to staging, tag an RC on `main`: use `/release` with a pre-release tag.
-7. After staging validation, tag the production release on `main`: use `/release`.
+2. If the change touches `packages/*/src/**`, `packages/*/package.json`,
+   `packages/*/README.md`, or `packages/*/tsdown.config.ts`, run `bun changeset`
+   to declare the release intent. Commit the resulting `.changeset/*.md`.
+3. Commit using `/commit`.
+4. Before opening a PR, rebase onto `main`: `git pull --rebase origin main`
+5. Push and open a PR using `/pr` — target is always `main`.
+6. After squash merge, the branch is deleted automatically by the forge.
+7. Releasing is automatic from there: `changesets/action` opens a
+   `chore: release packages` Version PR, a maintainer merges it, the
+   `npm-publish` environment reviewer approves, and packages publish in
+   topological order. **No manual tag creation or pushing.**
 <!-- /skrrt:branching -->

@@ -37,15 +37,22 @@ harden in layers. Each layer assumes the layers below it have failed.
 
 - Default-deny permissions: every workflow declares `permissions: {}` at the
   top level; each job re-grants only what it needs.
-- **Build / publish are separate jobs.** The publish job runs *one*
-  command — `npm publish` — so the OIDC token cannot be siphoned by a
-  poisoned dep elsewhere in the same runner (the TanStack class).
+- **Version PR creation and publish are separate jobs.** `release.yml`
+  splits into a `version-pr` job (holds only `contents: write` +
+  `pull-requests: write`, never gated) and a `publish` job (holds
+  `id-token: write` for OIDC, gated by the `npm-publish` environment
+  reviewer, runs `bun run build` + the topological publish loop +
+  `changeset tag`). The OIDC token never coexists with version-bumping
+  install/build code that processes contributor-supplied manifests — the
+  TanStack/Astro 2025 exfiltration class.
 - **`step-security/harden-runner`** on every job:
   - `audit` mode on CI / build jobs.
-  - `block` mode on publish jobs, with an allowlist limited to npmjs,
-    sigstore, and github.com.
-- **GitHub Environment `npm-publish`** gates every publish job — required
-  reviewers + optional wait timer configured in repo settings.
+  - `block` mode on release jobs, with allowlists limited to npmjs,
+    sigstore (publish job only), and github.com.
+- **GitHub Environment `npm-publish`** gates only the publish job —
+  required reviewers + optional wait timer configured in repo settings.
+  The Version PR is created without environment gating so reviewers can
+  see the proposed bumps before approving the eventual publish.
 - **Every third-party Action is pinned to a commit SHA**, with the version
   in a trailing comment. Renovate keeps SHAs current via `pinDigests: true`.
 - Workflows do **not** use `pull_request_target` and do **not**

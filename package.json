@@ -10,15 +10,21 @@
   "scripts": {
     "build": "bun run --filter './packages/*' build",
     "build:packages": "bun run --filter './packages/*' build",
-    "test": "bun run --filter './packages/*' test",
+    "test": "bun run --filter './packages/*' test && bun test scripts/tests",
     "typecheck": "bun run --filter './packages/*' typecheck",
     "lint": "biome ci .",
     "lint:fix": "biome check --write .",
-    "check": "bun run lint && bun run typecheck && bun run test && bun run build"
+    "check": "bun run lint && bun run typecheck && bun run test && bun run build",
+    "changeset": "changeset",
+    "changeset:status": "changeset status --verbose",
+    "ci:version": "changeset version && rm -f bun.lock && bun install",
+    "ci:publish": "bun run build && bun scripts/publish-topological.ts && changeset tag"
   },
   "devDependencies": {
     "@alien-id/miniapps-bridge": "workspace:*",
     "@biomejs/biome": "2.4.15",
+    "@changesets/changelog-github": "0.7.0",
+    "@changesets/cli": "2.31.0",
     "unrun": "0.3.0"
   }
 }

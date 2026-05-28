@@ -18,7 +18,9 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "artifacts/events.schema.json",
+    "artifacts/methods.schema.json"
   ],
   "repository": {
     "type": "git",
@@ -30,9 +32,8 @@
     "access": "public"
   },
   "scripts": {
-    "build": "tsdown",
+    "build": "tsdown && bun run generate-schemas",
     "test": "bun test tests",
-    "prepublishOnly": "bun run build",
     "generate-schemas": "bun run scripts/generate-schemas.ts"
   },
   "devDependencies": {
