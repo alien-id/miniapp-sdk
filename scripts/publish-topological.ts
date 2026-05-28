@@ -17,6 +17,7 @@
 import { spawnSync } from 'node:child_process';
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { classifyNpmView } from './lib/npm-view';
 import { deriveTag } from './lib/tag';
 import { topoSort } from './lib/topo';
 
@@ -59,12 +60,28 @@ async function readPackages(): Promise<Pkg[]> {
 }
 
 function alreadyPublished(name: string, version: string): boolean {
-  // `npm view <name>@<version> version` exits 0 if the version exists, non-zero otherwise.
+  // `npm view <name>@<version> version` exits 0 if the version exists, non-zero
+  // with a 404 if it doesn't, and non-zero with any other code if the lookup
+  // itself failed (network, DNS, rate-limit). Treating "lookup failed" as
+  // "not published" would re-publish packages that are already on the registry
+  // — so unknown failures abort the loop and surface to the operator.
   const result = spawnSync('npm', ['view', `${name}@${version}`, 'version'], {
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
   });
-  return result.status === 0 && result.stdout.trim() === version;
+  const classification = classifyNpmView(version, {
+    status: result.status,
+    stdout: result.stdout,
+    stderr: result.stderr,
+  });
+  if (classification === 'unknown') {
+    throw new Error(
+      `npm view ${name}@${version} failed unexpectedly (exit ${result.status}). ` +
+        `Re-run the workflow to retry; this is treated as transient on purpose ` +
+        `so a real publish is never skipped. Stderr:\n${(result.stderr ?? '').trim()}`,
+    );
+  }
+  return classification === 'published';
 }
 
 function run(
