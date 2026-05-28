@@ -15,23 +15,15 @@
 // registry (via `npm view`) and resumes from the failure point.
 
 import { spawnSync } from 'node:child_process';
-import { appendFileSync } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
-import { join, relative } from 'node:path';
+import { join } from 'node:path';
 import { classifyNpmView } from './lib/npm-view';
-import { buildReleaseEntry } from './lib/release-assets';
 import { deriveTag } from './lib/tag';
 import { topoSort } from './lib/topo';
 
 const REPO_ROOT = new URL('..', import.meta.url).pathname;
 const PACKAGES_DIR = join(REPO_ROOT, 'packages');
 const DRY_RUN = process.argv.includes('--dry-run');
-// Optional manifest path: when set, the orchestrator writes one JSONL line per
-// package with the tag + asset paths the upload step should attach to that
-// package's GitHub Release. Written for every package — including ones already
-// on the registry — so a re-run after a partial upload still has the manifest
-// it needs to drive `gh release upload --clobber`.
-const ASSETS_MANIFEST = process.env.RELEASE_ASSETS_MANIFEST;
 
 type Pkg = {
   name: string;
@@ -151,28 +143,17 @@ async function main() {
     const tag = deriveTag(pkg.version);
     console.log(`\n=== ${pkg.name}@${pkg.version} (tag: ${tag}) ===`);
 
+    if (!DRY_RUN && alreadyPublished(pkg.name, pkg.version)) {
+      console.log(`  ✓ already on registry — skipping`);
+      summary.push(`skipped ${pkg.name}@${pkg.version}`);
+      continue;
+    }
+
     // Pack always runs (even in dry-run) — it's local-only and validates that
     // `workspace:*` substitutes correctly under Bun. The network publish step
     // is the only one suppressed in dry-run.
     run('bun', ['pm', 'pack'], cwd, false);
     const tarball = await findTarball(cwd, pkg.name, pkg.version);
-
-    // Record the manifest entry BEFORE the publish guard. We want skipped
-    // packages (already-published on a re-run) in the manifest too, so the
-    // upload step can fill in any GitHub Release assets that didn't make it
-    // up on the prior attempt. `gh release upload --clobber` is idempotent.
-    if (ASSETS_MANIFEST) {
-      const tarballRepoPath = relative(REPO_ROOT, join(cwd, tarball));
-      const entry = buildReleaseEntry(pkg.name, pkg.version, tarballRepoPath);
-      appendFileSync(ASSETS_MANIFEST, `${JSON.stringify(entry)}\n`);
-    }
-
-    if (!DRY_RUN && alreadyPublished(pkg.name, pkg.version)) {
-      console.log(`  ✓ already on registry — skipping publish`);
-      summary.push(`skipped publish ${pkg.name}@${pkg.version} (registry hit)`);
-      continue;
-    }
-
     run(
       'npm',
       [

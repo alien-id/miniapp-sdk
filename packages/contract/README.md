@@ -10,6 +10,18 @@ Type definitions and version utilities for miniapp-host communication.
 bun add @alien-id/miniapps-contract
 ```
 
+## JSON schemas (for non-TS consumers)
+
+The published tarball ships JSON schemas at `artifacts/events.schema.json`
+and `artifacts/methods.schema.json`. Pull them via any npm CDN:
+
+```
+https://unpkg.com/@alien-id/miniapps-contract/artifacts/events.schema.json
+https://cdn.jsdelivr.net/npm/@alien-id/miniapps-contract/artifacts/methods.schema.json
+```
+
+Append `@<version>` to pin (e.g. `@alien-id/miniapps-contract@2.1.0`).
+
 ## Exports
 
 ### Types
