@@ -1,18 +1,9 @@
 #!/usr/bin/env bun
 
-// Publishes every public workspace package to npm in topological order:
-// upstream packages publish before their internal dependents, so consumers
-// installing during the publish window never see a stale upstream.
-//
-// Bun-specific notes:
-//   - `bun pm pack` correctly substitutes `workspace:*` to a concrete version.
-//   - `npm pack` does NOT (open issue: oven-sh/bun#24687). We therefore pack
-//     with bun and upload the tarball with `npm publish <tgz>` so OIDC trusted
-//     publishing + sigstore provenance still apply.
-//   - `bun publish` exists but lacks `--provenance`, so we cannot use it here.
-//
-// Idempotency: a re-run after a partial failure skips packages already on the
-// registry (via `npm view`) and resumes from the failure point.
+// Topological publish loop. Bun-specific: `bun pm pack` substitutes
+// `workspace:*` to concrete versions (npm pack does not — oven-sh/bun#24687)
+// and `bun publish` lacks `--provenance`, so we pack with bun and upload with
+// `npm publish <tgz>`. Idempotent across re-runs via `npm view`.
 
 import { spawnSync } from 'node:child_process';
 import { readdir, readFile } from 'node:fs/promises';
@@ -60,11 +51,8 @@ async function readPackages(): Promise<Pkg[]> {
 }
 
 function alreadyPublished(name: string, version: string): boolean {
-  // `npm view <name>@<version> version` exits 0 if the version exists, non-zero
-  // with a 404 if it doesn't, and non-zero with any other code if the lookup
-  // itself failed (network, DNS, rate-limit). Treating "lookup failed" as
-  // "not published" would re-publish packages that are already on the registry
-  // — so unknown failures abort the loop and surface to the operator.
+  // Unknown failures throw rather than degrade to "not published" — a transient
+  // network blip must not cause a re-publish attempt against an existing version.
   const result = spawnSync('npm', ['view', `${name}@${version}`, 'version'], {
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -106,7 +94,7 @@ async function findTarball(
   name: string,
   version: string,
 ): Promise<string> {
-  // Bun packs as `<scope>-<name>-<version>.tgz` under the package cwd.
+  // Bun packs to `<scope>-<name>-<version>.tgz` in the package cwd.
   const expected = `${name.replace('@', '').replace('/', '-')}-${version}.tgz`;
   const entries = await readdir(cwd);
   const match = entries.find(
@@ -149,9 +137,7 @@ async function main() {
       continue;
     }
 
-    // Pack always runs (even in dry-run) — it's local-only and validates that
-    // `workspace:*` substitutes correctly under Bun. The network publish step
-    // is the only one suppressed in dry-run.
+    // Pack always runs — local-only and validates `workspace:*` substitution.
     run('bun', ['pm', 'pack'], cwd, false);
     const tarball = await findTarball(cwd, pkg.name, pkg.version);
     run(

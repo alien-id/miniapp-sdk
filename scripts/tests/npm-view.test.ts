@@ -13,8 +13,6 @@ describe('classifyNpmView', () => {
   });
 
   test('exit 0 with mismatched stdout → not-published', () => {
-    // npm view --json with a range can return a different concrete version.
-    // We never want to treat that as "this exact version is published".
     expect(
       classifyNpmView('2.1.0', { status: 0, stdout: '1.9.9\n', stderr: '' }),
     ).toBe('not-published');
@@ -89,15 +87,11 @@ npm error 429 Too Many Requests - GET https://registry.npmjs.org/...
     );
   });
 
-  test('does not confuse "E404" appearing in a package name with an error code', () => {
-    // A package literally named "@scope/E404-thing" would not embed "code E404"
-    // in stderr on success. Just verify that publication detection is keyed on
-    // stdout, not stderr leak.
+  test('stderr "E404" leak on exit 0 does not flip the published result', () => {
     expect(
       classifyNpmView('1.0.0', {
         status: 0,
         stdout: '1.0.0\n',
-        // Hypothetical stderr leak should not flip the result.
         stderr: 'some warning mentioning E404 spuriously',
       }),
     ).toBe('published');

@@ -1,6 +1,5 @@
-// Kahn's algorithm. Graph is `Map<node, deps[]>` where each entry lists the
-// nodes the key depends on. Dependencies outside the graph (e.g. external npm
-// packages) are silently ignored so callers can pass raw dependency lists.
+// Kahn's algorithm. Deps outside the graph (e.g. external npm packages) are
+// silently ignored so callers can pass raw `package.json` dependency lists.
 export function topoSort(graph: Map<string, string[]>): string[] {
   const nodes = Array.from(graph.keys());
   const nodeSet = new Set(nodes);

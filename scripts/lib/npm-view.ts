@@ -1,17 +1,6 @@
-// Classify the result of `npm view <name>@<version> version` for the purpose
-// of publish-loop idempotency. Three outcomes:
-//
-//   - 'published'     — exit 0 and stdout matches the expected version. Skip publish.
-//   - 'not-published' — exit non-zero AND stderr indicates a 404 (the canonical
-//                       "this version does not exist on the registry" signal).
-//   - 'unknown'       — any other failure (network, DNS, 5xx, rate-limit, kill).
-//                       Caller must abort rather than guess — guessing
-//                       'not-published' on a transient blips re-publishes
-//                       packages that are already there.
-//
-// The discriminator for 'not-published' is the literal string `code E404` in
-// stderr, which `npm view` prints whether the version or the whole package is
-// missing. Anything else is treated as transient.
+// Classify `npm view <name>@<version> version` for publish-loop idempotency.
+// `code E404` in stderr is npm's canonical "version missing" signal; anything
+// else with a non-zero exit is treated as transient (caller throws).
 
 export type NpmViewResult = {
   status: number | null;

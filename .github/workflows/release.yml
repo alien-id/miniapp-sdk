@@ -1,44 +1,9 @@
 name: Release
 
-# Two-phase release pipeline. On every push to main:
-#
-#   1. The `version-pr` job runs first. It has only `contents: write` and
-#      `pull-requests: write` and is NEVER gated by an environment reviewer.
-#      If pending changesets exist, it opens or updates the
-#      `chore: release packages` Version PR. If none exist (i.e. that PR was
-#      just merged), it no-ops and emits `hasChangesets=false`.
-#
-#   2. The `publish` job runs only when `version-pr` reports
-#      `hasChangesets == 'false'` — i.e. the Version PR was just merged and
-#      the consumed CHANGELOGs + version bumps are on main. It is gated by the
-#      `npm-publish` GitHub Environment reviewer and is the only job that ever
-#      holds `id-token: write` (OIDC trusted publishing + sigstore provenance).
-#
-# Why split: collapsing both phases into one job means the reviewer gate also
-# blocks Version PR creation, and the OIDC token sits alongside install/build
-# code that processes contributor-supplied package manifests. The split keeps
-# the reviewer approval scoped to publishing and confines `id-token: write` to
-# a job whose only work is `bun run build` + the publish loop + `changeset tag`.
-#
-# Security envelope (defends against the TanStack/Astro 2025 attack class):
-#   - All third-party actions pinned to commit SHA (defeats tag-overwrite
-#     attacks like `tj-actions/changed-files` from March 2025).
-#   - `step-security/harden-runner` with `egress-policy: block` + a tight
-#     allowlist on every job. The version job's allowlist excludes sigstore.
-#   - `oven-sh/setup-bun` inlined with `cache: false` on the publish job —
-#     action caching during OIDC-holding workflows is a known exfiltration
-#     vector (TanStack/Astro postmortems). The version job also disables cache
-#     for consistency and defense in depth.
-#   - `persist-credentials: false` on every checkout. `changesets/action`
-#     re-injects `GITHUB_TOKEN` via env when it needs to push.
-#   - Workflow-level `permissions: {}`; jobs opt into the minimum.
-#   - `id-token: write` lives only in the `publish` job.
-#   - `NPM_TOKEN: ''` defeats any accidental fallback to a static credential
-#     (no static NPM_TOKEN exists — publishes use OIDC trusted publishing).
-#   - `npm publish --provenance` attaches sigstore attestation to every
-#     artifact (handled inside `scripts/publish-topological.ts`).
-#   - `concurrency.cancel-in-progress: false` so an in-flight publish run is
-#     never killed mid-loop.
+# Two-job split: `version-pr` opens/updates the Version PR (no env gate,
+# no id-token). `publish` runs after the Version PR merges, gated by the
+# `npm-publish` environment, and is the only job that holds id-token: write.
+# See SECURITY.md and RELEASING.md for the full rationale.
 
 on:
   push:
@@ -48,7 +13,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
-# Default-deny at the workflow level. Each job opts in.
 permissions: {}
 
 jobs:
@@ -56,9 +20,7 @@ jobs:
     name: Open or update Version PR
     runs-on: ubuntu-latest
     permissions:
-      # changesets/action pushes to `changeset-release/main`.
       contents: write
-      # changesets/action opens or updates the Version PR.
       pull-requests: write
     outputs:
       hasChangesets: ${{ steps.changesets.outputs.hasChangesets }}
@@ -67,8 +29,6 @@ jobs:
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: block
-          # No sigstore endpoints in this allowlist — the version job never
-          # touches the registry beyond `bun install` against the cached deps.
           allowed-endpoints: >
             registry.npmjs.org:443
             github.com:443
@@ -80,10 +40,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          # GITHUB_TOKEN is never written to git config. changesets/action
-          # re-injects it via env when it needs to push to changeset-release/main.
           persist-credentials: false
-          # Full history so changesets can compute changelogs.
           fetch-depth: 0
           fetch-tags: true
 
@@ -91,9 +48,6 @@ jobs:
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: 1.3.14
-          # Defense in depth: this job does not hold id-token: write but we
-          # disable the action's cache anyway to keep the security envelope
-          # uniform between the two jobs.
           no-cache: true
 
       - name: Install dependencies
@@ -103,9 +57,6 @@ jobs:
         id: changesets
         uses: changesets/action@63a615b9cd06ba9a3e6d13796c7fbcb080a60a0b # v1.8.0
         with:
-          # NO `publish:` input. With `publish` unset and no pending changesets,
-          # changesets/action emits `hasChangesets=false` and exits cleanly —
-          # the publish job picks it up from there.
           version: bun run ci:version
           commit: 'chore: release packages'
           title: 'chore: release packages'
@@ -115,16 +66,11 @@ jobs:
   publish:
     name: Publish to npm
     needs: version-pr
-    # Publish only after the Version PR has been merged. When the Version PR
-    # merges, the next push to main has no pending changesets, version-pr
-    # no-ops, and this job picks up the publish.
     if: needs.version-pr.outputs.hasChangesets == 'false'
     runs-on: ubuntu-latest
     environment: npm-publish
     permissions:
-      # changesets/action pushes git tags (and creates GitHub Releases) after publish.
       contents: write
-      # OIDC trusted publishing + sigstore provenance. Lives only in this job.
       id-token: write
     steps:
       - name: Harden runner
@@ -150,12 +96,11 @@ jobs:
           fetch-tags: true
 
       - name: Setup Bun
-        # Inlined with `no-cache: true`. Action caching during OIDC-holding
-        # workflows is the supply-chain exfiltration vector cited by the
-        # TanStack + Astro 2025 postmortems.
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: 1.3.14
+          # no-cache: action caching during OIDC-holding workflows is the
+          # TanStack/Astro 2025 token-exfiltration vector.
           no-cache: true
 
       - name: Install dependencies
@@ -171,13 +116,10 @@ jobs:
         id: changesets
         uses: changesets/action@63a615b9cd06ba9a3e6d13796c7fbcb080a60a0b # v1.8.0
         with:
-          # NO `version:` input. With `version` unset, changesets/action only
-          # runs the publish path — it cannot version even if changesets reappear.
           publish: bun run ci:publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Force OIDC. No static NPM_TOKEN exists; this empty value defeats
-          # any accidental fallback to a workflow-level or org-level secret.
+          # Defeat any accidental fallback to a static NPM credential.
           NPM_TOKEN: ''
 
       - name: Summary

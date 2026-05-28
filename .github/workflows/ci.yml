@@ -77,10 +77,6 @@ jobs:
 
   changeset-status:
     name: Changeset status (advisory)
-    # Pure information: surfaces what the next Version PR would compute given
-    # the changesets present on this PR. Never fails — `changesets/bot` (GitHub
-    # App) is the conversational nudge for "you forgot a changeset", and
-    # reviewer attention is the gate.
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
@@ -102,7 +98,5 @@ jobs:
         uses: ./.github/actions/setup-bun-project
 
       - name: Show pending changesets
-        # --since narrows the diff to the PR's actual changes. The base ref is
-        # exposed as `github.base_ref` (e.g. "main") on pull_request events.
         run: bun changeset status --since=origin/${{ github.base_ref }} --verbose
         continue-on-error: true
