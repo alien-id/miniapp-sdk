@@ -142,6 +142,38 @@ graph TD
 Auth-client and contract are leaves. Bridge follows contract. React and
 solana-provider follow bridge.
 
+## GitHub Release assets
+
+`changesets/action` creates one GitHub Release per published package, keyed
+on the git tag `<name>@<version>` it pushes after the publish loop. The
+release body is the CHANGELOG entry for that version; the action does not
+attach file assets on its own.
+
+The publish job's `Attach assets to GitHub Releases` step does that, driven
+by a JSONL manifest the orchestrator writes (one line per package) at
+`$RELEASE_ASSETS_MANIFEST`. Each line lists the assets to upload to that
+package's release. Today's manifest, per package:
+
+| Package | Assets attached |
+| --- | --- |
+| `@alien-id/miniapps-auth-client` | the signed `.tgz` |
+| `@alien-id/miniapps-bridge` | the signed `.tgz` |
+| `@alien-id/miniapps-contract` | the signed `.tgz` + `events.schema.json` + `methods.schema.json` |
+| `@alien-id/miniapps-react` | the signed `.tgz` |
+| `@alien-id/miniapps-solana-provider` | the signed `.tgz` |
+
+The mapping lives in `scripts/lib/release-assets.ts` — add a package name to
+the `EXTRA_ASSETS` record to ship extra files alongside its tarball.
+
+The upload uses `gh release upload --clobber`, so partial-failure re-runs
+overwrite existing assets safely. The orchestrator writes manifest entries
+for *every* package each run (including ones already on the npm registry),
+so the upload step can fill in missing assets without depending on
+`publishedPackages` from `changesets/action`.
+
+Provenance attestations are *not* attached as a separate asset — they live
+on npm at `https://www.npmjs.com/package/<name>/v/<version>/provenance`.
+
 ## Force-push approval reset (Version PR)
 
 `changesets/action` rewrites the `changeset-release/main` branch every time a

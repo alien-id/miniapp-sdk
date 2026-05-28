@@ -179,6 +179,47 @@ jobs:
           # Force OIDC. No static NPM_TOKEN exists; this empty value defeats
           # any accidental fallback to a workflow-level or org-level secret.
           NPM_TOKEN: ''
+          # The publish orchestrator writes one JSONL line per published
+          # package describing the assets to attach to that package's
+          # GitHub Release. The next step consumes this manifest.
+          RELEASE_ASSETS_MANIFEST: ${{ github.workspace }}/release-assets.jsonl
+
+      - name: Attach assets to GitHub Releases
+        # Runs whenever the orchestrator emitted a manifest — independent of
+        # changesets/action's `published` output, so a partial-failure re-run
+        # that re-uploads to already-existing releases still works.
+        if: hashFiles('release-assets.jsonl') != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          while IFS= read -r line; do
+            [ -z "$line" ] && continue
+            tag=$(echo "$line" | jq -r '.tag')
+            mapfile -t assets < <(echo "$line" | jq -r '.assets[]')
+            # changesets/action creates GitHub Releases for packages that
+            # appeared in `New tag:` stdout this run. On a re-run after a
+            # partial failure, the release may not be (re-)created — skip
+            # gracefully rather than fail the whole step.
+            if ! gh release view "$tag" >/dev/null 2>&1; then
+              echo "skip $tag — no GitHub Release exists"
+              continue
+            fi
+            missing=0
+            for a in "${assets[@]}"; do
+              if [ ! -f "$a" ]; then
+                echo "  warn: asset not found on disk: $a"
+                missing=1
+              fi
+            done
+            if [ "$missing" -eq 1 ]; then
+              echo "skip $tag — one or more assets missing"
+              continue
+            fi
+            echo "uploading ${#assets[@]} asset(s) to $tag"
+            # --clobber overwrites assets with the same name (idempotent re-runs).
+            gh release upload "$tag" "${assets[@]}" --clobber
+          done < release-assets.jsonl
 
       - name: Summary
         if: steps.changesets.outputs.published == 'true'
