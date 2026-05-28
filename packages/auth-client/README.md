@@ -5,7 +5,7 @@
 Core authentication utilities for the Alien Miniapp SDK.
 Provides tools for verifying JWT tokens issued by the Alien SSO.
 
-Use it in your miniapp backend to verify tokens sent by miniapp.
+Use it in your miniapp backend to verify tokens sent by the miniapp.
 
 ## Installation
 
@@ -43,7 +43,7 @@ By default, the client verifies:
 
 ### Custom JWKS URL
 
-`createAuthClient` accepts an optional jwksUrl parameter to use custom JWKS endpoint for JWT verification.
+`createAuthClient` accepts an optional `jwksUrl` parameter to use a custom JWKS endpoint for JWT verification.
 
 ```typescript
 import { createAuthClient } from '@alien-id/miniapps-auth-client';
