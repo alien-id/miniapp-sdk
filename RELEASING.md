@@ -20,6 +20,43 @@ feature PRs and approve two gates.
    Environment reviewer, the only job that holds `id-token: write`). A
    maintainer approves, and the publish loop runs in topological order.
 
+## Job gating
+
+A read-only `detect` job (`contents: read`, no env gate, no id-token) runs
+`scripts/detect-release.ts` to decide what each push should do from **ground
+truth**, so nothing reaches the `npm-publish` environment unless a publish is
+actually pending:
+
+| Output | Source of truth | Gates |
+| --- | --- | --- |
+| `hasChangesets` | `.changeset/*.md` files (other than the README) exist | `version-pr` runs only when `true` |
+| `shouldPublish` | a publishable `packages/*` version is **not yet on the npm registry** (`npm view name@version`) | `publish` runs only when `true` |
+
+| Push to `main` | `hasChangesets` | `shouldPublish` | `version-pr` | `publish` |
+| --- | --- | --- | --- | --- |
+| Feature PR with a changeset | `true` | `false` | runs (opens/updates Version PR) | skipped |
+| Version PR merge (versions bumped, not yet on npm) | `false` | `true` | skipped | runs |
+| Ordinary commit, nothing pending | `false` | `false` | skipped | skipped |
+
+In a prerelease line the changeset `.md` files persist until the *stable*
+version is cut, so a beta Version PR merge has both `hasChangesets` and
+`shouldPublish` true: `publish` ships the beta and `version-pr` re-runs as a
+harmless no-op (the changeset is already recorded in `pre.json`). The only case
+where the two genuinely conflict is bootstrapping a brand-new, never-published
+package *with* a bump changeset in the same merge — its initial version would
+publish before the bump; the next Version PR then ships the bumped version.
+
+Why registry state and not the commit message or `changesets/action` outputs:
+`published`/`hasChangesets` are only known *after* the action runs (too late to
+gate the env), commit messages are editable and merge-strategy dependent, and
+`hasChangesets == false` cannot tell a Version PR merge from an ordinary commit
+(see [changesets/action#515][cs515]). Comparing each package version against the
+registry is the same idempotent check `changeset publish` itself uses, so it is
+also self-correcting: a partial publish simply leaves the missing packages
+`shouldPublish == true` for the next run.
+
+[cs515]: https://github.com/changesets/action/issues/515
+
 ## Adding a changeset
 
 On any feature branch that touches code shipped to npm
