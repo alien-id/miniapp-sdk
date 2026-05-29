@@ -1,5 +1,13 @@
 # @alien-id/miniapps-react
 
+## 2.1.1
+
+### Patch Changes
+
+- Updated dependencies [[`85d46b2`](https://github.com/alien-id/miniapp-sdk/commit/85d46b22127140faec2a121a6839799218e7f05f)]:
+  - @alien-id/miniapps-contract@2.1.1
+  - @alien-id/miniapps-bridge@2.1.1
+
 ## 2.1.0
 
 ### Patch Changes
