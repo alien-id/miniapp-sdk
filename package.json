@@ -17,6 +17,7 @@
     "check": "bun run lint && bun run typecheck && bun run test && bun run build",
     "changeset": "changeset",
     "changeset:status": "changeset status --verbose",
+    "ci:detect": "bun scripts/detect-release.ts",
     "ci:version": "changeset version && rm -f bun.lock && bun install",
     "ci:publish": "bun run build && bun scripts/publish-topological.ts && changeset tag"
   },
