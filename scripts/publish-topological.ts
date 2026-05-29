@@ -6,9 +6,10 @@
 // `npm publish <tgz>`. Idempotent across re-runs via `npm view`.
 
 import { spawnSync } from 'node:child_process';
-import { readdir, readFile } from 'node:fs/promises';
+import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { classifyNpmView } from './lib/npm-view';
+import { runNpmView } from './lib/npm-view';
+import { readPackages } from './lib/packages';
 import { deriveTag } from './lib/tag';
 import { topoSort } from './lib/topo';
 
@@ -16,57 +17,15 @@ const REPO_ROOT = new URL('..', import.meta.url).pathname;
 const PACKAGES_DIR = join(REPO_ROOT, 'packages');
 const DRY_RUN = process.argv.includes('--dry-run');
 
-type Pkg = {
-  name: string;
-  version: string;
-  dir: string;
-  private: boolean;
-  deps: string[];
-};
-
-async function readPackages(): Promise<Pkg[]> {
-  const entries = await readdir(PACKAGES_DIR, { withFileTypes: true });
-  const dirs = entries.filter((e) => e.isDirectory()).map((e) => e.name);
-  const pkgs: Pkg[] = [];
-  for (const dir of dirs) {
-    const manifestPath = join(PACKAGES_DIR, dir, 'package.json');
-    const raw = await readFile(manifestPath, 'utf8').catch(() => null);
-    if (!raw) continue;
-    const m = JSON.parse(raw) as {
-      name?: string;
-      version?: string;
-      private?: boolean;
-      dependencies?: Record<string, string>;
-    };
-    if (!m.name || !m.version) continue;
-    pkgs.push({
-      name: m.name,
-      version: m.version,
-      dir,
-      private: m.private === true,
-      deps: Object.keys(m.dependencies ?? {}),
-    });
-  }
-  return pkgs;
-}
-
 function alreadyPublished(name: string, version: string): boolean {
   // Unknown failures throw rather than degrade to "not published" — a transient
   // network blip must not cause a re-publish attempt against an existing version.
-  const result = spawnSync('npm', ['view', `${name}@${version}`, 'version'], {
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
-  const classification = classifyNpmView(version, {
-    status: result.status,
-    stdout: result.stdout,
-    stderr: result.stderr,
-  });
+  const classification = runNpmView(name, version);
   if (classification === 'unknown') {
     throw new Error(
-      `npm view ${name}@${version} failed unexpectedly (exit ${result.status}). ` +
-        `Re-run the workflow to retry; this is treated as transient on purpose ` +
-        `so a real publish is never skipped. Stderr:\n${(result.stderr ?? '').trim()}`,
+      `npm view ${name}@${version} failed unexpectedly. Re-run the workflow ` +
+        `to retry; this is treated as transient on purpose so a real publish ` +
+        `is never skipped.`,
     );
   }
   return classification === 'published';
@@ -106,7 +65,7 @@ async function findTarball(
 }
 
 async function main() {
-  const pkgs = await readPackages();
+  const pkgs = await readPackages(PACKAGES_DIR);
   const publishable = pkgs.filter((p) => !p.private);
   const publishableNames = new Set(publishable.map((p) => p.name));
 
