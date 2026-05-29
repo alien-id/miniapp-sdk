@@ -1,5 +1,11 @@
 # @alien-id/miniapps-auth-client
 
+## 2.1.1
+
+### Patch Changes
+
+- [#56](https://github.com/alien-id/miniapp-sdk/pull/56) [`85d46b2`](https://github.com/alien-id/miniapp-sdk/commit/85d46b22127140faec2a121a6839799218e7f05f) Thanks [@truehazker-eti](https://github.com/truehazker-eti)! - Remove the redundant custom JWKS modulus-floor resolver and rely on jose's built-in RSA key-size enforcement. jose already rejects sub-2048-bit RSA keys at verification time (and the algorithm allowlist only permits RS256/EdDSA), so the bespoke resolver — and its extra per-verification JWKS fetch — added no security guarantee. Behavior is unchanged; one network round-trip per verification is eliminated.
+
 ## 2.1.0
 
 ### Patch Changes
