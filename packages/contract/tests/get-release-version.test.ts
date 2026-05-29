@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 import type { MethodName, Version } from '../src';
-import { getReleaseVersion, METHOD_NAMES, releases } from '../src';
+import {
+  getMethodMinVersion,
+  getReleaseVersion,
+  METHOD_NAMES,
+  releases,
+} from '../src';
+import { selectReleaseVersion } from '../src/methods/versions/get-release-version';
 
 /**
  * Tests `getReleaseVersion` against the real release table.
@@ -49,6 +55,32 @@ describe('getReleaseVersion — single-argument overload', () => {
 
   test('returns null for an unknown method', () => {
     expect(getReleaseVersion('unknown:method' as MethodName)).toBeNull();
+  });
+
+  test('agrees with getMethodMinVersion for every method', () => {
+    // Both APIs answer "earliest release that introduced this method" and
+    // must never diverge. getMethodMinVersion walks a semver-sorted list;
+    // getReleaseVersion must use the same ordering, not raw key order.
+    for (const method of METHOD_NAMES) {
+      expect(getReleaseVersion(method)).toBe(
+        getMethodMinVersion(method) as Version,
+      );
+    }
+  });
+});
+
+describe('selectReleaseVersion — ordering is semver, not table key order', () => {
+  test('returns the semver-earliest release regardless of key insertion order', () => {
+    // Authored deliberately out of semver order: the later release is keyed
+    // first. Raw Object.keys order would pick '1.0.0'; semver order picks
+    // '0.1.0'. This is the divergence that desynced getReleaseVersion from
+    // getMethodMinVersion.
+    const method = 'late:method' as MethodName;
+    const table: Record<string, MethodName[]> = {
+      '1.0.0': [method],
+      '0.1.0': [method],
+    };
+    expect(selectReleaseVersion(table, method)).toBe('0.1.0');
   });
 });
 

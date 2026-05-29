@@ -1,61 +1,17 @@
 import type { Version } from '../../utils';
 import type { MethodName } from '../types/method-types';
+import { ascendingReleaseVersions, compareVersions } from './compare';
 import { releases } from './releases';
 
+// Re-exported from the shared comparator module so existing imports of
+// `compareVersions` / `isValidVersion` from this barrel keep working.
+export { compareVersions, isValidVersion } from './compare';
 export { getReleaseVersion } from './get-release-version';
 export { releases } from './releases';
 
-/**
- * Compare two semver versions on their major.minor.patch numbers only.
- *
- * Pre-release identifiers (`-rc.1`, `-alpha.3`) and build metadata
- * (`+sha`) are stripped before parsing, so `1.5.3-rc.1` compares equal
- * to `1.5.3` regardless of which component carries the suffix.
- *
- * Rationale: the host injects a single Contract Version string
- * (`window.__ALIEN_CONTRACT_VERSION__`). Method support is a property of
- * the *released* contract surface, not of the tag spelling — a host on
- * `1.5.3-rc.1` ships the same methods as `1.5.3`. Honouring the
- * pre-release suffix would deny callers methods their host already
- * declares.
- *
- * If stricter semver ordering is ever required (e.g. for a host that
- * exposes draft methods only on RC builds), add a dedicated comparator
- * rather than overloading this one.
- *
- * @returns negative if a < b, 0 if a === b, positive if a > b
- */
-const SEMVER_RE =
-  /^(\d+)\.(\d+)\.(\d+)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
-
-/**
- * Whether a string matches the contract's accepted version shape:
- * `X.Y.Z` with optional `-prerelease` and `+build` suffixes. This is the
- * single source of truth for "is this a `Version`?" — boundary
- * validators (e.g. host-injected `__ALIEN_CONTRACT_VERSION__`) and
- * direct callers of {@link compareVersions} agree by construction.
- */
-export function isValidVersion(value: string): boolean {
-  return SEMVER_RE.test(value);
-}
-
-export function compareVersions(a: Version, b: Version): number {
-  const parse = (v: Version): [number, number, number] => {
-    const m = SEMVER_RE.exec(v);
-    if (!m) throw new TypeError(`Invalid version string: ${JSON.stringify(v)}`);
-    // Indices 1–3 are guaranteed numeric by the regex.
-    return [Number(m[1]), Number(m[2]), Number(m[3])];
-  };
-  const [aMajor, aMinor, aPatch] = parse(a);
-  const [bMajor, bMinor, bPatch] = parse(b);
-  if (aMajor !== bMajor) return aMajor - bMajor;
-  if (aMinor !== bMinor) return aMinor - bMinor;
-  return aPatch - bPatch;
-}
-
-const ASCENDING_RELEASE_VERSIONS: readonly Version[] = (
-  Object.keys(releases) as Version[]
-).sort(compareVersions);
+const ASCENDING_RELEASE_VERSIONS: readonly Version[] = ascendingReleaseVersions(
+  Object.keys(releases) as Version[],
+);
 
 // Walked in ascending order, first-seen wins — so each method maps to
 // the earliest release that introduced it.

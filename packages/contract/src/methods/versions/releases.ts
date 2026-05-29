@@ -5,16 +5,15 @@ import type {
   MethodVersionedPayload,
 } from '../types/method-types';
 
-export const releases: Record<
-  Version,
-  (
-    | MethodName
-    | {
-        method: MethodNameWithVersionedPayload;
-        param: MethodVersionedPayload<MethodNameWithVersionedPayload>;
-      }
-  )[]
-> = {
+/** A single entry in a release: a plain method, or a method+param pair. */
+export type ReleaseItem =
+  | MethodName
+  | {
+      method: MethodNameWithVersionedPayload;
+      param: MethodVersionedPayload<MethodNameWithVersionedPayload>;
+    };
+
+export const releases: Record<Version, ReleaseItem[]> = {
   '0.0.9': ['app:ready'],
   '0.1.1': ['payment:request', 'clipboard:write', 'clipboard:read'],
   '0.1.3': ['link:open'],
