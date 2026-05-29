@@ -3,14 +3,16 @@
 // Topological publish loop. Bun-specific: `bun pm pack` substitutes
 // `workspace:*` to concrete versions (npm pack does not — oven-sh/bun#24687)
 // and `bun publish` lacks `--provenance`, so we pack with bun and upload with
-// `npm publish <tgz>`. Idempotent across re-runs via `npm view`.
+// `npm publish <tgz>`. Idempotent across re-runs via `npm view`. Tagging is
+// left to canonical `changeset tag` (run after this script in `ci:publish`).
 
 import { spawnSync } from 'node:child_process';
-import { readdir } from 'node:fs/promises';
+import { readdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { runNpmView } from './lib/npm-view';
 import { readPackages } from './lib/packages';
 import { deriveTag } from './lib/tag';
+import { selectTarball } from './lib/tarball';
 import { topoSort } from './lib/topo';
 
 const REPO_ROOT = new URL('..', import.meta.url).pathname;
@@ -48,20 +50,13 @@ function run(
   }
 }
 
-async function findTarball(
-  cwd: string,
-  name: string,
-  version: string,
-): Promise<string> {
-  // Bun packs to `<scope>-<name>-<version>.tgz` in the package cwd.
-  const expected = `${name.replace('@', '').replace('/', '-')}-${version}.tgz`;
-  const entries = await readdir(cwd);
-  const match = entries.find(
-    (f) => f === expected || (f.endsWith('.tgz') && f.includes(version)),
-  );
-  if (!match)
-    throw new Error(`Tarball not found in ${cwd} (expected ${expected})`);
-  return match;
+// Remove any leftover tarballs before packing so `selectTarball` can never
+// pick up a stale artifact from a prior run (defence-in-depth alongside its
+// exact-name match).
+function cleanTarballs(cwd: string): void {
+  for (const entry of readdirSync(cwd)) {
+    if (entry.endsWith('.tgz')) rmSync(join(cwd, entry));
+  }
 }
 
 async function main() {
@@ -97,8 +92,10 @@ async function main() {
     }
 
     // Pack always runs — local-only and validates `workspace:*` substitution.
+    // Clear stale tarballs first so the exact-name match can't be fooled.
+    cleanTarballs(cwd);
     run('bun', ['pm', 'pack'], cwd, false);
-    const tarball = await findTarball(cwd, pkg.name, pkg.version);
+    const tarball = selectTarball(readdirSync(cwd), pkg.name, pkg.version);
     run(
       'npm',
       [

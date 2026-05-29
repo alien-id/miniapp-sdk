@@ -1,52 +1,18 @@
 import {
   createRemoteJWKSet,
   decodeProtectedHeader,
-  type JWK,
   type JWTVerifyGetKey,
   jwtVerify,
 } from 'jose';
 import { SSO_ISSUER, SSO_JWKS_URL } from './const';
 import { type TokenInfo, TokenInfoSchema } from './types';
 
-// RFC 7518 §3.3 / RFC 8725 §3.5 — RS256 keys MUST be ≥ 2048 bits.
-const MIN_RSA_MODULUS_BYTES = 256;
-
-function b64urlByteLength(s: string): number {
-  // RFC 7518 §3.3 modulus floor check operates on byte length of `n`.
-  // Decode just enough to count bytes; jose imports the same value.
-  const b64 = s.replace(/-/g, '+').replace(/_/g, '/');
-  const pad =
-    b64.length % 4 === 0 ? b64 : b64 + '='.repeat(4 - (b64.length % 4));
-  return atob(pad).length;
-}
-
-function makeJwksResolver(jwksUrl: URL): JWTVerifyGetKey {
-  // Wraps createRemoteJWKSet with an RSA modulus floor (RFC 7518 §3.3).
-  // jose's resolver caches and rotates; we re-fetch the JWKS on cache miss
-  // to inspect raw `n` before importJWK because once imported the modulus
-  // is opaque.
-  const inner = createRemoteJWKSet(jwksUrl);
-  const validated = new Set<string>();
-  return async (header, token) => {
-    const kid = typeof header.kid === 'string' ? header.kid : '';
-    const alg = typeof header.alg === 'string' ? header.alg : '';
-    if (alg.startsWith('RS') && !validated.has(kid)) {
-      const res = await fetch(jwksUrl);
-      if (!res.ok) throw new Error(`JWKS fetch failed: ${res.status}`);
-      const body = (await res.json()) as { keys?: JWK[] };
-      const candidate = body.keys?.find(
-        (k) => k.kid === header.kid && (!k.alg || k.alg === alg),
-      );
-      if (candidate?.kty === 'RSA' && typeof candidate.n === 'string') {
-        if (b64urlByteLength(candidate.n) < MIN_RSA_MODULUS_BYTES) {
-          throw new Error('RSA modulus below 2048 bits (RFC 7518 §3.3)');
-        }
-      }
-      validated.add(kid);
-    }
-    return inner(header, token);
-  };
-}
+// RFC 7518 §3.3 / RFC 8725 §3.5 — RS256 keys MUST be ≥ 2048 bits. jose
+// enforces this at `jwtVerify` (it throws "RS256 requires key modulusLength
+// to be 2048 bits or larger" for the key it actually verifies with), and the
+// `algorithms` allowlist below only permits RS256 and EdDSA — so the floor is
+// guaranteed for the real verifying key, with no extra JWKS fetch to keep in
+// sync. See tests/jwt.test.ts ("sub-2048-bit RSA key from the remote JWKS").
 
 type AuthClientOptions = {
   /** The miniapp's provider address used to verify the token audience. */
@@ -158,7 +124,7 @@ export const createAuthClient = ({
     if (url.protocol !== 'https:') {
       throw new Error(`jwksUrl must use https: scheme, got ${url.protocol}`);
     }
-    jwksResolver = makeJwksResolver(url);
+    jwksResolver = createRemoteJWKSet(url);
   }
   return new AuthClient(jwksResolver, audience, effectiveIssuer);
 };
