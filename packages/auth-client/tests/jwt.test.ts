@@ -1,4 +1,5 @@
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { beforeAll, describe, expect, spyOn, test } from 'bun:test';
+import { createSign, generateKeyPairSync } from 'node:crypto';
 import * as jose from 'jose';
 import { type AuthClient, createAuthClient } from '../src/index';
 
@@ -810,6 +811,106 @@ describe('AuthClient tests', () => {
     expect(() => createAuthClient({ audience: ['valid', ''] })).toThrow(
       /audience/i,
     );
+  });
+
+  // The two tests below exercise the *remote* JWKS path (jwksUrl + fetch) —
+  // the only path that resolves keys at verification time.
+  const REMOTE_JWKS_URL = 'https://sso.alien-api.com/oauth/jwks';
+  const serveJwks = (...keys: jose.JWK[]) =>
+    spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ keys }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+  // RFC 7518 §3.3 / RFC 8725 §3.5: RS256 keys MUST be ≥ 2048 bits. jose itself
+  // rejects sub-2048-bit RSA keys at jwtVerify, so a weak key served by the
+  // JWKS endpoint can never verify a token — regardless of header `kid`
+  // shenanigans. Locks in that guarantee so it survives the removal of the
+  // bespoke modulus resolver.
+  test('RFC 7518 §3.3: a sub-2048-bit RSA key from the remote JWKS is rejected', async () => {
+    const { publicKey, privateKey } = generateKeyPairSync('rsa', {
+      modulusLength: 1024,
+    });
+    const weakJwk = {
+      ...(publicKey.export({ format: 'jwk' }) as jose.JWK),
+      alg: 'RS256',
+      use: 'sig',
+      kid: 'weak-rsa',
+    };
+    const fetchSpy = serveJwks(weakJwk);
+
+    try {
+      const c = createAuthClient({
+        audience,
+        issuer,
+        jwksUrl: REMOTE_JWKS_URL,
+      });
+      // jose refuses to *sign* with a <2048-bit key, so assemble the JWS by
+      // hand to simulate a malicious/misconfigured issuer.
+      const b64 = (o: object) =>
+        Buffer.from(JSON.stringify(o)).toString('base64url');
+      const head = b64({ alg: 'RS256', typ: 'at+jwt', kid: 'weak-rsa' });
+      const body = b64({
+        sub: '00000001010000000000000200000000',
+        iss: issuer,
+        aud: [audience],
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        client_id: audience,
+        jti: 'jti-weak-rsa',
+      });
+      const signingInput = `${head}.${body}`;
+      const sig = createSign('RSA-SHA256')
+        .update(signingInput)
+        .sign(privateKey)
+        .toString('base64url');
+      const token = `${signingInput}.${sig}`;
+
+      await expect(c.verifyToken(token)).rejects.toThrow(/2048/i);
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+
+  // A correctly-sized (2048-bit) RSA key served by the remote JWKS verifies a
+  // genuinely-signed token. Proves the remote path still works end-to-end
+  // (regression guard for removing the custom resolver).
+  test('remote JWKS path verifies a token signed by a 2048-bit RSA key', async () => {
+    const { publicKey: pub, privateKey: priv } = await jose.generateKeyPair(
+      'RS256',
+      { modulusLength: 2048 },
+    );
+    const jwk = await jose.exportJWK(pub);
+    jwk.alg = 'RS256';
+    jwk.use = 'sig';
+    jwk.kid = 'good-rsa';
+    const fetchSpy = serveJwks(jwk);
+
+    try {
+      const c = createAuthClient({
+        audience,
+        issuer,
+        jwksUrl: REMOTE_JWKS_URL,
+      });
+      const token = await new jose.SignJWT({
+        sub: '00000001010000000000000200000000',
+        iss: issuer,
+        aud: [audience],
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000),
+        client_id: audience,
+        jti: 'jti-good-rsa',
+      })
+        .setProtectedHeader({ alg: 'RS256', typ: 'at+jwt', kid: 'good-rsa' })
+        .sign(priv);
+
+      const info = await c.verifyToken(token);
+      expect(info.sub).toBe('00000001010000000000000200000000');
+    } finally {
+      fetchSpy.mockRestore();
+    }
   });
 
   test('RFC 9068 §2.2 / OIDC §2: TokenInfoSchema surfaces acr and amr instead of stripping them', async () => {
