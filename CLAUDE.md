@@ -252,9 +252,17 @@ bot-driven mode. See `RELEASING.md` for the full mental model. The shape:
 5. `bun pm pack` is used instead of `bun publish` because `bun publish` lacks
    `--provenance`. `npm pack` is avoided because Bun's `workspace:*` is not
    substituted by it (open issue oven-sh/bun#24687).
-6. `ci:version` script uses `rm bun.lock && bun install` (not
-   `bun install --no-frozen-lockfile`) because the latter does not refresh
-   workspace versions in the lockfile under Bun.
+6. `ci:version` script is `changeset version && bun install` — it does **not**
+   `rm` the lockfile. The lockfile is version-agnostic for workspace packages
+   (they appear as `workspace:*` / `@workspace:<path>`, with no concrete
+   version), so a `changeset version` bump needs no lockfile refresh and
+   `--frozen-lockfile` installs tolerate it; `bun pm pack` substitutes the
+   concrete version into the published tarball. Removing the lockfile would
+   force a full re-resolution of every third-party range, and under the
+   `minimumReleaseAge` cooldown Bun (≥1.3.14) resolves the newest in-range
+   version, finds it blocked, and **errors instead of backtracking** to the
+   cooldown-cleared version — breaking the Version-PR job whenever any
+   dependency published within the last 3 days.
 
 Pre-release lines: enter via one-line PR (`bun changeset pre enter beta` or
 `...alpha`), exit via one-line PR (`bun changeset pre exit`). No separate
