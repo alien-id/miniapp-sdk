@@ -1,5 +1,12 @@
 # @alien-id/miniapps-bridge
 
+## 2.1.2-beta.0
+
+### Patch Changes
+
+- Updated dependencies [[`b317e19`](https://github.com/alien-id/miniapp-sdk/commit/b317e198a490fc5fc2d7ca0014a3dbc5ab4e1be5)]:
+  - @alien-id/miniapps-contract@2.2.0-beta.0
+
 ## 2.1.1
 
 ### Patch Changes

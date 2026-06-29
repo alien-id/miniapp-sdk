@@ -11,5 +11,7 @@
     "@alien-id/miniapps-react": "2.1.1",
     "@alien-id/miniapps-solana-provider": "2.1.1"
   },
-  "changesets": []
+  "changesets": [
+    "location-request"
+  ]
 }
