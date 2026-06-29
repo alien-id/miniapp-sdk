@@ -36,6 +36,8 @@ export {
 export type {
   HapticImpactStyle,
   HapticNotificationType,
+  LocationAccuracy,
+  LocationErrorCode,
   NotificationPermissionStatus,
   PaymentErrorCode,
   PaymentTestScenario,

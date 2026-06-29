@@ -201,6 +201,34 @@ export type NotificationPermissionStatus =
   | 'rate_limited';
 
 /**
+ * Requested location accuracy for `location:request`.
+ *
+ * - `reduced` (default): coarse/approximate position (~city block). Lower
+ *   power, lower privacy cost — prefer this unless precise position is
+ *   genuinely needed. Maps to iOS reduced accuracy / Android coarse.
+ * - `full`: best available precision (GPS). Maps to iOS full accuracy /
+ *   Android fine. The host may still prompt for or downgrade to coarse.
+ *
+ * @since 1.6.0
+ * @schema
+ */
+export type LocationAccuracy = 'reduced' | 'full';
+
+/**
+ * Location error codes returned in `location:response` when no position
+ * could be delivered. Mirrors the W3C `GeolocationPositionError` set.
+ *
+ * - `permission_denied`: User denied location access (or it's blocked).
+ *   Re-prompting won't help — direct the user to host settings.
+ * - `unavailable`: Position source failed / location services are off.
+ * - `timeout`: No fix acquired within the requested `timeout`.
+ *
+ * @since 1.6.0
+ * @schema
+ */
+export type LocationErrorCode = 'permission_denied' | 'unavailable' | 'timeout';
+
+/**
  * Solana chain identifiers (wallet-standard format).
  * Used by `wallet.solana:sign.send` to tell the host app
  * which cluster to broadcast to.

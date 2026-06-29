@@ -28,4 +28,5 @@ export const releases: Record<Version, ReleaseItem[]> = {
     'host.back.button:toggle',
   ],
   '1.5.0': ['notifications:permission.request'],
+  '1.6.0': ['location:request'],
 };

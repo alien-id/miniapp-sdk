@@ -2,6 +2,7 @@ import type {
   Empty,
   HapticImpactStyle,
   HapticNotificationType,
+  LocationAccuracy,
   PaymentTestScenario,
   SolanaChain,
   SolanaCommitment,
@@ -327,4 +328,44 @@ export interface Methods {
    * @schema
    */
   'notifications:permission.request': CreateMethodPayload<WithReqId<Empty>>;
+  /**
+   * Request the user's current location — a one-time snapshot.
+   *
+   * The host app owns the consent flow: it shows the OS permission prompt
+   * (with purpose string) on first use and surfaces precise/approximate
+   * choice. The resolved position (or an error) is delivered via the
+   * `location:response` event.
+   *
+   * This is a single reading, not a stream. Poll again for an updated fix.
+   * A future `location.watch:*` namespace may add continuous tracking.
+   *
+   * @since 1.6.0
+   * @schema
+   */
+  'location:request': CreateMethodPayload<
+    WithReqId<{
+      /**
+       * Desired accuracy. Defaults to `reduced` (coarse) — only request
+       * `full` when precise position is genuinely needed.
+       * @since 1.6.0
+       * @schema
+       */
+      accuracy?: LocationAccuracy;
+      /**
+       * Maximum age (ms) of a cached position the host may return instead
+       * of acquiring a fresh fix. `0` (default) forces a fresh reading.
+       * Mirrors W3C `PositionOptions.maximumAge`.
+       * @since 1.6.0
+       * @schema
+       */
+      maximumAge?: number;
+      /**
+       * Maximum time (ms) to wait for a fix before failing with
+       * `errorCode: 'timeout'`. Mirrors W3C `PositionOptions.timeout`.
+       * @since 1.6.0
+       * @schema
+       */
+      timeout?: number;
+    }>
+  >;
 }
