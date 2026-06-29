@@ -1,5 +1,6 @@
 import type {
   Empty,
+  LocationErrorCode,
   NotificationPermissionStatus,
   PaymentErrorCode,
   WalletSolanaErrorCode,
@@ -172,6 +173,108 @@ export interface Events {
        * @schema
        */
       status: NotificationPermissionStatus;
+    }>
+  >;
+  /**
+   * Location response for `location:request`.
+   *
+   * On success: position fields are present and `errorCode` is absent.
+   * On failure: position fields are absent and `errorCode` indicates why.
+   *
+   * Field shape follows native CLLocation / android.location.Location
+   * (accuracy split into horizontal/vertical/heading/speed). `latitude`,
+   * `longitude` and `horizontalAccuracy` are always present on success; the
+   * rest are `null` when the device can't provide them.
+   *
+   * @since 1.6.0
+   * @schema
+   */
+  'location:response': CreateEventPayload<
+    WithReqId<{
+      // --- Position (always present on success) ---
+      /**
+       * Latitude in decimal degrees (WGS84). Present on success.
+       * @since 1.6.0
+       * @schema
+       */
+      latitude?: number;
+      /**
+       * Longitude in decimal degrees (WGS84). Present on success.
+       * @since 1.6.0
+       * @schema
+       */
+      longitude?: number;
+
+      // --- Motion & elevation (null when the device can't provide them) ---
+      /**
+       * Altitude in meters above the WGS84 ellipsoid, or `null`. iOS host
+       * must use `ellipsoidalAltitude` (not `altitude`, which is
+       * mean-sea-level); Android `getAltitude()` is already ellipsoidal.
+       * @since 1.6.0
+       * @schema
+       */
+      altitude?: number | null;
+      /**
+       * Direction of travel (course), degrees clockwise from true north —
+       * NOT compass/magnetic heading. Host maps from iOS `course` /
+       * Android `getBearing()` and sends `null` when unavailable or
+       * stationary (iOS `-1`, Android `!hasBearing()`).
+       * @since 1.6.0
+       * @schema
+       */
+      heading?: number | null;
+      /**
+       * Ground speed in meters per second, or `null`.
+       * @since 1.6.0
+       * @schema
+       */
+      speed?: number | null;
+
+      // --- Accuracy (one per measurement above; null when unavailable) ---
+      /**
+       * Accuracy radius of `latitude`/`longitude` in meters. Present on
+       * success. Reflects the granted accuracy (coarse vs precise).
+       * @since 1.6.0
+       * @schema
+       */
+      horizontalAccuracy?: number;
+      /**
+       * Accuracy of `altitude` (vertical) in meters, or `null`.
+       * @since 1.6.0
+       * @schema
+       */
+      verticalAccuracy?: number | null;
+      /**
+       * Accuracy of `heading` in degrees, or `null`. Host maps from iOS
+       * `courseAccuracy` (13.4+) / Android `getBearingAccuracyDegrees()`
+       * (API 26+); `null` on older OS or when unavailable.
+       * @since 1.6.0
+       * @schema
+       */
+      headingAccuracy?: number | null;
+      /**
+       * Accuracy of `speed` in meters per second, or `null`. Host maps from
+       * iOS `speedAccuracy` (10+) / Android
+       * `getSpeedAccuracyMetersPerSecond()` (API 26+); `null` on older OS or
+       * when unavailable.
+       * @since 1.6.0
+       * @schema
+       */
+      speedAccuracy?: number | null;
+
+      // --- Meta ---
+      /**
+       * Unix timestamp (ms) of the reading. Present on success.
+       * @since 1.6.0
+       * @schema
+       */
+      timestamp?: number;
+      /**
+       * Error code when the request failed (no position delivered).
+       * @since 1.6.0
+       * @schema
+       */
+      errorCode?: LocationErrorCode;
     }>
   >;
 }

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import { LATEST_VERSION } from '@alien-id/miniapps-contract';
 import { on } from '../src/events';
 import type { MockBridgeInstance } from '../src/mock';
 import { createMockBridge } from '../src/mock';
@@ -39,7 +40,7 @@ describe('createMockBridge', () => {
   test('sets launch param globals with defaults', () => {
     mock = createMockBridge();
     expect(window.__ALIEN_AUTH_TOKEN__).toBe('mock-auth-token');
-    expect(window.__ALIEN_CONTRACT_VERSION__).toBe('1.5.0');
+    expect(window.__ALIEN_CONTRACT_VERSION__).toBe(LATEST_VERSION);
     expect(window.__ALIEN_PLATFORM__).toBe('ios');
     expect(window.__ALIEN_DISPLAY_MODE__).toBe('standard');
   });
@@ -53,7 +54,7 @@ describe('createMockBridge', () => {
     });
     expect(window.__ALIEN_AUTH_TOKEN__).toBe('custom-token');
     expect(window.__ALIEN_PLATFORM__).toBe('android');
-    expect(window.__ALIEN_CONTRACT_VERSION__).toBe('1.5.0');
+    expect(window.__ALIEN_CONTRACT_VERSION__).toBe(LATEST_VERSION);
   });
 
   test('auto-responds to payment:request with default payload', async () => {
