@@ -155,6 +155,25 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: '' # defeat any fallback to a static credential
 
+      # changesets/action already cut the GitHub release for each published tag;
+      # re-attach the contract JSON schemas as assets (dropped in the #46
+      # changesets migration). ci:publish ran the build, so the schemas exist.
+      - name: Attach contract JSON schemas to release
+        if: steps.changesets.outputs.published == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag=$(echo '${{ steps.changesets.outputs.publishedPackages }}' \
+            | jq -r '.[] | select(.name == "@alien-id/miniapps-contract") | "\(.name)@\(.version)"')
+          if [ -z "$tag" ]; then
+            echo "contract not in this release; skipping schema upload"
+            exit 0
+          fi
+          gh release upload "$tag" \
+            packages/contract/artifacts/events.schema.json \
+            packages/contract/artifacts/methods.schema.json \
+            --clobber
+
       - name: Summary
         if: steps.changesets.outputs.published == 'true'
         run: |
