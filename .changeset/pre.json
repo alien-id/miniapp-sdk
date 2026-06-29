@@ -12,6 +12,7 @@
     "@alien-id/miniapps-solana-provider": "2.1.1"
   },
   "changesets": [
+    "contract-schema-release-assets",
     "location-request"
   ]
 }
