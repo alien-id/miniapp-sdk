@@ -1,5 +1,11 @@
 # @alien-id/miniapps-contract
 
+## 2.2.0-beta.1
+
+### Patch Changes
+
+- [#69](https://github.com/alien-id/miniapp-sdk/pull/69) [`2ac20c8`](https://github.com/alien-id/miniapp-sdk/commit/2ac20c89121331fddb9195426900825669795edd) Thanks [@truehazker-eti](https://github.com/truehazker-eti)! - Re-cut the contract package so its generated JSON schemas (`events.schema.json`, `methods.schema.json`) are published as GitHub release assets via the updated release pipeline. No API or schema content changes — the schemas already ship inside the npm tarball; this validates the asset-upload step and restores convenient direct download from the release.
+
 ## 2.2.0-beta.0
 
 ### Minor Changes
