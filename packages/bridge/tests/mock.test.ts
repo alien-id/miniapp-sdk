@@ -1,5 +1,5 @@
-import { LATEST_VERSION } from '@alien-id/miniapps-contract';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import { LATEST_VERSION } from '@alien-id/miniapps-contract';
 import { on } from '../src/events';
 import type { MockBridgeInstance } from '../src/mock';
 import { createMockBridge } from '../src/mock';
