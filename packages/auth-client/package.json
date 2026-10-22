@@ -41,7 +41,7 @@
     "jose": "6.2.3"
   },
   "peerDependencies": {
-    "typescript": "^6.0.3"
+    "typescript": "^7.0.0"
   },
   "dependencies": {
     "zod": "^4.4.3"
