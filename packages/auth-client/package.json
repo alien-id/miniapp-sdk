@@ -37,7 +37,7 @@
   "devDependencies": {
     "@types/bun": "1.3.14",
     "@types/node": "26.0.1",
-    "tsdown": "0.22.3",
+    "tsdown": "0.22.14",
     "jose": "6.2.3"
   },
   "peerDependencies": {
